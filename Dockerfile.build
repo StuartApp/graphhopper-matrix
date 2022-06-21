@@ -14,8 +14,9 @@ RUN apt-get -y install locales curl git jq
 RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=en_US.UTF-8
-COPY --from=docker-registry-proxy.internal.stuart.com/docker:20.10 /usr/local/bin/docker /usr/local/bin/
-COPY --from=docker-registry-proxy.internal.stuart.com/docker:20.10 /usr/local/bin/docker-compose /usr/local/bin/
+
+RUN mkdir -p /home/$UNAME/.m2
+COPY settings.xml /home/$UNAME/.m2/settings.xml
 
 ENV LANG en_US.UTF-8
 ENV LANGUAGE en_US:en
