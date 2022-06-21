@@ -80,7 +80,7 @@ pipeline {
 
                 stage('Style') {
                     steps {
-                        sh "mvn checkstyle"
+                        sh "mvn checkstyle:check"
                     }
                 }
 
