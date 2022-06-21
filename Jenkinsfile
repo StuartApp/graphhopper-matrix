@@ -77,6 +77,18 @@ pipeline {
                         sh "mvn clean compile"
                     }
                 }
+
+                stage('Style') {
+                    steps {
+                        sh "mvn checkstyle"
+                    }
+                }
+
+                stage('Test') {
+                    steps {
+                        sh "mvn test"
+                    }
+                }
             }
         }
     }
