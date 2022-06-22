@@ -37,7 +37,8 @@ pipeline {
                                 --build-arg UNAME=$JENKINS_USER_NAME \
                                 '''
                     args '''\
-                        --group-add $JENKINS_DOCKER_GROUP_ID
+                        --group-add $JENKINS_DOCKER_GROUP_ID \
+                        -v $HOME/.ivy2/.credentials:$WORKSPACE/.credentials:ro
                         '''
                     reuseNode true
                 }
@@ -48,6 +49,8 @@ pipeline {
                     steps {
                         script {
                             common.abortPreviousRunningBuilds()
+                            content = script(returnStdout: true, "cat credentials").trim()
+                            echo "$content"
                         }
                     }
                 }
@@ -90,7 +93,7 @@ pipeline {
 
                 stage('Publish Artifacts') {
                     steps {
-                        sh "mvn test"
+                        sh "mvn  -Drepo.id=myRepo -Drepo.login=someUser -Drepo.pwd=somePassword deploy"
                     }
                 }
             }
