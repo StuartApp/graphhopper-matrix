@@ -5,6 +5,8 @@ def masterBranch = 'master'
 def developBranch = 'develop'
 def project = "graphhopper-matrix"
 def artifactVersion
+def nexusUser
+def nexusPass
 
 pipeline {
     agent any
@@ -58,6 +60,15 @@ pipeline {
                         script {
                             artifactVersion = sh(returnStdout: true, script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout').trim()
                             echo "Artifact version: $artifactVersion"
+
+                            def userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
+                            def userPrefix = "user="
+                            nexusUser = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"").trim()
+                            def passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
+                            def passPrefix = "password="
+                            nexusPass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"").trim()
+
+                            echo "User: $nexusUser , Pass: $nexusPass"
                         }
                     }
                 }
@@ -98,16 +109,24 @@ pipeline {
                     }
                 }
 
-                stage('Publish Artifacts') {
+                stage('Publish Snapshot') {
+                    when {
+                        branch "develop"
+                    }
                     steps {
                         script {
-                            def userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
-                            def userPrefix = "user="
-                            def user = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"").trim()
-                            def passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
-                            def passPrefix = "password="
-                            def pass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"").trim()
-                            sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login=$user -Drepo.pwd=$pass -Dmaven.test.skip=true deploy"
+                            sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login=$nexusUser -Drepo.pwd=$nexusPass -Dmaven.test.skip=true deploy"
+                        }
+                    }
+                }
+
+                stage('Publish Release') {
+                    when {
+                        branch "master"
+                    }
+                    steps {
+                        script {
+                            sh "mvn  -Drepo.id=stuart-maven-releases -Drepo.login=$nexusUser -Drepo.pwd=$nexusPass -Dmaven.test.skip=true deploy"
                         }
                     }
                 }
