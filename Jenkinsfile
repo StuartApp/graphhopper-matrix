@@ -63,10 +63,10 @@ pipeline {
 
                             def userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
                             def userPrefix = "user="
-                            nexusUser = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"")
+                            nexusUser = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"", returnStdout: true).trim()
                             def passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
                             def passPrefix = "password="
-                            nexusPass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"")
+                            nexusPass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"", returnStdout: true).trim()
 
                             echo "User: $nexusUser , Pass: $nexusPass"
                         }
