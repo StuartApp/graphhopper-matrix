@@ -15,7 +15,7 @@ RUN sed -i -e 's/# en_US.UTF-8 UTF-8/en_US.UTF-8 UTF-8/' /etc/locale.gen && \
     dpkg-reconfigure --frontend=noninteractive locales && \
     update-locale LANG=en_US.UTF-8
 
-RUN mkdir -p /home/$UNAME/.m2
+RUN mkdir -p /home/$UNAME/.m2 && mkdir /home/$UNAME/.m2/repository
 COPY settings.xml /home/$UNAME/.m2/settings.xml
 
 ENV LANG en_US.UTF-8
