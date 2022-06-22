@@ -108,9 +108,9 @@ pipeline {
                 }
 
                 stage('Publish Snapshot') {
-                    when {
-                        branch "develop"
-                    }
+//                    when {
+//                        branch "develop"
+//                    }
                     steps {
                         script {
                             sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login=$nexusUser -Drepo.pwd=$nexusPass -Dmaven.test.skip=true deploy"
