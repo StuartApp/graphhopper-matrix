@@ -4,7 +4,7 @@
 def masterBranch = 'master'
 def developBranch = 'develop'
 def project = "graphhopper-matrix"
-def artifactVersion = "1.0"
+def artifactVersion
 
 pipeline {
     agent any
@@ -49,6 +49,15 @@ pipeline {
                     steps {
                         script {
                             common.abortPreviousRunningBuilds()
+                        }
+                    }
+                }
+
+                stage('Prepare environment') {
+                    steps {
+                        script {
+                            artifactVersion = sh(returnStdout: true, script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout').trim()
+                            echo "Artifact version: $artifactVersion"
                         }
                     }
                 }
