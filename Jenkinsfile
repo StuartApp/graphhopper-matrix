@@ -87,6 +87,12 @@ pipeline {
                         sh "mvn test"
                     }
                 }
+
+                stage('Publish Artifacts') {
+                    steps {
+                        sh "mvn test"
+                    }
+                }
             }
         }
     }
