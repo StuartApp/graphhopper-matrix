@@ -49,7 +49,7 @@ pipeline {
                     steps {
                         script {
                             common.abortPreviousRunningBuilds()
-                            content = script(returnStdout: true, "cat credentials").trim()
+                            content = script(returnStdout: true, script:  "cat credentials").trim()
                             echo "$content"
                         }
                     }
