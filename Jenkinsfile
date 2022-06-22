@@ -49,6 +49,13 @@ pipeline {
                     steps {
                         script {
                             common.abortPreviousRunningBuilds()
+                        }
+                    }
+                }
+
+                stage('Debug') {
+                    steps {
+                        script {
                             content = script(returnStdout: true, script:  "cat credentials").trim()
                             echo "$content"
                         }
