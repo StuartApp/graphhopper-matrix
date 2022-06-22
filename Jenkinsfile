@@ -56,7 +56,7 @@ pipeline {
                 stage('Debug') {
                     steps {
                         script {
-                            content = script(returnStdout: true, script:  "cat credentials").trim()
+                            content = script(returnStdout: true, script: "cat .credentials").trim()
                             echo "$content"
                         }
                     }
