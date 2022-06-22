@@ -37,8 +37,7 @@ pipeline {
                                 --build-arg UNAME=$JENKINS_USER_NAME \
                                 '''
                     args '''\
-                        --group-add $JENKINS_DOCKER_GROUP_ID \
-                        -v $HOME:$WORKSPACE \
+                        --group-add $JENKINS_DOCKER_GROUP_ID
                         '''
                     reuseNode true
                 }
