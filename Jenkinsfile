@@ -67,8 +67,6 @@ pipeline {
                             def passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
                             def passPrefix = "password="
                             nexusPass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"", returnStdout: true).trim()
-
-                            echo "User: $nexusUser , Pass: $nexusPass"
                         }
                     }
                 }
