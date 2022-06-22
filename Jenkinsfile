@@ -113,7 +113,7 @@ pipeline {
 //                    }
                     steps {
                         script {
-                            sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login=$nexusUser -Drepo.pwd=$nexusPass -Dmaven.test.skip=true deploy"
+                            sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login='$nexusUser' -Drepo.pwd='$nexusPass' -Dmaven.test.skip=true deploy"
                         }
                     }
                 }
@@ -124,7 +124,7 @@ pipeline {
                     }
                     steps {
                         script {
-                            sh "mvn  -Drepo.id=stuart-maven-releases -Drepo.login=$nexusUser -Drepo.pwd=$nexusPass -Dmaven.test.skip=true deploy"
+                            sh "mvn  -Drepo.id=stuart-maven-releases -Drepo.login='$nexusUser' -Drepo.pwd='$nexusPass' -Dmaven.test.skip=true deploy"
                         }
                     }
                 }
