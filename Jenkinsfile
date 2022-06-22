@@ -53,15 +53,6 @@ pipeline {
                     }
                 }
 
-                stage('Debug') {
-                    steps {
-                        script {
-                            content = sh(returnStdout: true, script: "cat .credentials").trim()
-                            echo "$content"
-                        }
-                    }
-                }
-
                 stage('Deploy Notifications') {
                     environment {
                         gitLogMessage = safeRun("git log --no-merges --pretty='%h - %s (%an)' \$(git tag --sort=-version:refname | head -n 2 | tail -n 1)..HEAD")
@@ -100,7 +91,13 @@ pipeline {
 
                 stage('Publish Artifacts') {
                     steps {
-                        sh "mvn  -Drepo.id=myRepo -Drepo.login=someUser -Drepo.pwd=somePassword deploy"
+                        userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
+                        userPrefix = "user="
+                        user = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"").trim()
+                        passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
+                        passPrefix = "password="
+                        pass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"").trim()
+                        sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login=$user -Drepo.pwd=$pass -Dmaven.test.skip=true deploy"
                     }
                 }
             }
