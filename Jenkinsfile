@@ -38,8 +38,7 @@ pipeline {
                                 '''
                     args '''\
                         --group-add $JENKINS_DOCKER_GROUP_ID \
-                        -v /var/run/docker.sock:/var/run/docker.sock \
-                        -v $HOME/.ivy2/.credentials:$WORKSPACE/.credentials:ro \
+                        -v $HOME:$WORKSPACE \
                         '''
                     reuseNode true
                 }
