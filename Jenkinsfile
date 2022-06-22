@@ -91,12 +91,12 @@ pipeline {
 
                 stage('Publish Artifacts') {
                     steps {
-                        userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
-                        userPrefix = "user="
-                        user = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"").trim()
-                        passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
-                        passPrefix = "password="
-                        pass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"").trim()
+                        def userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
+                        def userPrefix = "user="
+                        def user = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"").trim()
+                        def passLine = sh(script: "cat .credentials | grep password=", returnStdout: true).trim()
+                        def passPrefix = "password="
+                        def pass = sh(script: "echo '$passLine' | sed -e \"s/^$passPrefix//\"").trim()
                         sh "mvn  -Drepo.id=stuart-maven-snapshots -Drepo.login=$user -Drepo.pwd=$pass -Dmaven.test.skip=true deploy"
                     }
                 }
