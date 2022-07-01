@@ -53,11 +53,6 @@ public interface EdgeIteratorState {
         }
 
         @Override
-        public int getVersion() {
-            return 1;
-        }
-
-        @Override
         public boolean getBool(boolean reverse, IntsRef ref) {
             return reverse;
         }
@@ -88,6 +83,11 @@ public interface EdgeIteratorState {
      * you use an odd edge key.
      */
     int getEdgeKey();
+
+    /**
+     * Like #getEdgeKey, but returns the reverse key. For loops the reverse key is the same as the key.
+     */
+    int getReverseEdgeKey();
 
     /**
      * Returns the node used to instantiate the EdgeIterator. Often only used for convenience reasons.

@@ -27,15 +27,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
- * implementing GraphStorage should extend {@link GraphHopperStorageTest} instead.
+ * implementing GraphStorage should extend {@link BaseGraphTest} instead.
  * <p>
  *
  * @author Peter Karich
@@ -645,7 +643,7 @@ public abstract class AbstractGraphStorageTester {
     }
 
     @Test
-    public void testStringIndex() {
+    public void testEdgeKVStorage() {
         graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1).setDistance(10).set(carAccessEnc, true, true);
         iter1.setName("named street1");
@@ -659,10 +657,9 @@ public abstract class AbstractGraphStorageTester {
 
     @Test
     public void test8AndMoreBytesForEdgeFlags() {
-        List<FlagEncoder> list = new ArrayList<>();
-        list.add(FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")));
-        list.add(FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")));
-        EncodingManager manager = EncodingManager.create(list);
+        FlagEncoder car0 = FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001"));
+        FlagEncoder car = FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001"));
+        EncodingManager manager = EncodingManager.create(car0, car);
         graph = new BaseGraph.Builder(manager).create();
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -681,14 +678,14 @@ public abstract class AbstractGraphStorageTester {
         BooleanEncodedValue access1Enc = manager.getBooleanEncodedValue(getKey("car", "access"));
 
         edge = graph.edge(0, 1);
-        GHUtility.setSpeed(99.123, true, true, list.get(0), edge);
+        GHUtility.setSpeed(99.123, true, true, access0Enc, avSpeed0Enc, edge);
         assertEquals(99.123, edge.get(avSpeed0Enc), 1e-3);
         EdgeIteratorState edgeIter = GHUtility.getEdge(graph, 1, 0);
         assertEquals(99.123, edgeIter.get(avSpeed0Enc), 1e-3);
         assertTrue(edgeIter.get(access0Enc));
         assertTrue(edgeIter.getReverse(access0Enc));
         edge = graph.edge(2, 3);
-        GHUtility.setSpeed(44.123, true, false, list.get(1), edge);
+        GHUtility.setSpeed(44.123, true, false, access1Enc, avSpeed1Enc, edge);
         assertEquals(44.123, edge.get(avSpeed1Enc), 1e-3);
 
         edgeIter = GHUtility.getEdge(graph, 3, 2);
@@ -697,11 +694,11 @@ public abstract class AbstractGraphStorageTester {
         assertFalse(edgeIter.get(access1Enc));
         assertTrue(edgeIter.getReverse(access1Enc));
 
-        list.clear();
-        list.add(FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")));
-        list.add(FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")));
-        list.add(FlagEncoders.createCar(new PMap("name=car2|speed_bits=30|speed_factor=0.001")));
-        manager = EncodingManager.create(list);
+        manager = EncodingManager.create(
+                FlagEncoders.createCar(new PMap("name=car0|speed_bits=29|speed_factor=0.001")),
+                FlagEncoders.createCar(new PMap("speed_bits=29|speed_factor=0.001")),
+                FlagEncoders.createCar(new PMap("name=car2|speed_bits=30|speed_factor=0.001"))
+        );
         graph = new BaseGraph.Builder(manager).create();
         edgeIter = graph.edge(0, 1).set(access0Enc, true, false);
         assertTrue(edgeIter.get(access0Enc));

@@ -423,28 +423,25 @@ public class GHUtility {
         return toSortedGraph;
     }
 
-    static Directory guessDirectory(GraphHopperStorage store) {
-        if (store.getDirectory() instanceof MMapDirectory) {
+    static Directory guessDirectory(BaseGraph graph) {
+        if (graph.getDirectory() instanceof MMapDirectory) {
             throw new IllegalStateException("not supported yet: mmap will overwrite existing storage at the same location");
         }
-        String location = store.getDirectory().getLocation();
-        boolean isStoring = ((GHDirectory) store.getDirectory()).isStoring();
+        String location = graph.getDirectory().getLocation();
+        boolean isStoring = ((GHDirectory) graph.getDirectory()).isStoring();
         return new RAMDirectory(location, isStoring);
     }
 
     /**
      * Create a new storage from the specified one without copying the data. CHGraphs won't be copied.
      */
-    public static GraphHopperStorage newStorage(GraphHopperStorage store) {
-        Directory outdir = guessDirectory(store);
-        boolean is3D = store.getNodeAccess().is3D();
-        GraphHopperStorage copy = new GraphBuilder(store.getEncodingManager())
-                .withTurnCosts(store.getTurnCostStorage() != null)
-                .set3D(is3D)
+    public static BaseGraph newGraph(BaseGraph baseGraph) {
+        Directory outdir = guessDirectory(baseGraph);
+        return new BaseGraph.Builder(baseGraph.getIntsForFlags())
+                .withTurnCosts(baseGraph.getTurnCostStorage() != null)
+                .set3D(baseGraph.getNodeAccess().is3D())
                 .setDir(outdir)
                 .create();
-        copy.getProperties().putAll(store.getProperties().getAll());
-        return copy;
     }
 
     public static int getAdjNode(Graph g, int edge, int adjNode) {
@@ -566,35 +563,16 @@ public class GHUtility {
     }
 
     /**
-     * Creates unique positive number for specified edgeId taking into account the direction defined
-     * by nodeA, nodeB and reverse.
-     */
-    public static int createEdgeKey(int nodeA, int nodeB, int edgeId, boolean reverse) {
-        edgeId = edgeId << 1;
-        if (reverse)
-            return (nodeA >= nodeB) ? edgeId : edgeId + 1;
-        return (nodeA > nodeB) ? edgeId + 1 : edgeId;
-    }
-
-    /**
      * Creates an edge key, i.e. an integer number that encodes an edge ID and the direction of an edge
      */
-    public static int createEdgeKey(int edgeId, boolean reverse) {
+    public static int createEdgeKey(int edgeId, boolean isLoop, boolean reverse) {
         // edge state in storage direction -> edge key is even
         // edge state against storage direction -> edge key is odd
-        return (edgeId << 1) + (reverse ? 1 : 0);
+        return (edgeId << 1) + ((reverse && !isLoop) ? 1 : 0);
     }
 
     /**
-     * Returns if the specified edgeKeys (created by createEdgeKey) are identical regardless of the
-     * direction.
-     */
-    public static boolean isSameEdgeKeys(int edgeKey1, int edgeKey2) {
-        return edgeKey1 / 2 == edgeKey2 / 2;
-    }
-
-    /**
-     * Returns the edgeKey of the opposite direction
+     * Returns the edgeKey of the opposite direction, be careful not to use this for loops!
      */
     public static int reverseEdgeKey(int edgeKey) {
         return edgeKey % 2 == 0 ? edgeKey + 1 : edgeKey - 1;
@@ -607,59 +585,51 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
-    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, IntsRef edgeFlags) {
+    public static IntsRef setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, IntsRef edgeFlags) {
         if (fwdSpeed < 0 || bwdSpeed < 0)
             throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
 
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
-
-        avgSpeedEnc.setDecimal(false, edgeFlags, fwdSpeed);
+        speedEnc.setDecimal(false, edgeFlags, fwdSpeed);
         if (fwdSpeed > 0)
             accessEnc.setBool(false, edgeFlags, true);
 
-        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
-            if (!avgSpeedEnc.isStoreTwoDirections())
-                throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+        if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
+            if (!speedEnc.isStoreTwoDirections())
+                throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
                         "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-            avgSpeedEnc.setDecimal(true, edgeFlags, bwdSpeed);
+            speedEnc.setDecimal(true, edgeFlags, bwdSpeed);
         }
         if (bwdSpeed > 0)
             accessEnc.setBool(true, edgeFlags, true);
         return edgeFlags;
     }
 
-    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, EdgeIteratorState... edges) {
-        setSpeed(fwdSpeed, bwdSpeed, encoder, Arrays.asList(edges));
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, EdgeIteratorState... edges) {
+        setSpeed(fwdSpeed, bwdSpeed, accessEnc, speedEnc, Arrays.asList(edges));
     }
 
-    public static void setSpeed(double fwdSpeed, double bwdSpeed, FlagEncoder encoder, Collection<EdgeIteratorState> edges) {
+    public static void setSpeed(double fwdSpeed, double bwdSpeed, BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, Collection<EdgeIteratorState> edges) {
         if (fwdSpeed < 0 || bwdSpeed < 0)
             throw new IllegalArgumentException("Speed must be positive but wasn't! fwdSpeed:" + fwdSpeed + ", bwdSpeed:" + bwdSpeed);
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avgSpeedEnc = encoder.getAverageSpeedEnc();
         for (EdgeIteratorState edge : edges) {
-            edge.set(avgSpeedEnc, fwdSpeed);
+            edge.set(speedEnc, fwdSpeed);
             if (fwdSpeed > 0)
                 edge.set(accessEnc, true);
 
-            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || avgSpeedEnc.isStoreTwoDirections())) {
-                if (!avgSpeedEnc.isStoreTwoDirections())
-                    throw new IllegalArgumentException("EncodedValue " + avgSpeedEnc.getName() + " supports only one direction " +
+            if (bwdSpeed > 0 && (fwdSpeed != bwdSpeed || speedEnc.isStoreTwoDirections())) {
+                if (!speedEnc.isStoreTwoDirections())
+                    throw new IllegalArgumentException("EncodedValue " + speedEnc.getName() + " supports only one direction " +
                             "but two different speeds were specified " + fwdSpeed + " " + bwdSpeed);
-                edge.setReverse(avgSpeedEnc, bwdSpeed);
+                edge.setReverse(speedEnc, bwdSpeed);
             }
             if (bwdSpeed > 0)
                 edge.setReverse(accessEnc, true);
         }
     }
 
-    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, FlagEncoder encoder, EdgeIteratorState edge) {
+    public static EdgeIteratorState setSpeed(double averageSpeed, boolean fwd, boolean bwd, BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc, EdgeIteratorState edge) {
         if (averageSpeed < 0.0001 && (fwd || bwd))
             throw new IllegalStateException("Zero speed is only allowed if edge will get inaccessible. Otherwise Weighting can produce inconsistent results");
-
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
-        DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
         edge.set(accessEnc, fwd, bwd);
         if (fwd)
             edge.set(avSpeedEnc, averageSpeed);
@@ -786,6 +756,11 @@ public class GHUtility {
 
         @Override
         public int getEdgeKey() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getReverseEdgeKey() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

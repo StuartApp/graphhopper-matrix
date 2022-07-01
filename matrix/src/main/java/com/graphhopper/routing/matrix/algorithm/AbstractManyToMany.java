@@ -11,6 +11,7 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.GHUtility;
 
 import java.util.List;
 import java.util.PriorityQueue;
@@ -43,7 +44,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     protected IntSet visited = new IntHashSet();
 
-    public AbstractManyToMany(QueryRoutingCHGraph graph){
+    public AbstractManyToMany(QueryRoutingCHGraph graph) {
 
         this.graph = graph;
         this.weighting = graph.getWrappedWeighting();
@@ -78,25 +79,25 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     }
 
     @Override
-    public DistanceMatrix calcMatrix(List<Snap>  sources, List<Snap> targets){
+    public DistanceMatrix calcMatrix(List<Snap> sources, List<Snap> targets) {
 
         checkAlreadyRun();
 
-        DistanceMatrix matrix = new DistanceMatrix(sources.size(),targets.size());
+        DistanceMatrix matrix = new DistanceMatrix(sources.size(), targets.size());
         IntObjectMap<IntArrayList> targetIdxsNodes = new GHIntObjectHashMap<>(targets.size());
 
         //Backward
-        int idxTarget =0;
-        while(idxTarget < targets.size()){
+        int idxTarget = 0;
+        while (idxTarget < targets.size()) {
             int targetClosestNode = targets.get(idxTarget).getClosestNode();
 
             //Avoid iterate over the same node two times
-            if(!targetIdxsNodes.containsKey(targetClosestNode)){
+            if (!targetIdxsNodes.containsKey(targetClosestNode)) {
                 IntArrayList a = new IntArrayList();
                 a.add(idxTarget);
-                targetIdxsNodes.put(targetClosestNode,a);
+                targetIdxsNodes.put(targetClosestNode, a);
                 backwardSearch(targets.get(idxTarget));
-            }else{
+            } else {
                 targetIdxsNodes.get(targetClosestNode).add(idxTarget);
             }
 
@@ -105,9 +106,9 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         }
 
         //Forward
-        int idxSource =0;
-        while(idxSource < sources.size()){
-            forwardSearch(sources.get(idxSource),idxSource,matrix,targetIdxsNodes);
+        int idxSource = 0;
+        while (idxSource < sources.size()) {
+            forwardSearch(sources.get(idxSource), idxSource, matrix, targetIdxsNodes);
             idxSource++;
         }
 
@@ -119,7 +120,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         alreadyRun = true;
     }
 
-    protected void backwardSearch( Snap targetSnap){
+    protected void backwardSearch(Snap targetSnap) {
 
         visited.clear();
 
@@ -128,7 +129,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         this.map.clear();
         this.heap.clear();
 
-        MatrixEntry currEdge = new MatrixEntry(target,0,0,0);
+        MatrixEntry currEdge = new MatrixEntry(target, 0, 0, 0);
         heap.add(currEdge);
 
         // For the first step though we need all edges, so we need to ignore this filter.
@@ -142,21 +143,21 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             currEdge = heap.poll();
             int currNode = currEdge.adjNode;
 
-            if(visited.contains(currNode)){
+            if (visited.contains(currNode)) {
                 run = !heap.isEmpty();
                 continue;
             }
 
             RoutingCHEdgeIterator iterator = inEdgeExplorer.setBaseNode(currNode);
 
-            while(iterator.next()){
+            while (iterator.next()) {
 
-                if(!accept(iterator,currEdge))
+                if (!accept(iterator, currEdge))
                     continue;
 
-                final double weight = calcWeight(iterator,currEdge,true);
+                final double weight = calcWeight(iterator, currEdge, true);
 
-                if(!Double.isFinite(weight))
+                if (!Double.isFinite(weight))
                     continue;
 
                 final int origEdgeId = getOrigEdgeId(iterator, true);
@@ -196,18 +197,18 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
             visited.add(currNode);
             run = (visitedNodes <= maxVisitedNodes) && !heap.isEmpty();
-        }while(run);
+        } while (run);
     }
 
     protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse);
 
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
+        return GHUtility.getEdgeFromEdgeKey(reverse ? edge.getOrigEdgeKeyFirst() : edge.getOrigEdgeKeyLast());
     }
 
     protected boolean accept(RoutingCHEdgeIteratorState edge, MatrixEntry currEdge) {
 
-        if(edge.getEdge() == getIncomingEdge(currEdge))
+        if (edge.getEdge() == getIncomingEdge(currEdge))
             return false;
         else
             return levelEdgeFilter == null || levelEdgeFilter.accept(edge);
@@ -223,19 +224,19 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     protected abstract double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge);
 
-    protected void saveToBucket(MatrixEntry entry, RoutingCHEdgeIteratorState iter, int target){
+    protected void saveToBucket(MatrixEntry entry, RoutingCHEdgeIteratorState iter, int target) {
         int node = iter.getAdjNode();
 
-        if(node != target){
+        if (node != target) {
 
             IntObjectMap<BucketEntry> bucketDistances = bucket.get(node);
 
-            if(bucketDistances == null){
+            if (bucketDistances == null) {
 
                 bucketDistances = new GHIntObjectHashMap<>();
-                bucketDistances.put(target,new BucketEntry(entry.weight,entry.time ,entry.distance));
-                bucket.put(node,bucketDistances);
-            }else {
+                bucketDistances.put(target, new BucketEntry(entry.weight, entry.time, entry.distance));
+                bucket.put(node, bucketDistances);
+            } else {
 
                 BucketEntry targetEntry = bucketDistances.get(target);
                 if (targetEntry == null || targetEntry.weight > entry.weight) {
@@ -245,7 +246,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         }
     }
 
-    protected void forwardSearch(Snap sourceSnap, int idxSource, DistanceMatrix dm, IntObjectMap<IntArrayList> targets){
+    protected void forwardSearch(Snap sourceSnap, int idxSource, DistanceMatrix dm, IntObjectMap<IntArrayList> targets) {
 
         int source = sourceSnap.getClosestNode();
 
@@ -255,10 +256,10 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         this.tentativeWeights.clear();
 
         //For the case when the shortest path is the direct path between source and target
-        saveBestPath(source,idxSource,targets,source,0,0,0,dm);
+        saveBestPath(source, idxSource, targets, source, 0, 0, 0, dm);
 
-        MatrixEntry currEdge = new MatrixEntry(source,0,0,0);
-        map.put(source,currEdge);
+        MatrixEntry currEdge = new MatrixEntry(source, 0, 0, 0);
+        map.put(source, currEdge);
         heap.add(currEdge);
 
         // For the first step though we need all edges, so we need to ignore this filter.
@@ -274,7 +275,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
             int currNode = currEdge.adjNode;
 
-            if(visited.contains(currNode)){
+            if (visited.contains(currNode)) {
                 run = !heap.isEmpty();
                 continue;
             }
@@ -302,7 +303,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                     map.put(traversalId, entry);
                     heap.add(entry);
 
-                    saveBestPath(source,idxSource,targets,iterator.getAdjNode(),weight,time,distance,dm);
+                    saveBestPath(source, idxSource, targets, iterator.getAdjNode(), weight, time, distance, dm);
 
                 } else if (entry.getWeightOfVisitedPath() > weight) {
 
@@ -316,7 +317,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                     entry.time = time;
                     heap.add(entry);
 
-                    saveBestPath(source,idxSource,targets,iterator.getAdjNode(),weight,time,distance,dm);
+                    saveBestPath(source, idxSource, targets, iterator.getAdjNode(), weight, time, distance, dm);
                 }
             }
 
@@ -325,43 +326,43 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             visited.add(currNode);
 
             run = (visitedNodes <= maxVisitedNodes) && !heap.isEmpty();
-        }while(run);
+        } while (run);
 
     }
 
-    private void saveBestPath( int sourceNode,int idxSource, IntObjectMap<IntArrayList> targets,int currNode, double currentEdgeWeight,
-                               long currentEdgeTime, double currentEdgeDistance, DistanceMatrix dm){
+    private void saveBestPath(int sourceNode, int idxSource, IntObjectMap<IntArrayList> targets, int currNode, double currentEdgeWeight,
+                              long currentEdgeTime, double currentEdgeDistance, DistanceMatrix dm) {
 
         final IntObjectMap<BucketEntry> bucketEntries = bucket.get(currNode);
-        if(bucketEntries != null){
+        if (bucketEntries != null) {
 
-            for( IntObjectCursor<BucketEntry> next : bucketEntries){
+            for (IntObjectCursor<BucketEntry> next : bucketEntries) {
 
                 int target = next.key;
 
-                if(sourceNode == target) continue;
+                if (sourceNode == target) continue;
 
                 final double savedWeight = tentativeWeights.get(target);
                 final double currentWeight = currentEdgeWeight + next.value.weight;
 
-                if(savedWeight == 0.0){
+                if (savedWeight == 0.0) {
 
                     final long time = currentEdgeTime + next.value.time;
                     final double distance = currentEdgeDistance + next.value.distance;
-                    tentativeWeights.put(target,currentWeight);
+                    tentativeWeights.put(target, currentWeight);
 
-                    for(IntCursor idxNext : targets.get(target)){
-                        dm.setCell(idxSource,idxNext.value,distance,time);
+                    for (IntCursor idxNext : targets.get(target)) {
+                        dm.setCell(idxSource, idxNext.value, distance, time);
                     }
 
-                } else if(currentWeight < savedWeight){
+                } else if (currentWeight < savedWeight) {
 
                     final long time = currentEdgeTime + next.value.time;
                     final double distance = currentEdgeDistance + next.value.distance;
-                    tentativeWeights.put(target,currentWeight);
+                    tentativeWeights.put(target, currentWeight);
 
-                    for(IntCursor idxNext : targets.get(target)){
-                        dm.setCell(idxSource,idxNext.value,distance,time);
+                    for (IntCursor idxNext : targets.get(target)) {
+                        dm.setCell(idxSource, idxNext.value, distance, time);
                     }
                 }
             }
@@ -374,7 +375,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     }
 
     @Override
-    public void setMaxVisitedNodes(int numberOfNodes){
+    public void setMaxVisitedNodes(int numberOfNodes) {
         this.maxVisitedNodes = numberOfNodes;
     }
 }

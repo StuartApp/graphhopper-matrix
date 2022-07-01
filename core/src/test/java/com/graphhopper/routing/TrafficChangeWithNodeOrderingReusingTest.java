@@ -1,14 +1,13 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.reader.osm.OSMReader;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ch.CHRoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoders;
-import com.graphhopper.routing.util.TagParserManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.TurnCostProvider;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -45,17 +44,22 @@ public class TrafficChangeWithNodeOrderingReusingTest {
     private static class Fixture {
         private final int maxDeviationPercentage;
         private final BaseGraph graph;
-        private final TagParserManager em;
+        private final EncodingManager em;
+        private final OSMParsers osmParsers;
         private final CHConfig baseCHConfig;
         private final CHConfig trafficCHConfig;
 
         public Fixture(int maxDeviationPercentage) {
             this.maxDeviationPercentage = maxDeviationPercentage;
             FlagEncoder encoder = FlagEncoders.createCar();
-            em = TagParserManager.create(encoder);
+            em = EncodingManager.create(encoder);
+            CarTagParser carParser = new CarTagParser(em, new PMap());
+            carParser.init(new DateRangeParser());
+            osmParsers = new OSMParsers()
+                    .addVehicleTagParser(carParser);
             baseCHConfig = CHConfig.nodeBased("base", new FastestWeighting(encoder));
             trafficCHConfig = CHConfig.nodeBased("traffic", new RandomDeviationWeighting(baseCHConfig.getWeighting(), encoder, maxDeviationPercentage));
-            graph = new BaseGraph.Builder(em.getEncodingManager()).create();
+            graph = new BaseGraph.Builder(em).create();
         }
 
         @Override
@@ -85,7 +89,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
 
         LOGGER.info("Running performance test, max deviation percentage: " + f.maxDeviationPercentage);
         // read osm
-        OSMReader reader = new OSMReader(f.graph, f.em, new OSMReaderConfig());
+        OSMReader reader = new OSMReader(f.graph, f.em, f.osmParsers, new OSMReaderConfig());
         reader.setFile(new File(OSM_FILE));
         reader.readGraph();
         f.graph.freeze();
@@ -190,7 +194,7 @@ public class TrafficChangeWithNodeOrderingReusingTest {
         private final double maxDeviationPercentage;
 
         public RandomDeviationWeighting(Weighting baseWeighting, FlagEncoder encoder, double maxDeviationPercentage) {
-            super(encoder);
+            super(encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), TurnCostProvider.NO_TURN_COST_PROVIDER);
             this.baseWeighting = baseWeighting;
             this.maxDeviationPercentage = maxDeviationPercentage;
         }

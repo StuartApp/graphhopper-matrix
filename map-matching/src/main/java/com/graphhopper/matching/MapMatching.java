@@ -129,7 +129,7 @@ public class MapMatching {
         } else {
             landmarks = null;
         }
-        graph = graphHopper.getGraphHopperStorage().getBaseGraph();
+        graph = graphHopper.getBaseGraph();
         unwrappedWeighting = graphHopper.createWeighting(profile, hints);
         inSubnetworkEnc = graphHopper.getEncodingManager().getBooleanEncodedValue(Subnetwork.key(profileStr));
         this.maxVisitedNodes = hints.getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
@@ -399,7 +399,8 @@ public class MapMatching {
                 }
             };
             int activeLM = Math.min(8, landmarks.getLandmarkCount());
-            algo.setApproximation(LMApproximator.forLandmarks(queryGraph, landmarks, activeLM));
+            LMApproximator lmApproximator = LMApproximator.forLandmarks(queryGraph, landmarks, activeLM);
+            algo.setApproximation(lmApproximator);
             algo.setMaxVisitedNodes(maxVisitedNodes);
             router = algo;
         } else {

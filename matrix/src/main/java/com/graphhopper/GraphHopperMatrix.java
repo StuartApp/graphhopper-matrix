@@ -7,7 +7,7 @@ import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.matrix.GHMatrixRequest;
 import com.graphhopper.routing.matrix.GHMatrixResponse;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.TranslationMap;
@@ -21,21 +21,21 @@ public class GraphHopperMatrix extends GraphHopper {
     }
 
     protected RouterMatrix createMatrixRouter() {
-        if (ghStorage == null || !fullyLoaded)
+        if (baseGraph == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
-        if (ghStorage.isClosed())
+        if (baseGraph.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
         if (locationIndex == null)
             throw new IllegalStateException("Location index not initialized");
 
-        return doCreateRouter(ghStorage, locationIndex, profilesByName, pathBuilderFactory,
+        return doCreateRouter(baseGraph, locationIndex, profilesByName, pathBuilderFactory,
                 trMap, routerConfig, createWeightingFactory(), chGraphs, landmarks);
     }
 
-    protected RouterMatrix doCreateRouter(GraphHopperStorage ghStorage, LocationIndex locationIndex, Map<String, Profile> profilesByName,
+    protected RouterMatrix doCreateRouter(BaseGraph baseGraph, LocationIndex locationIndex, Map<String, Profile> profilesByName,
                                           PathDetailsBuilderFactory pathBuilderFactory, TranslationMap trMap, RouterConfig routerConfig,
                                           WeightingFactory weightingFactory, Map<String, RoutingCHGraph> chGraphs, Map<String, LandmarkStorage> landmarks) {
-        return new RouterMatrix(ghStorage.getBaseGraph(), ghStorage.getEncodingManager(), locationIndex, profilesByName, pathBuilderFactory,
+        return new RouterMatrix(baseGraph, getEncodingManager(), locationIndex, profilesByName, pathBuilderFactory,
                 trMap, routerConfig, weightingFactory, chGraphs, landmarks
         );
     }

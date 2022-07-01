@@ -156,7 +156,7 @@ public class PrepareLandmarksTest {
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 135, oneDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 72, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         RoutingAlgorithm biDirAlgoWithLandmarks = new LMRoutingAlgorithmFactory(lms).createAlgo(graph, weighting,
@@ -164,7 +164,7 @@ public class PrepareLandmarksTest {
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 162, biDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 99, biDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
@@ -179,13 +179,13 @@ public class PrepareLandmarksTest {
         expectedPath = expectedAlgo.calcPath(fromSnap.getClosestNode(), toSnap.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 135, qGraphOneDirAlgo.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 72, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
     public void testStoreAndLoad() {
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(0, 1).setDistance(80_000));
-        GHUtility.setSpeed(60, true, true, encoder, graph.edge(1, 2).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(0, 1).setDistance(80_000));
+        GHUtility.setSpeed(60, true, true, encoder.getAccessEnc(), encoder.getAverageSpeedEnc(), graph.edge(1, 2).setDistance(80_000));
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 

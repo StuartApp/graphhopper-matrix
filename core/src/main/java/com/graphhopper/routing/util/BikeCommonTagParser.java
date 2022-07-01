@@ -19,14 +19,12 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 
 import java.util.*;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
-import static com.graphhopper.routing.util.EncodingManager.getKey;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
@@ -37,6 +35,8 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  * @author ratrun
  */
 abstract public class BikeCommonTagParser extends VehicleTagParser {
+
+    public static double BIKE_MAX_SPEED = 30;
 
     protected static final int PUSHING_SECTION_SPEED = 4;
     // Pushing section highways are parts where you need to get off your bike and push it (German: Schiebestrecke)
@@ -60,10 +60,13 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     // This is the specific bicycle class
     private String classBicycleKey;
 
-    protected BikeCommonTagParser(String name, int speedBits, double speedFactor, int maxTurnCosts, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections, maxTurnCosts);
-
-        priorityEnc = new DecimalEncodedValueImpl(getKey(name, "priority"), 4, PriorityCode.getFactor(1), false);
+    protected BikeCommonTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                  EnumEncodedValue<RouteNetwork> bikeRouteEnc, EnumEncodedValue<Smoothness> smoothnessEnc,
+                                  String name, BooleanEncodedValue roundaboutEnc, DecimalEncodedValue turnCostEnc) {
+        super(accessEnc, speedEnc, name, roundaboutEnc, turnCostEnc, TransportationMode.BIKE, speedEnc.getNextStorableValue(BIKE_MAX_SPEED));
+        this.bikeRouteEnc = bikeRouteEnc;
+        this.smoothnessEnc = smoothnessEnc;
+        this.priorityEnc = priorityEnc;
 
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -99,8 +102,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         unpavedSurfaceTags.add("salt");
         unpavedSurfaceTags.add("sand");
         unpavedSurfaceTags.add("wood");
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(30);
 
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 12); // now unpaved ...
@@ -183,82 +184,68 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     }
 
     @Override
-    public TransportationMode getTransportationMode() {
-        return TransportationMode.BIKE;
-    }
-
-    @Override
-    public void createEncodedValues(List<EncodedValue> registerNewEncodedValue) {
-        super.createEncodedValues(registerNewEncodedValue);
-        registerNewEncodedValue.add(priorityEnc);
-
-        bikeRouteEnc = getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
-        smoothnessEnc = getEnumEncodedValue(Smoothness.KEY, Smoothness.class);
-    }
-
-    @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
-            EncodingManager.Access access = EncodingManager.Access.CAN_SKIP;
+            WayAccess access = WayAccess.CAN_SKIP;
 
             if (way.hasTag("route", ferries)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified either
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || intendedValues.contains(bikeTag))
-                    access = EncodingManager.Access.FERRY;
+                    access = WayAccess.FERRY;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                access = EncodingManager.Access.WAY;
+                access = WayAccess.WAY;
 
             if (way.hasTag("man_made", "pier"))
-                access = EncodingManager.Access.WAY;
+                access = WayAccess.WAY;
 
             if (!access.canSkip()) {
                 if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 return access;
             }
 
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         }
 
         if (!highwaySpeeds.containsKey(highwayValue))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         String sacScale = way.getTag("sac_scale");
         if (sacScale != null) {
             if (!isSacScaleAllowed(sacScale))
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
         }
 
         // use the way if it is tagged for bikes
         if (way.hasTag("bicycle", intendedValues) ||
                 way.hasTag("bicycle", "dismount") ||
                 way.hasTag("highway", "cycleway"))
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
 
         // accept only if explicitly tagged for bike usage
         if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue) || "bridleway".equals(highwayValue))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // do not use fords with normal bikes, flagged fords are in included above
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
         else
-            return EncodingManager.Access.WAY;
+            return WayAccess.WAY;
     }
 
     boolean isSacScaleAllowed(String sacScale) {
@@ -284,7 +271,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 
@@ -561,14 +548,6 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
 
     void addPushingSection(String highway) {
         pushingSectionsHighways.add(highway);
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
     void setAvoidSpeedLimit(int limit) {

@@ -175,7 +175,7 @@ public class Measurement {
 
         hopper.importOrLoad();
 
-        BaseGraph g = hopper.getGraphHopperStorage().getBaseGraph();
+        BaseGraph g = hopper.getBaseGraph();
         EncodingManager encodingManager = hopper.getEncodingManager();
         if (encodingManager.fetchEdgeEncoders().size() != 1) {
             throw new IllegalArgumentException("There has to be exactly one encoder for each measurement");
@@ -196,9 +196,16 @@ public class Measurement {
                 boolean isLM = false;
                 measureRouting(hopper, new QuerySettings("routing", count / 20, isCH, isLM).
                         withInstructions());
-                if (encoder.supportsTurnCosts())
+                measureRouting(hopper, new QuerySettings("routing_alt", count / 500, isCH, isLM).
+                        alternative());
+                if (encoder.supportsTurnCosts()) {
                     measureRouting(hopper, new QuerySettings("routing_edge", count / 20, isCH, isLM).
                             withInstructions().edgeBased());
+                    // unfortunately alt routes are so slow that we cannot really afford many iterations
+                    measureRouting(hopper, new QuerySettings("routing_edge_alt", count / 500, isCH, isLM).
+                            edgeBased().alternative()
+                    );
+                }
                 if (!blockAreaStr.isEmpty())
                     measureRouting(hopper, new QuerySettings("routing_block_area", count / 20, isCH, isLM).
                             withInstructions().blockArea(blockAreaStr));
@@ -208,15 +215,19 @@ public class Measurement {
                 gcAndWait();
                 boolean isCH = false;
                 boolean isLM = true;
-                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12,16]")).stream()
+                Helper.parseList(args.getString("measurement.lm.active_counts", "[4,8,12]")).stream()
                         .mapToInt(Integer::parseInt).forEach(activeLMCount -> {
-                    measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
-                            withInstructions().activeLandmarks(activeLMCount));
-                    if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
-                        measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
-                                withInstructions().activeLandmarks(activeLMCount).edgeBased());
-                    }
-                });
+                            measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount, count / 20, isCH, isLM).
+                                    withInstructions().activeLandmarks(activeLMCount));
+                            measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt", count / 500, isCH, isLM).
+                                    activeLandmarks(activeLMCount).alternative());
+                            if (args.getBool("measurement.lm.edge_based", encoder.supportsTurnCosts())) {
+                                measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_edge", count / 20, isCH, isLM).
+                                        withInstructions().activeLandmarks(activeLMCount).edgeBased());
+                                measureRouting(hopper, new QuerySettings("routingLM" + activeLMCount + "_alt_edge", count / 500, isCH, isLM).
+                                        activeLandmarks(activeLMCount).edgeBased().alternative());
+                            }
+                        });
 
                 final int activeLMCount = 8;
                 if (!blockAreaStr.isEmpty())
@@ -234,7 +245,7 @@ public class Measurement {
                     gcAndWait();
                     measureRouting(hopper, new QuerySettings("routingCH", count, isCH, isLM).
                             withInstructions().sod());
-                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 10, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_alt", count / 100, isCH, isLM).
                             withInstructions().sod().alternative());
                     measureRouting(hopper, new QuerySettings("routingCH_with_hints", count, isCH, isLM).
                             withInstructions().sod().withPointHints());
@@ -254,7 +265,7 @@ public class Measurement {
                 if (edgeBasedCH != null) {
                     measureRouting(hopper, new QuerySettings("routingCH_edge", count, isCH, isLM).
                             edgeBased().withInstructions());
-                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 10, isCH, isLM).
+                    measureRouting(hopper, new QuerySettings("routingCH_edge_alt", count / 100, isCH, isLM).
                             edgeBased().withInstructions().alternative());
                     measureRouting(hopper, new QuerySettings("routingCH_edge_no_instr", count, isCH, isLM).
                             edgeBased());
@@ -527,7 +538,7 @@ public class Measurement {
     }
 
     private void measureRouting(final GraphHopper hopper, final QuerySettings querySettings) {
-        final Graph g = hopper.getGraphHopperStorage();
+        final Graph g = hopper.getBaseGraph();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
@@ -575,7 +586,7 @@ public class Measurement {
                 try {
                     req.getHints().putObject(BLOCK_AREA, querySettings.blockArea);
                     // run this method to check if creating the blocked area is possible
-                    GraphEdgeIdFinder.createBlockArea(hopper.getGraphHopperStorage(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
+                    GraphEdgeIdFinder.createBlockArea(hopper.getBaseGraph(), hopper.getLocationIndex(), req.getPoints(), req.getHints(), edgeFilter);
                     break;
                 } catch (IllegalArgumentException ex) {
                     if (i >= 4)
@@ -631,8 +642,12 @@ public class Measurement {
                     maxVisitedNodes.set(visitedNodes);
                 }
 
+                rsp.getAll().forEach(p -> {
+                    long dist = (long) p.getDistance();
+                    distSum.addAndGet(dist);
+                });
+
                 long dist = (long) responsePath.getDistance();
-                distSum.addAndGet(dist);
 
                 GHPoint prev = req.getPoints().get(0);
                 for (GHPoint point : req.getPoints()) {
