@@ -15,36 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util.details;
 
-import com.graphhopper.util.EdgeIteratorState;
+package com.graphhopper.routing.ev;
 
-import static com.graphhopper.util.Parameters.Details.STREET_NAME;
+import com.graphhopper.routing.util.EncodingManager;
 
-/**
- * Calculate the speed name segments of a Path
- *
- * @author Robin Boldt
- */
-public class StreetNameDetails extends AbstractPathDetailsBuilder {
+public class VehicleAccess {
 
-    private String curStreetName = null;
-
-    public StreetNameDetails() {
-        super(STREET_NAME);
+    public static String key(String name) {
+        return EncodingManager.getKey(name, "access");
     }
 
-    @Override
-    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (curStreetName == null || !curStreetName.equals(edge.getName())) {
-            curStreetName = edge.getName();
-            return true;
-        }
-        return false;
-    }
-
-    @Override
-    public Object getCurrentValue() {
-        return this.curStreetName;
+    public static BooleanEncodedValue create(String name) {
+        return new SimpleBooleanEncodedValue(key(name), true);
     }
 }

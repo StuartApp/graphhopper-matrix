@@ -5,11 +5,13 @@ import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.search.EdgeKVStorage;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.Iterator;
+import java.util.List;
 
 class PtGraphAsAdjacencyList implements Graph {
     private final PtGraph ptGraph;
@@ -302,7 +304,17 @@ class PtGraphAsAdjacencyList implements Graph {
             }
 
             @Override
-            public EdgeIteratorState setName(String name) {
+            public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> list) {
+                throw new RuntimeException();
+            }
+
+            @Override
+            public List<EdgeKVStorage.KeyValue> getKeyValues() {
+                throw new RuntimeException();
+            }
+
+            @Override
+            public Object getValue(String key) {
                 throw new RuntimeException();
             }
 

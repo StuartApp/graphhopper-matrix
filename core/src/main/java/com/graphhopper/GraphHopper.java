@@ -69,7 +69,6 @@ import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.graphhopper.util.GHUtility.readCountries;
 import static com.graphhopper.util.Helper.*;
@@ -124,7 +123,7 @@ public class GraphHopper {
     // for data reader
     private String osmFile;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
-    private FlagEncoderFactory flagEncoderFactory = new DefaultFlagEncoderFactory();
+    private VehicleEncodedValuesFactory vehicleEncodedValuesFactory = new DefaultVehicleEncodedValuesFactory();
     private VehicleTagParserFactory vehicleTagParserFactory = new DefaultVehicleTagParserFactory();
     private EncodedValueFactory encodedValueFactory = new DefaultEncodedValueFactory();
     private TagParserFactory tagParserFactory = new DefaultTagParserFactory();
@@ -394,8 +393,8 @@ public class GraphHopper {
         return trMap;
     }
 
-    public GraphHopper setFlagEncoderFactory(FlagEncoderFactory factory) {
-        this.flagEncoderFactory = factory;
+    public GraphHopper setVehicleEncodedValuesFactory(VehicleEncodedValuesFactory factory) {
+        this.vehicleEncodedValuesFactory = factory;
         return this;
     }
 
@@ -584,7 +583,7 @@ public class GraphHopper {
                 .collect(Collectors.toList());
 
         EncodingManager.Builder emBuilder = new EncodingManager.Builder();
-        flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(flagEncoderFactory.createFlagEncoder(name, new PMap(encoderStr))));
+        flagEncodersMap.forEach((name, encoderStr) -> emBuilder.add(vehicleEncodedValuesFactory.createVehicleEncodedValues(name, new PMap(encoderStr))));
         profiles.forEach(profile -> emBuilder.add(Subnetwork.create(profile.getName())));
         encodedValueStrings.forEach(s -> emBuilder.add(encodedValueFactory.create(s)));
         encodingManager = emBuilder.build();
@@ -835,7 +834,6 @@ public class GraphHopper {
         properties.put("graph.em.edge_config", encodingManager.toEdgeConfigAsString());
         properties.put("graph.em.turn_cost_config", encodingManager.toTurnCostConfigAsString());
         properties.put("graph.encoded_values", encodingManager.toEncodedValuesAsString());
-        properties.put("graph.flag_encoders", encodingManager.toFlagEncodersAsString());
     }
 
     private List<CustomArea> readCustomAreas() {
@@ -960,23 +958,9 @@ public class GraphHopper {
                 throw new IllegalStateException("Duplicate encoded value name: " + encodedValue.getName() + " in: graph.encoded_values=" + encodedValueStr);
         });
 
-        String flagEncodersStr = properties.get("graph.flag_encoders");
-        LinkedHashMap<String, VehicleEncodedValues> flagEncoders = Stream.of(flagEncodersStr.split(","))
-                .map(str -> flagEncoderFactory.deserializeFlagEncoder(str, name -> {
-                    EncodedValue ev = encodedValues.get(name);
-                    if (ev == null)
-                        throw new IllegalStateException("FlagEncoder " + str + " uses unknown encoded value: " + name);
-                    return ev;
-                }))
-                .collect(Collectors.toMap(FlagEncoder::getName, f -> (VehicleEncodedValues) f,
-                        (f1, f2) -> {
-                            throw new IllegalStateException("Duplicate flag encoder: " + f1.getName() + " in: " + flagEncodersStr);
-                        },
-                        LinkedHashMap::new));
-
         EncodedValue.InitializerConfig edgeConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.edge_config"));
         EncodedValue.InitializerConfig turnCostConfig = EncodedValueSerializer.deserializeInitializerConfig(properties.get("graph.em.turn_cost_config"));
-        encodingManager = new EncodingManager(encodedValues, flagEncoders, edgeConfig, turnCostConfig);
+        encodingManager = new EncodingManager(encodedValues, edgeConfig, turnCostConfig);
     }
 
     private ArrayNode deserializeEncodedValueList(String encodedValueStr) {
@@ -996,11 +980,13 @@ public class GraphHopper {
             throw new IllegalArgumentException("There has to be at least one profile");
         EncodingManager encodingManager = getEncodingManager();
         for (Profile profile : profilesByName.values()) {
-            if (!encodingManager.hasEncoder(profile.getVehicle())) {
-                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". Make sure all vehicles used in 'profiles' exist in 'graph.flag_encoders'");
-            }
-            FlagEncoder encoder = encodingManager.getEncoder(profile.getVehicle());
-            if (profile.isTurnCosts() && !encoder.supportsTurnCosts()) {
+            if (!encodingManager.getVehicles().contains(profile.getVehicle()))
+                throw new IllegalArgumentException("Unknown vehicle '" + profile.getVehicle() + "' in profile: " + profile + ". " +
+                        "Available vehicles: " + String.join(",", encodingManager.getVehicles()));
+            DecimalEncodedValue turnCostEnc = encodingManager.hasEncodedValue(TurnCost.key(profile.getVehicle()))
+                    ? encodingManager.getDecimalEncodedValue(TurnCost.key(profile.getVehicle()))
+                    : null;
+            if (profile.isTurnCosts() && turnCostEnc == null) {
                 throw new IllegalArgumentException("The profile '" + profile.getName() + "' was configured with " +
                         "'turn_costs=true', but the corresponding vehicle '" + profile.getVehicle() + "' does not support turn costs." +
                         "\nYou need to add `|turn_costs=true` to the vehicle in `graph.flag_encoders`");

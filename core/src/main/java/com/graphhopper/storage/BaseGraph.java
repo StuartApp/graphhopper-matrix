@@ -27,7 +27,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.Closeable;
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -43,7 +44,6 @@ import static com.graphhopper.util.Helper.nf;
  * loadExisting, (4) usage, (5) flush, (6) close
  */
 public class BaseGraph implements Graph, Closeable {
-    private final static String EDGEKV_NAME_KEY = "name";
     final BaseGraphNodesAndEdges store;
     final NodeAccess nodeAccess;
     final EdgeKVStorage edgeKVStorage;
@@ -258,7 +258,7 @@ public class BaseGraph implements Graph, Closeable {
 
         // copy the rest with higher level API
         to.setDistance(from.getDistance()).
-                setName(from.getName()).
+                setKeyValues(from.getKeyValues()).
                 setWayGeometry(from.fetchWayGeometry(FetchMode.PILLAR_ONLY));
 
         return to;
@@ -463,13 +463,6 @@ public class BaseGraph implements Graph, Closeable {
         throw new IllegalArgumentException("Mode isn't handled " + mode);
     }
 
-    private void setName(long edgePointer, String name) {
-        int nameRef = (int) edgeKVStorage.add(Collections.singletonMap(EDGEKV_NAME_KEY, name));
-        if (nameRef < 0)
-            throw new IllegalStateException("Too many names are stored, currently limited to int pointer");
-        store.setNameRef(edgePointer, nameRef);
-    }
-
     private void ensureGeometry(long bytePos, int byteLength) {
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
@@ -557,7 +550,6 @@ public class BaseGraph implements Graph, Closeable {
 
         public EdgeIteratorImpl(BaseGraph baseGraph, EdgeFilter filter) {
             super(baseGraph);
-
             if (filter == null)
                 throw new IllegalArgumentException("Instead null filter use EdgeFilter.ALL_EDGES");
             this.filter = filter;
@@ -955,17 +947,32 @@ public class BaseGraph implements Graph, Closeable {
         }
 
         @Override
-        public String getName() {
-            int nameRef = store.getNameRef(edgePointer);
-            String name = (String) baseGraph.edgeKVStorage.get(nameRef, EDGEKV_NAME_KEY);
-            // preserve backward compatibility (returns null if not explicitly set)
-            return name == null ? "" : name;
+        public EdgeIteratorState setKeyValues(List<EdgeKVStorage.KeyValue> entries) {
+            long pointer = baseGraph.edgeKVStorage.add(entries);
+            if (pointer > Integer.MAX_VALUE)
+                throw new IllegalStateException("Too many key value pairs are stored, currently limited to " + Integer.MAX_VALUE + " was " + pointer);
+            store.setKeyValuesRef(edgePointer, (int) pointer);
+            return this;
         }
 
         @Override
-        public EdgeIteratorState setName(String name) {
-            baseGraph.setName(edgePointer, name);
-            return this;
+        public List<EdgeKVStorage.KeyValue> getKeyValues() {
+            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            return baseGraph.edgeKVStorage.getAll(kvEntryRef);
+        }
+
+        @Override
+        public Object getValue(String key) {
+            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            return baseGraph.edgeKVStorage.get(kvEntryRef, key, reverse);
+        }
+
+        @Override
+        public String getName() {
+            int kvEntryRef = store.getKeyValuesRef(edgePointer);
+            String name = (String) baseGraph.edgeKVStorage.get(kvEntryRef, "name", reverse);
+            // preserve backward compatibility (returns empty string if name tag missing)
+            return name == null ? "" : name;
         }
 
         @Override

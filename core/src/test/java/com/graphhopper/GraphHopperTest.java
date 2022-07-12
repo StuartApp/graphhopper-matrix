@@ -1222,7 +1222,7 @@ public class GraphHopperTest {
         assertEquals("keep left onto Hoher Markt", il.get(4).getTurnDescription(tr));
         assertEquals("turn right onto Wegscheid", il.get(6).getTurnDescription(tr));
         assertEquals("continue onto Wegscheid", il.get(7).getTurnDescription(tr));
-        assertEquals("turn right onto Ringstraße, L73", il.get(8).getTurnDescription(tr));
+        assertEquals("turn right onto Ringstraße", il.get(8).getTurnDescription(tr));
         assertEquals("keep left onto Eyblparkstraße", il.get(9).getTurnDescription(tr));
         assertEquals("keep left onto Austraße", il.get(10).getTurnDescription(tr));
         assertEquals("keep left onto Rechte Kremszeile", il.get(11).getTurnDescription(tr));
@@ -1337,18 +1337,17 @@ public class GraphHopperTest {
                 new CHProfile(profile2)
         );
         hopper.importOrLoad();
-        String str = hopper.getEncodingManager().toString();
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile2"));
         ResponsePath res = rsp.getBest();
-        assertFalse(rsp.hasErrors(), "car routing for " + str + " should not have errors:" + rsp.getErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(207, res.getTime() / 1000f, 1);
         assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile1"));
         res = rsp.getBest();
-        assertFalse(rsp.hasErrors(), "bike routing for " + str + " should not have errors:" + rsp.getErrors());
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(511, res.getTime() / 1000f, 1);
         assertEquals(2481, res.getDistance(), 1);
 
@@ -2053,8 +2052,8 @@ public class GraphHopperTest {
         GHPoint q = new GHPoint(50.014141, 11.497552);
         final String itz = "Itzgrund";
         final String rotmain = "An den Rotmainauen";
-        final String bayreuth = "Bayreuther Straße, KU 18";
-        final String kulmbach = "Kulmbacher Straße, KU 18";
+        final String bayreuth = "Bayreuther Straße";
+        final String kulmbach = "Kulmbacher Straße";
         final String adamSeiler = "Adam-Seiler-Straße";
         final String friedhof = "Friedhofsweg";
         assertCurbsidesPath(h, p, q, asList(CURBSIDE_RIGHT, CURBSIDE_RIGHT), 344, asList(itz, rotmain, rotmain));
@@ -2192,7 +2191,7 @@ public class GraphHopperTest {
                 .addPoint(new GHPoint(50.016895, 11.4923))
                 .addPoint(new GHPoint(50.003464, 11.49157))
                 .setProfile(profile)
-                .setPathDetails(Arrays.asList("street_name", "max_speed"));
+                .setPathDetails(Arrays.asList("street_ref", "max_speed"));
         req.putHint("elevation", true);
 
         GHResponse rsp = hopper.route(req);
@@ -2213,14 +2212,14 @@ public class GraphHopperTest {
         assertInstruction(instructions.get(0), "KU 11", "[0, 4[", 4, 4);
         assertInstruction(instructions.get(1), "B 85", "[4, 16[", 12, 12);
         // via instructions have length = 0, but the point list must not be empty!
-        assertInstruction(instructions.get(2), "", "[16, 17[", 0, 1);
+        assertInstruction(instructions.get(2), null, "[16, 17[", 0, 1);
         assertInstruction(instructions.get(3), "B 85", "[16, 32[", 16, 16);
-        assertInstruction(instructions.get(4), "", "[32, 34[", 2, 2);
+        assertInstruction(instructions.get(4), null, "[32, 34[", 2, 2);
         assertInstruction(instructions.get(5), "KU 18", "[34, 37[", 3, 3);
         assertInstruction(instructions.get(6), "St 2189", "[37, 38[", 1, 1);
-        assertInstruction(instructions.get(7), "", "[38, 40[", 2, 2);
+        assertInstruction(instructions.get(7), null, "[38, 40[", 2, 2);
         // finish instructions have length = 0, but the point list must not be empty!
-        assertInstruction(instructions.get(8), "", "[40, 41[", 0, 1);
+        assertInstruction(instructions.get(8), null, "[40, 41[", 0, 1);
 
         // check max speeds
         List<PathDetail> speeds = path.getPathDetails().get("max_speed");
@@ -2233,17 +2232,17 @@ public class GraphHopperTest {
         assertDetail(speeds.get(6), "null [38, 40]");
 
         // check street_names
-        List<PathDetail> streetNames = path.getPathDetails().get("street_name");
+        List<PathDetail> streetNames = path.getPathDetails().get("street_ref");
         assertDetail(streetNames.get(0), "KU 11 [0, 4]");
         assertDetail(streetNames.get(1), "B 85 [4, 32]");
-        assertDetail(streetNames.get(2), " [32, 34]");
+        assertDetail(streetNames.get(2), "null [32, 34]");
         assertDetail(streetNames.get(3), "KU 18 [34, 37]");
         assertDetail(streetNames.get(4), "St 2189 [37, 38]");
-        assertDetail(streetNames.get(5), " [38, 40]");
+        assertDetail(streetNames.get(5), "null [38, 40]");
     }
 
-    private void assertInstruction(Instruction instruction, String expectedName, String expectedInterval, int expectedLength, int expectedPoints) {
-        assertEquals(expectedName, instruction.getName());
+    private void assertInstruction(Instruction instruction, String expectedRef, String expectedInterval, int expectedLength, int expectedPoints) {
+        assertEquals(expectedRef, instruction.getExtraInfoJSON().get("ref"));
         assertEquals(expectedInterval, ((ShallowImmutablePointList) instruction.getPoints()).getIntervalString());
         assertEquals(expectedLength, instruction.getLength());
         assertEquals(expectedPoints, instruction.getPoints().size());
@@ -2546,7 +2545,7 @@ public class GraphHopperTest {
         int nodes = hopper.getBaseGraph().getNodes();
         hopper.close();
 
-        // load without configured FlagEncoders
+        // load without configured graph.flag_encoders
         hopper = new GraphHopper();
         hopper.setProfiles(Arrays.asList(
                 new Profile("p_car").setVehicle("car").setWeighting("fastest"),
@@ -2558,7 +2557,7 @@ public class GraphHopperTest {
         assertEquals(nodes, hopper.getBaseGraph().getNodes());
         hopper.close();
 
-        // load via explicitly configured FlagEncoders
+        // load via explicitly configured graph.flag_encoders
         hopper = new GraphHopper();
         hopper.setFlagEncodersString("car,bike");
         hopper.setProfiles(Arrays.asList(
