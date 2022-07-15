@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.matrix;
 
-public class BucketEntry {
+final public class BucketEntry {
 
     public double weight;
     public double distance;

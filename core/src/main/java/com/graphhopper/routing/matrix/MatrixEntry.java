@@ -20,7 +20,7 @@ package com.graphhopper.routing.matrix;
 import com.graphhopper.util.EdgeIterator;
 
 
-public class MatrixEntry implements Comparable<MatrixEntry> {
+final public class MatrixEntry implements Comparable<MatrixEntry> {
 
     public int edge;
     public int adjNode;

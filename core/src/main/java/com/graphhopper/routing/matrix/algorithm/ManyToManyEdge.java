@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.storage.*;
 
 
+
 public class ManyToManyEdge extends AbstractManyToMany {
 
     private TraversalMode traversalMode = TraversalMode.EDGE_BASED;
