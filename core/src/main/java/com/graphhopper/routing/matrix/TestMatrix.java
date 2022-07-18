@@ -35,9 +35,6 @@ public class TestMatrix {
         //System.exit(1);
 
 
-
-
-
         //try {
         //    System.in.read();
         //} catch(Exception e) {
@@ -51,7 +48,7 @@ public class TestMatrix {
 
         List<GHPoint> origins = new ArrayList<>();
 
-        Arrays.stream(sourcesX).forEach( x -> origins.add(new GHPoint(x[0],x[1])));
+        Arrays.stream(sourcesX).forEach(x -> origins.add(new GHPoint(x[0], x[1])));
         /*
         origins.add(new GHPoint(51.68140061533052,-0.044214058132244625));
         origins.add(new GHPoint(51.41945963257834,0.09509579022414802));
@@ -81,7 +78,7 @@ public class TestMatrix {
          */
 
         List<GHPoint> targets = new ArrayList<>();
-        Arrays.stream(targetsX).forEach( x -> targets.add(new GHPoint(x[0],x[1])));
+        Arrays.stream(targetsX).forEach(x -> targets.add(new GHPoint(x[0], x[1])));
         /*
         targets.add(new GHPoint(51.41945963257834,0.09509579022414802));
         targets.add(new GHPoint(51.68140061533052,-0.044214058132244625));
@@ -109,7 +106,6 @@ public class TestMatrix {
         targets.add(new GHPoint(51.56127398650828,-0.5150265194232526));
         targets.add(new GHPoint(51.62685152525985,-0.3976761908038831));
         */
-
 
 
         //Andorra
@@ -193,10 +189,10 @@ public class TestMatrix {
                 double diffDistance = Math.round(response.getBest().getDistance() - matrix.getMatrix().getDistance(sourceIdx, targetIdx));
                 double diffTime = Math.round(response.getBest().getTime() - matrix.getMatrix().getTime(sourceIdx, targetIdx));
 
-                if(diffDistance > 1 || diffTime > 1){
+                if (diffDistance > 1 || diffTime > 1) {
                     System.out.println("Distance: " + diffDistance + " GH: " + response.getBest().getDistance() + " Matrix: " + matrix.getMatrix().getDistance(sourceIdx, targetIdx));
                     System.out.println("Time: " + diffTime + " GH: " + response.getBest().getTime() + " Matrix: " + matrix.getMatrix().getTime(sourceIdx, targetIdx));
-                   errors++;
+                    errors++;
                 }
 
                 targetIdx++;
