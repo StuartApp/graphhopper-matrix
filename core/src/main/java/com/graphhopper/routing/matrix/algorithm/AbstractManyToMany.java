@@ -85,7 +85,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         this.tentativeWeights = new IntDoubleHashMap(100);
     }
 
-    private void calculateMaxDistance(List<Snap>  sources, List<Snap> targets){
+    private void calculateMaxDistance(List<Snap>  sources, List<Snap> targets,DistanceMatrix matrix){
 
         this.targetsMaxDistance = new double[targets.size()];
         this.sourcesMaxDistance = new double[sources.size()];
@@ -115,6 +115,8 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                 if(meters > maxSource){
                     sourcesMaxDistance[idxSource] = meters;
                 }
+
+                matrix.setCell(idxSource,idxTarget,Double.MAX_VALUE,Long.MAX_VALUE);
 
                 idxSource++;
             }
