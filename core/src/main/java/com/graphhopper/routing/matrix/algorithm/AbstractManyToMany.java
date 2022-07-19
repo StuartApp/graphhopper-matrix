@@ -116,8 +116,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                     sourcesMaxDistance[idxSource] = meters;
                 }
 
-                matrix.setCell(idxSource,idxTarget,Double.MAX_VALUE,Long.MAX_VALUE);
-
                 idxSource++;
             }
 
