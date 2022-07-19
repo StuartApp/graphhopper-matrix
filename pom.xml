@@ -243,6 +243,7 @@
                     <failsOnError>true</failsOnError>
                     <consoleOutput>true</consoleOutput>
                     <linkXRef>false</linkXRef>
+                    <excludes>**/TestMatrix.java</excludes>
                 </configuration>
             </plugin>
 
