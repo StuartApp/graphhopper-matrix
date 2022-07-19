@@ -136,7 +136,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         DistanceMatrix matrix = new DistanceMatrix(sources.size(),targets.size());
         IntObjectMap<IntArrayList> targetIdxsNodes = new GHIntObjectHashMap<>(targets.size());
 
-        calculateMaxDistance(sources,targets);
+        calculateMaxDistance(sources,targets,matrix);
 
         //Backward
         int idxTarget =0;
