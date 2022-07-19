@@ -47,8 +47,9 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     double[] targetsMaxDistance;
     double[] sourcesMaxDistance;
 
-    double DISTANCE_MULT = 2;
-    double MIN_DISTANCE =15000;
+    double DISTANCE_MULT = 1.5;
+    double MIN_DISTANCE =  15000; //15km
+    double MAX_DISTANCE = 300000; //300km
 
     public AbstractManyToMany(QueryRoutingCHGraph graph){
 
@@ -150,7 +151,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                 targetIdxsNodes.get(targetClosestNode).add(idxTarget);
             }
 
-
             idxTarget++;
         }
 
@@ -188,7 +188,11 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         boolean run;
 
         double maxDistanceInMeters = targetsMaxDistance[targetIdx] * DISTANCE_MULT;
-        if(maxDistanceInMeters < MIN_DISTANCE) maxDistanceInMeters = MIN_DISTANCE;
+        if(maxDistanceInMeters < MIN_DISTANCE){
+            maxDistanceInMeters = MIN_DISTANCE;
+        }else if(maxDistanceInMeters > MAX_DISTANCE){
+            maxDistanceInMeters = MAX_DISTANCE;
+        }
 
         do {
             visitedNodes++;
@@ -327,6 +331,8 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         double maxDistanceInMeters = sourcesMaxDistance[idxSource] * DISTANCE_MULT;
         if(maxDistanceInMeters < MIN_DISTANCE){
             maxDistanceInMeters = MIN_DISTANCE;
+        }else if(maxDistanceInMeters > MAX_DISTANCE){
+            maxDistanceInMeters = MAX_DISTANCE;
         }
 
         do {
