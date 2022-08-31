@@ -53,8 +53,11 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
             throw new IllegalStateException("forward and backward entries must have same adjacent nodes, fwdEntry:" + fwdEntry + ", bwdEntry:" + bwdEntry);
 
         StopWatch sw = new StopWatch().start();
+        System.out.println("#######################################");
+        System.out.println("Forward");
         extractFwdPath(fwdEntry);
         processMeetingPoint(fwdEntry, bwdEntry);
+        System.out.println("Backward");
         extractBwdPath(bwdEntry);
         setExtractionTime(sw.stop().getNanos());
         path.setFound(true);
@@ -84,6 +87,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
         SPTEntry currEntry = sptEntry;
         SPTEntry parentEntry = currEntry.parent;
         while (EdgeIterator.Edge.isValid(currEntry.edge)) {
+            System.out.println(currEntry.adjNode + " -> " + currEntry.weight);
             onEdge(currEntry.edge, currEntry.adjNode, reverse, getIncEdge(parentEntry));
             currEntry = parentEntry;
             parentEntry = currEntry.parent;
@@ -108,6 +112,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
     }
 
     protected void onEdge(int edge, int adjNode, boolean reverse, int prevOrNextEdge) {
+
         EdgeIteratorState edgeState = graph.getEdgeIteratorState(edge, adjNode);
         path.addDistance(edgeState.getDistance());
         path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edgeState, reverse, prevOrNextEdge));

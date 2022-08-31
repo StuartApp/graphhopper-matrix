@@ -63,6 +63,7 @@ public class EdgeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
             path.addDistance(edge.getDistance());
             path.addTime(GHUtility.calcMillisWithTurnMillis(weighting, edge, reverse, prevOrNextEdgeId));
             path.addEdge(edge.getEdge());
+
         }, true);
     }
 

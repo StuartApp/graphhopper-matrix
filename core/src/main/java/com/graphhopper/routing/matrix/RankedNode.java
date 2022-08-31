@@ -17,19 +17,30 @@
  */
 package com.graphhopper.routing.matrix;
 
-public class BucketEntry {
 
-    public double weight;
-    public double distance;
-    public long time;
-    public int targetIdx;
+public class RankedNode implements Comparable<RankedNode> {
+    public int node;
+    public int rank;
 
 
+    public RankedNode(int node, int rank) {
+        this.node = node;
+        this.rank = rank;
+    }
 
-    public BucketEntry(double weight, long time, double distance, int targetIdx) {
-        this.weight = weight;
-        this.time = time;
-        this.distance = distance;
-        this.targetIdx = targetIdx;
+
+    @Override
+    public int compareTo(RankedNode o) {
+
+        if (rank < o.rank)
+            return -1;
+
+        // assumption no NaN and no -0
+        return rank > o.rank ? 1 : 0;
+    }
+
+    @Override
+    public String toString() {
+        return node + " rank: " + rank;
     }
 }

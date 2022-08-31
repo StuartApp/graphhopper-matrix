@@ -2,17 +2,23 @@ package com.graphhopper.routing.matrix.algorithm;
 
 import com.carrotsearch.hppc.*;
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.cursors.IntIntCursor;
 import com.carrotsearch.hppc.cursors.IntObjectCursor;
+import com.carrotsearch.hppc.cursors.ObjectCursor;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.matrix.BucketEntry;
 import com.graphhopper.routing.matrix.DistanceMatrix;
 import com.graphhopper.routing.matrix.MatrixEntry;
+import com.graphhopper.routing.matrix.RankedNode;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.DistanceCalcEarth;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.GHPoint;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -26,8 +32,9 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     protected RoutingCHEdgeExplorer inEdgeExplorer;
     protected RoutingCHEdgeExplorer outEdgeExplorer;
     protected CHEdgeFilter levelEdgeFilter;
+    protected CHEdgeFilter sbiLevelEdgeFilter;
 
-    protected IntObjectMap<IntObjectMap<BucketEntry>> bucket;
+    protected IntObjectMap<IntObjectMap<BucketEntry>> buckets;
 
     protected boolean alreadyRun = false;
 
@@ -77,8 +84,28 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             }
         };
 
+        this.sbiLevelEdgeFilter = new CHEdgeFilter() {
+
+            @Override
+            public boolean accept(RoutingCHEdgeIteratorState edgeState) {
+
+                int base = edgeState.getBaseNode();
+                int adj = edgeState.getAdjNode();
+
+                if(base == adj) return false;
+
+                // always accept virtual edges, see #288
+                if (base >= maxNodes || adj >= maxNodes) return true;
+
+                // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
+                if (edgeState.isShortcut()) return true;
+
+                return graph.getLevel(base) < graph.getLevel(adj);
+            }
+        };
+
         this.size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
-        this.bucket = new GHIntObjectHashMap<>(size);
+        this.buckets = new GHIntObjectHashMap<>(size);
 
         this.map = new GHIntObjectHashMap<>(size);
         this.heap = new PriorityQueue<>(size);
@@ -134,6 +161,13 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         DistanceMatrix matrix = new DistanceMatrix(sources.size(),targets.size());
         IntObjectMap<IntArrayList> targetIdxsNodes = new GHIntObjectHashMap<>(targets.size());
 
+        StopWatch watch = new StopWatch();
+        watch.start();
+        simultaneousBucketInitialization(targets);
+        watch.stop();
+        System.out.println("SBI: " + watch.getTimeString());
+
+
         calculateMaxDistance(sources,targets,matrix);
 
         //Backward
@@ -146,7 +180,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                 IntArrayList a = new IntArrayList();
                 a.add(idxTarget);
                 targetIdxsNodes.put(targetClosestNode,a);
-                backwardSearch(targets.get(idxTarget), idxTarget);
+                //backwardSearch(targets.get(idxTarget), idxTarget);
             }else{
                 targetIdxsNodes.get(targetClosestNode).add(idxTarget);
             }
@@ -160,6 +194,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             forwardSearch(sources.get(idxSource),idxSource,matrix,targetIdxsNodes);
             idxSource++;
         }
+
 
         return matrix;
     }
@@ -284,23 +319,58 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     protected abstract double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge);
 
+    private double calcWeight(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId){
+
+        double edgeWeight = edgeState.getWeight(reverse);
+        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        double turnCosts = reverse
+                ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+        return edgeWeight + turnCosts;
+
+    }
+
+    private long calcTime(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId){
+
+        long time = edgeState.getTime(reverse);
+        int origEdgeId;
+        if(reverse){
+            origEdgeId = edgeState.getOrigEdgeLast();
+        }else{
+            origEdgeId = edgeState.getOrigEdgeFirst();
+        }
+        long turnCost;
+        if(reverse){
+            turnCost = weighting.calcTurnMillis(origEdgeId,edgeState.getBaseNode(),prevOrNextEdgeId);
+        }else{
+            turnCost = weighting.calcTurnMillis(prevOrNextEdgeId,edgeState.getBaseNode(),origEdgeId);
+        }
+
+        return time + turnCost;
+    }
+
+
+    protected double calcDistance(RoutingCHEdgeIteratorState iter){
+        return iter.getDistance();
+    }
+
     protected void saveToBucket(MatrixEntry entry, RoutingCHEdgeIteratorState iter, int target){
         int node = iter.getAdjNode();
 
         if(node != target){
 
-            IntObjectMap<BucketEntry> bucketDistances = bucket.get(node);
+            IntObjectMap<BucketEntry> bucketDistances = buckets.get(node);
 
             if(bucketDistances == null){
 
                 bucketDistances = new GHIntObjectHashMap<>();
-                bucketDistances.put(target,new BucketEntry(entry.weight,entry.time ,entry.distance));
-                bucket.put(node,bucketDistances);
+                bucketDistances.put(target,new BucketEntry(entry.weight,entry.time ,entry.distance,0));
+                buckets.put(node,bucketDistances);
             }else {
 
                 BucketEntry targetEntry = bucketDistances.get(target);
                 if (targetEntry == null || targetEntry.weight > entry.weight) {
-                    bucketDistances.put(target, new BucketEntry(entry.weight, entry.time, entry.distance));
+                    bucketDistances.put(target, new BucketEntry(entry.weight, entry.time, entry.distance,0));
                 }
             }
         }
@@ -403,7 +473,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     private void saveBestPath( int sourceNode,int idxSource, IntObjectMap<IntArrayList> targets,int currNode, double currentEdgeWeight,
                                long currentEdgeTime, double currentEdgeDistance, DistanceMatrix dm){
 
-        final IntObjectMap<BucketEntry> bucketEntries = bucket.get(currNode);
+        final IntObjectMap<BucketEntry> bucketEntries = buckets.get(currNode);
         if(bucketEntries != null){
 
             for( IntObjectCursor<BucketEntry> next : bucketEntries){
@@ -420,6 +490,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                     final long time = currentEdgeTime + next.value.time;
                     final double distance = currentEdgeDistance + next.value.distance;
                     tentativeWeights.put(target,currentWeight);
+
 
                     for(IntCursor idxNext : targets.get(target)){
                         dm.setCell(idxSource,idxNext.value,distance,time);
@@ -447,5 +518,212 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     @Override
     public void setMaxVisitedNodes(int numberOfNodes){
         this.maxVisitedNodes = numberOfNodes;
+    }
+
+
+    /* SBI Methods */
+
+    public class Vertex {
+        public int vertex;
+        public double weight;
+        public long time;
+        public double distance;
+
+
+        public Vertex(int vertex, double weight, long time, double distance) {
+            this.vertex = vertex;
+            this.weight = weight;
+            this.time = time;
+            this.distance = distance;
+        }
+    }
+
+    private void simultaneousBucketInitialization(List<Snap> targets){
+
+        int nodes = graph.getNodes();
+        //System.out.println("Graph Nodes:" + nodes);
+
+        IntObjectMap<ObjectArrayList<Vertex>> upVertices = new IntObjectHashMap(nodes);
+        IntObjectMap<ObjectArrayList<Vertex>> downVertices = new IntObjectHashMap<>(nodes);
+
+        IntSet targetsNodes = new IntHashSet();
+        IntSet nodesAdded = new IntHashSet();
+        IntIntHashMap terminals = new IntIntHashMap();
+        System.out.println("Targets:" + targets.size());
+
+        double [] distances = new double[targets.size()];
+        long [] times = new long[targets.size()];
+        double [] weights = new double[targets.size()];
+
+        PriorityQueue<RankedNode> queue = new PriorityQueue<>(size);
+
+        //Targets Initialization
+        //we initialize a priority queue Q ordered by minimum rank rank(v) with all targets
+        int idxTarget =0;
+        while(idxTarget < targets.size()){
+            int node = targets.get(idxTarget).getClosestNode();
+            int rank = graph.getLevel(node);
+
+            distances[idxTarget] = Double.POSITIVE_INFINITY;
+            times[idxTarget] = Long.MAX_VALUE;
+            weights[idxTarget] = Double.POSITIVE_INFINITY;
+
+            nodesAdded.add(node);
+
+            //During the initialization, we add pair (t, 0) to B(t) for each t ∈ T. By adding
+            //such a pair, we indicate that t can be reached from t, with a shortest path of length zero.
+            IntObjectMap<BucketEntry> bucketTargets = new GHIntObjectHashMap<>();
+            bucketTargets.put(node,new BucketEntry(0,0,0, idxTarget));
+            buckets.put(node,bucketTargets);
+
+            if(rank == Integer.MAX_VALUE){
+                rank = 0;
+            }
+            queue.add(new RankedNode(node,rank));
+
+            System.out.println("Node Target: " + node + " ->" + rank);
+
+            idxTarget++;
+        }
+
+        int nodesCount = 0;
+
+        //Main loop
+        while(!queue.isEmpty()){
+
+            //In each iteration, a vertex v with minimum rank is removed from Q and settled
+            RankedNode rn = queue.poll();
+            int v = rn.node;
+            System.out.println("**** Node: " + v +  "(" + graph.getLevel(v) +") ****");
+            nodesCount++;
+
+            //Initialize DownVertices
+            RoutingCHEdgeIterator downIterator = inEdgeExplorer.setBaseNode(v);
+            while(downIterator.next()){
+
+                int u = downIterator.getAdjNode();
+
+
+                boolean accepted =  this.sbiLevelEdgeFilter.accept(downIterator);
+
+                if(!nodesAdded.contains(u) && accepted){
+                    nodesAdded.add(u);
+                    int rank = graph.getLevel(u);
+                    if(rank == Integer.MAX_VALUE)
+                        rank = 0;
+                    queue.add(new RankedNode(u,rank));
+                }
+
+                if(accepted){
+
+                    double weight = calcWeight(downIterator,true,v);
+                    double distance = calcDistance(downIterator);
+                    long time = calcTime(downIterator,true,v);
+
+                    ObjectArrayList<Vertex> dVertices = downVertices.get(u);
+                    if(dVertices == null){
+                        dVertices = new ObjectArrayList<>();
+                        downVertices.put(u,dVertices);
+                    }
+
+                    System.out.println("In: " + u  + " : " + weight);
+                    dVertices.add(new Vertex(v,weight,time,distance));
+                }
+            }
+
+            //Initialize UpVertices
+            /*
+            RoutingCHEdgeIterator upIterator = outEdgeExplorer.setBaseNode(v);
+            while(upIterator.next()){
+                if(this.sbiLevelEdgeFilter.accept(upIterator)){
+                    double weight = calcWeight(upIterator,false,v);
+
+                    ObjectArrayList<Vertex> uVertices = upVertices.get(upIterator.getAdjNode());
+                    if(uVertices == null){
+                        uVertices = new ObjectArrayList<>();
+                        upVertices.put(upIterator.getAdjNode(),uVertices);
+                    }
+                    uVertices.add(new Vertex(v,weight,0,0));
+                }
+            }
+
+             */
+
+            //Discover bucket entries to copy
+            ObjectArrayList<Vertex> downList = downVertices.get(v);
+            if(downList != null){
+                for(ObjectCursor<Vertex> vertex : downList){
+
+                    int w = vertex.value.vertex;
+                    double weight = vertex.value.weight;
+
+                    IntObjectMap<BucketEntry> bucketTargets = buckets.get(w);
+                    if(bucketTargets != null){
+
+                        for( IntObjectCursor<BucketEntry> next : bucketTargets){
+
+                            int t = next.key;
+                            int targetIdx = next.value.targetIdx;
+                            double pathWeight = next.value.weight;
+
+                            terminals.putIfAbsent(t,targetIdx);
+
+                            double currentWeight = pathWeight + weight;
+                            if(currentWeight < weights[targetIdx]){
+                                weights[targetIdx] = currentWeight;
+                                distances[targetIdx] = next.value.distance + vertex.value.distance;
+                                times[targetIdx] = next.value.time + vertex.value.time;
+                            }
+                        }
+                    }
+                }
+            }
+
+
+            //Apply the restrospective prunning algorithm
+            /*
+            ObjectArrayList<Vertex> upList = upVertices.get(v);
+            if(upList != null){
+                for(ObjectCursor<Vertex> vertex : upList){
+                    IntObjectMap<BucketEntry> bucketTargets = buckets.get(vertex.value.vertex);
+                    if(bucketTargets != null){
+                        for( IntObjectCursor<BucketEntry> next : bucketTargets){
+                            int target = next.key;
+                            if(next.value.weight > (vertex.value.weight) + weights[next.value.targetIdx]){
+                                //TODO - Enable prunning
+                                //System.out.println("Prunning");
+                                //bucketTargets.remove(target);
+                            }
+                        }
+                    }
+                }
+            }
+
+             */
+
+            //Copy bucket entries to the current vertex
+            for(IntIntCursor tCursor : terminals){
+
+                int targetIdx = tCursor.value;
+                int target = tCursor.key;
+                IntObjectMap<BucketEntry> b = buckets.get(v);
+
+                if(b == null){
+                    b = new IntObjectHashMap<>();
+                    buckets.put(v,b);
+                }
+                System.out.println("Bucket: " + target + " ->" + weights[targetIdx]);
+                b.put(target,new BucketEntry(weights[targetIdx],times[targetIdx],distances[targetIdx],targetIdx));
+                weights[targetIdx] = Double.POSITIVE_INFINITY;
+                distances[targetIdx] = Double.POSITIVE_INFINITY;
+                times[targetIdx] = Long.MAX_VALUE;
+            }
+
+            terminals.clear();
+
+        }
+        System.out.println("Nodes Processed:" + nodesCount);
+        System.out.println("Bucket Entries: " + buckets.size());
+
     }
 }
