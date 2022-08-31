@@ -11,7 +11,7 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.DistanceCalcEarth;
 
 import java.util.List;
 import java.util.PriorityQueue;
@@ -44,7 +44,14 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     protected IntSet visited = new IntHashSet();
 
-    public AbstractManyToMany(QueryRoutingCHGraph graph) {
+    double[] targetsMaxDistance;
+    double[] sourcesMaxDistance;
+
+    double DISTANCE_MULT = 1.5;
+    double MIN_DISTANCE =  15000; //15km
+    double MAX_DISTANCE = 300000; //300km
+
+    public AbstractManyToMany(QueryRoutingCHGraph graph){
 
         this.graph = graph;
         this.weighting = graph.getWrappedWeighting();
@@ -78,6 +85,47 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         this.tentativeWeights = new IntDoubleHashMap(100);
     }
 
+    private void calculateMaxDistance(List<Snap>  sources, List<Snap> targets,DistanceMatrix matrix){
+
+        this.targetsMaxDistance = new double[targets.size()];
+        this.sourcesMaxDistance = new double[sources.size()];
+
+        DistanceCalcEarth distanceCalc = new DistanceCalcEarth();
+
+        int idxTarget =0;
+        while(idxTarget < targets.size()){
+
+            double targetLat = targets.get(idxTarget).getQueryPoint().lat;
+            double targetLon = targets.get(idxTarget).getQueryPoint().lon;
+
+            double max = 0;
+
+            int idxSource = 0;
+            while(idxSource < sources.size()){
+
+                double sourceLat = sources.get(idxSource).getQueryPoint().lat;
+                double sourceLon = sources.get(idxSource).getQueryPoint().lon;
+
+                double meters = distanceCalc.calcDist(targetLat, targetLon, sourceLat, sourceLon);
+                if(meters > max){
+                    max = meters;
+                }
+
+                double maxSource = sourcesMaxDistance[idxSource];
+                if(meters > maxSource){
+                    sourcesMaxDistance[idxSource] = meters;
+                }
+
+                idxSource++;
+            }
+
+            targetsMaxDistance[idxTarget]  = max;
+
+            idxTarget++;
+        }
+
+    }
+
     @Override
     public DistanceMatrix calcMatrix(List<Snap> sources, List<Snap> targets) {
 
@@ -85,6 +133,8 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
         DistanceMatrix matrix = new DistanceMatrix(sources.size(), targets.size());
         IntObjectMap<IntArrayList> targetIdxsNodes = new GHIntObjectHashMap<>(targets.size());
+
+        calculateMaxDistance(sources,targets,matrix);
 
         //Backward
         int idxTarget = 0;
@@ -95,12 +145,11 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             if (!targetIdxsNodes.containsKey(targetClosestNode)) {
                 IntArrayList a = new IntArrayList();
                 a.add(idxTarget);
-                targetIdxsNodes.put(targetClosestNode, a);
-                backwardSearch(targets.get(idxTarget));
-            } else {
+                targetIdxsNodes.put(targetClosestNode,a);
+                backwardSearch(targets.get(idxTarget), idxTarget);
+            }else{
                 targetIdxsNodes.get(targetClosestNode).add(idxTarget);
             }
-
 
             idxTarget++;
         }
@@ -120,7 +169,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         alreadyRun = true;
     }
 
-    protected void backwardSearch(Snap targetSnap) {
+    protected void backwardSearch( Snap targetSnap, int targetIdx){
 
         visited.clear();
 
@@ -138,9 +187,20 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
         boolean run;
 
+        double maxDistanceInMeters = targetsMaxDistance[targetIdx] * DISTANCE_MULT;
+        if(maxDistanceInMeters < MIN_DISTANCE){
+            maxDistanceInMeters = MIN_DISTANCE;
+        }else if(maxDistanceInMeters > MAX_DISTANCE){
+            maxDistanceInMeters = MAX_DISTANCE;
+        }
+
         do {
             visitedNodes++;
             currEdge = heap.poll();
+
+            if(currEdge.distance > maxDistanceInMeters)
+                break;
+
             int currNode = currEdge.adjNode;
 
             if (visited.contains(currNode)) {
@@ -268,10 +328,20 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
         boolean run;
 
+        double maxDistanceInMeters = sourcesMaxDistance[idxSource] * DISTANCE_MULT;
+        if(maxDistanceInMeters < MIN_DISTANCE){
+            maxDistanceInMeters = MIN_DISTANCE;
+        }else if(maxDistanceInMeters > MAX_DISTANCE){
+            maxDistanceInMeters = MAX_DISTANCE;
+        }
+
         do {
             visitedNodes++;
 
             currEdge = heap.poll();
+
+            if(currEdge.distance > maxDistanceInMeters)
+                break;
 
             int currNode = currEdge.adjNode;
 
