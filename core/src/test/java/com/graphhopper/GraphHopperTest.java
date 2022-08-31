@@ -78,6 +78,7 @@ public class GraphHopperTest {
 
     // map locations
     private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
+    private static final String BAUTZEN = DIR + "/bautzen.osm";
     private static final String BERLIN = DIR + "/berlin-siegessaeule.osm.gz";
     private static final String KREMS = DIR + "/krems.osm.gz";
     private static final String LAUF = DIR + "/Laufamholzstrasse.osm.xml";
@@ -125,7 +126,7 @@ public class GraphHopperTest {
 
         ResponsePath res = rsp.getBest();
         assertEquals(3586.9, res.getDistance(), .1);
-        assertEquals(277112, res.getTime(), 10);
+        assertEquals(277115, res.getTime(), 10);
         assertEquals(91, res.getPoints().size());
 
         assertEquals(43.7276852, res.getWaypoints().getLat(0), 1e-7);
@@ -515,7 +516,31 @@ public class GraphHopperTest {
     }
 
     @Test
-    public void testNorthBayreuthDestination() {
+    public void testForwardBackwardDestination() {
+        final String profile = "profile";
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(BAUTZEN).
+                setProfiles(new Profile(profile).setVehicle("car").setWeighting("fastest"));
+        hopper.setMinNetworkSize(0);
+        hopper.importOrLoad();
+
+        Translation tr = hopper.getTranslationMap().getWithFallBack(Locale.US);
+
+        GHResponse rsp = hopper.route(new GHRequest(51.1915, 14.416, 51.192, 14.412).setProfile(profile));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals("keep right and take B 96 toward Bautzen-West, Hoyerswerda",
+                rsp.getBest().getInstructions().get(1).getTurnDescription(tr));
+        assertEquals("turn left onto Hoyerswerdaer Straße and drive toward Hoyerswerda, Kleinwelka",
+                rsp.getBest().getInstructions().get(2).getTurnDescription(tr));
+
+        rsp = hopper.route(new GHRequest(51.191, 14.414, 51.1884, 14.41).setProfile(profile));
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals("turn left and take A 4 toward Dresden", rsp.getBest().getInstructions().get(1).getTurnDescription(tr));
+    }
+
+    @Test
+    public void testNorthBayreuthAccessDestination() {
         final String profile = "profile";
         final String vehicle = "car";
         final String weighting = "fastest";
@@ -1318,14 +1343,12 @@ public class GraphHopperTest {
 
     @Test
     public void testMultipleVehiclesWithCH() {
-        final String profile1 = "profile1";
-        final String profile2 = "profile2";
-        final String vehicle1 = "bike";
-        final String vehicle2 = "car";
+        final String bikeProfile = "bike_profile";
+        final String carProfile = "car_profile";
         final String weighting = "fastest";
         List<Profile> profiles = asList(
-                new Profile(profile1).setVehicle(vehicle1).setWeighting(weighting),
-                new Profile(profile2).setVehicle(vehicle2).setWeighting(weighting)
+                new Profile(bikeProfile).setVehicle("bike").setWeighting(weighting),
+                new Profile(carProfile).setVehicle("car").setWeighting(weighting)
         );
         GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
@@ -1333,19 +1356,19 @@ public class GraphHopperTest {
                 setProfiles(profiles).
                 setStoreOnFlush(true);
         hopper.getCHPreparationHandler().setCHProfiles(
-                new CHProfile(profile1),
-                new CHProfile(profile2)
+                new CHProfile(bikeProfile),
+                new CHProfile(carProfile)
         );
         hopper.importOrLoad();
         GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
-                .setProfile("profile2"));
+                .setProfile(carProfile));
         ResponsePath res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(207, res.getTime() / 1000f, 1);
         assertEquals(2837, res.getDistance(), 1);
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
-                .setProfile("profile1"));
+                .setProfile(bikeProfile));
         res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
         assertEquals(511, res.getTime() / 1000f, 1);
@@ -1353,13 +1376,13 @@ public class GraphHopperTest {
 
         rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setProfile("profile3"));
-        assertTrue(rsp.hasErrors(), "only profile1 and profile2 exist, request for profile3 should fail");
+        assertTrue(rsp.hasErrors(), "only car_profile and bike_profile exist, request for profile3 should fail");
 
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 addPoint(new GHPoint(43.744445, 7.429483)).
                 setHeadings(Arrays.asList(0., 190.)).
-                setProfile("profile1");
+                setProfile(bikeProfile);
 
         rsp = hopper.route(req);
         assertTrue(rsp.hasErrors(), "heading not allowed for CH enabled graph");
@@ -1844,9 +1867,9 @@ public class GraphHopperTest {
         assertEquals(1995.38, pathLM.getDistance(), 0.1);
         assertEquals(1995.38, path.getDistance(), 0.1);
 
-        assertEquals(149497, pathCH.getTime());
-        assertEquals(149497, pathLM.getTime());
-        assertEquals(149497, path.getTime());
+        assertEquals(149504, pathCH.getTime());
+        assertEquals(149504, pathLM.getTime());
+        assertEquals(149504, path.getTime());
     }
 
     @Test
