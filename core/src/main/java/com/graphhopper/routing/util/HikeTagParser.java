@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 
@@ -34,27 +34,21 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class HikeTagParser extends FootTagParser {
 
-    public HikeTagParser() {
-        this(4, 1, false);
-    }
-
-    public HikeTagParser(PMap properties) {
+    public HikeTagParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                properties.getString("name", "hike"),
-                properties.getInt("speed_bits", 4),
-                properties.getDouble("speed_factor", 1),
-                properties.getBool("speed_two_directions", false));
-
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "hike"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "hike"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "hike"))),
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class),
+                properties.getString("name", "hike")
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected HikeTagParser(int speedBits, double speedFactor, boolean speedTwoDirections) {
-        this("hike", speedBits, speedFactor, speedTwoDirections);
-    }
-
-    protected HikeTagParser(String name, int speedBits, double speedFactor, boolean speedTwoDirections) {
-        super(name, speedBits, speedFactor, speedTwoDirections);
+    protected HikeTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                            EnumEncodedValue<RouteNetwork> footRouteEnc, String name) {
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, name);
 
         routeMap.put(INTERNATIONAL, BEST.getValue());
         routeMap.put(NATIONAL, BEST.getValue());
@@ -127,14 +121,6 @@ public class HikeTagParser extends FootTagParser {
             double newSpeed = Math.sqrt(1 + slope * slope) / (slope + 1 / 5.4);
             edge.set(avgSpeedEnc, Helper.keepIn(newSpeed, 1, 5));
         }
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
 }

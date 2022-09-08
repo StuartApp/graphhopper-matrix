@@ -263,7 +263,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse);
 
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
+        return reverse ? edge.getOrigEdgeKeyFirst() : edge.getOrigEdgeKeyLast();
     }
 
     protected boolean accept(RoutingCHEdgeIteratorState edge, MatrixEntry currEdge) {

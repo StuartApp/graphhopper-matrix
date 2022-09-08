@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -41,19 +42,20 @@ public class WheelchairTagParser extends FootTagParser {
     private final Set<String> excludeSmoothness = new HashSet<>();
     private final int maxInclinePercent = 6;
 
-    public WheelchairTagParser() {
-        this(4, 1);
-    }
-
-    public WheelchairTagParser(PMap properties) {
-        this(properties.getInt("speed_bits", 4), properties.getDouble("speed_factor", 1));
-
+    public WheelchairTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key("wheelchair")),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key("wheelchair")),
+                lookup.getDecimalEncodedValue(VehiclePriority.key("wheelchair")),
+                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
+        );
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-    protected WheelchairTagParser(int speedBits, double speedFactor) {
-        super("wheelchair", speedBits, speedFactor, true);
+    protected WheelchairTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
+                                  EnumEncodedValue<RouteNetwork> footRouteEnc) {
+        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, "wheelchair");
 
         restrictions.add("wheelchair");
 
@@ -91,33 +93,31 @@ public class WheelchairTagParser extends FootTagParser {
         excludeSmoothness.add("impassable");
 
         allowedSacScale.clear();
-
-        maxPossibleSpeed = avgSpeedEnc.getNextStorableValue(FERRY_SPEED);
     }
 
     /**
      * Avoid some more ways than for pedestrian like hiking trails.
      */
     @Override
-    public EncodingManager.Access getAccess(ReaderWay way) {
+    public WayAccess getAccess(ReaderWay way) {
         if (way.hasTag("surface", excludeSurfaces)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
                 if (way.hasTag("sidewalk:" + sidewalk + ":surface", excludeSurfaces)) {
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 }
             }
         }
 
         if (way.hasTag("smoothness", excludeSmoothness)) {
             if (!way.hasTag("sidewalk", sidewalkValues)) {
-                return EncodingManager.Access.CAN_SKIP;
+                return WayAccess.CAN_SKIP;
             } else {
                 String sidewalk = way.getTag("sidewalk");
                 if (way.hasTag("sidewalk:" + sidewalk + ":smoothness", excludeSmoothness)) {
-                    return EncodingManager.Access.CAN_SKIP;
+                    return WayAccess.CAN_SKIP;
                 }
             }
         }
@@ -132,7 +132,7 @@ public class WheelchairTagParser extends FootTagParser {
                     }
 
                     if (-maxInclinePercent > incline || incline > maxInclinePercent) {
-                        return EncodingManager.Access.CAN_SKIP;
+                        return WayAccess.CAN_SKIP;
                     }
                 } catch (NumberFormatException ex) {
                 }
@@ -140,7 +140,7 @@ public class WheelchairTagParser extends FootTagParser {
         }
 
         if (way.hasTag("kerb", "raised"))
-            return EncodingManager.Access.CAN_SKIP;
+            return WayAccess.CAN_SKIP;
 
         if (way.hasTag("kerb")) {
             String tagValue = way.getTag("kerb");
@@ -153,7 +153,7 @@ public class WheelchairTagParser extends FootTagParser {
 
                     int maxKerbHeightCm = 3;
                     if (kerbHeight > maxKerbHeightCm) {
-                        return EncodingManager.Access.CAN_SKIP;
+                        return WayAccess.CAN_SKIP;
                     }
                 } catch (NumberFormatException ex) {
                 }
@@ -165,7 +165,7 @@ public class WheelchairTagParser extends FootTagParser {
 
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-        EncodingManager.Access access = getAccess(way);
+        WayAccess access = getAccess(way);
         if (access.canSkip())
             return edgeFlags;
 

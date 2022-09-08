@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.FetchMode;
@@ -33,12 +34,27 @@ import static com.graphhopper.util.Helper.keepIn;
  */
 public class Bike2WeightTagParser extends BikeTagParser {
 
-    public Bike2WeightTagParser() {
-        this(new PMap());
+    public Bike2WeightTagParser(EncodedValueLookup lookup, PMap properties) {
+        this(
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "bike2"))),
+                lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "bike2"))),
+                lookup.getDecimalEncodedValue(VehiclePriority.key(properties.getString("name", "bike2"))),
+                lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class),
+                lookup.getBooleanEncodedValue(Roundabout.KEY),
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),
+                lookup.hasEncodedValue(TurnCost.key(properties.getString("name", "bike2"))) ? lookup.getDecimalEncodedValue(TurnCost.key(properties.getString("name", "bike2"))) : null,
+                properties
+        );
     }
 
-    public Bike2WeightTagParser(PMap properties) {
-        super(new PMap(properties).putObject("speed_two_directions", true).putObject("name", properties.getString("name", "bike2")));
+    public Bike2WeightTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc,
+                                DecimalEncodedValue priorityEnc, EnumEncodedValue<RouteNetwork> bikeRouteEnc,
+                                BooleanEncodedValue roundaboutEnc,
+                                EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue turnCostEnc, PMap properties) {
+        super(accessEnc, speedEnc, priorityEnc, bikeRouteEnc, smoothnessEnc, properties.getString("name", "bike2"),
+                roundaboutEnc, turnCostEnc);
+        blockPrivate(properties.getBool("block_private", true));
+        blockFords(properties.getBool("block_fords", false));
     }
 
     @Override
@@ -89,7 +105,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             double fwdSlower = 1 - 5 * keepIn(fwdIncline, 0, 0.2);
             fwdSlower = fwdSlower * fwdSlower;
             speed = speed * (fwdSlower * incDist2DSum + fwdFaster * decDist2DSum + 1 * restDist2D) / fullDist2D;
-            setSpeed(false, intsRef, keepIn(speed, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
+            setSpeed(false, intsRef, keepIn(speed, MIN_SPEED, maxSpeed));
         }
 
         if (accessEnc.getBool(true, intsRef)) {
@@ -99,7 +115,7 @@ public class Bike2WeightTagParser extends BikeTagParser {
             double bwSlower = 1 - 5 * keepIn(fwdDecline, 0, 0.2);
             bwSlower = bwSlower * bwSlower;
             speedReverse = speedReverse * (bwFaster * incDist2DSum + bwSlower * decDist2DSum + 1 * restDist2D) / fullDist2D;
-            setSpeed(true, intsRef, keepIn(speedReverse, PUSHING_SECTION_SPEED / 2.0, maxSpeed));
+            setSpeed(true, intsRef, keepIn(speedReverse, MIN_SPEED, maxSpeed));
         }
         edge.setFlags(intsRef);
     }
