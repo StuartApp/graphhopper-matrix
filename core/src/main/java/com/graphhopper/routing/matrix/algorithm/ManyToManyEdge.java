@@ -11,8 +11,8 @@ public class ManyToManyEdge extends AbstractManyToMany {
 
     private TraversalMode traversalMode = TraversalMode.EDGE_BASED;
 
-    public ManyToManyEdge(QueryRoutingCHGraph graph){
-        super(graph);
+    public ManyToManyEdge(QueryRoutingCHGraph graph, RoutingCHGraph graphNoVirtualNodes){
+        super(graph,graphNoVirtualNodes);
 
         if (!graph.isEdgeBased()) {
             throw new IllegalArgumentException("Edge-based CH algorithms only work with edge-based CH graphs");

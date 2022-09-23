@@ -17,29 +17,42 @@
  */
 package com.graphhopper.routing.matrix;
 
-public class BucketEntry {
+public class VirtualNodeEntry{
 
+    public int node;
     public double weight;
     public double distance;
+    public double turnCostWeight;
     public long time;
-    public int idx;
+    public boolean virtual;
+    public boolean combined;
 
 
-
-    public BucketEntry(double weight, long time, double distance, int idx) {
+    public VirtualNodeEntry(int node, double weight, long time, double distance) {
+        this.node = node;
         this.weight = weight;
         this.time = time;
         this.distance = distance;
-        this.idx = idx;
+        this.combined = false;
+    }
+
+    public VirtualNodeEntry(int node, double weight, long time, double distance,boolean combined) {
+        this(node,weight,time,distance);
+        this.combined = combined;
+    }
+
+    public VirtualNodeEntry combine(VirtualNodeEntry other) {
+        return new VirtualNodeEntry(this.node,this.weight + other.weight, this.time + other.time,
+                this.distance + other.distance);
+    }
+
+    public double getWeightOfVisitedPath() {
+        return weight;
     }
 
     @Override
     public String toString() {
-        return "BucketEntry{" +
-                "weight=" + weight +
-                ", distance=" + distance +
-                ", time=" + time +
-                ", idx=" + idx +
-                '}';
+        return node + " weight: " + weight + " time: " + time + " distance :" + distance;
     }
+
 }

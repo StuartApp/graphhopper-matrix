@@ -721,6 +721,7 @@ public class GHUtility {
         long turnMillis = reverse
                 ? weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+
         return edgeMillis + turnMillis;
     }
 

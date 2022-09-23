@@ -171,6 +171,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                            IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer explorer, boolean reverse) {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
+
+
             if (!accept(iter, currEdge, reverse))
                 continue;
 
@@ -178,6 +180,7 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
             if (Double.isInfinite(weight)) {
                 continue;
             }
+
             final int origEdgeId = getOrigEdgeId(iter, reverse);
             final int traversalId = getTraversalId(iter, origEdgeId, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
@@ -237,7 +240,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     }
 
     protected double calcWeight(RoutingCHEdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        return calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
+        double w = calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
+        return w;
     }
 
     @Override

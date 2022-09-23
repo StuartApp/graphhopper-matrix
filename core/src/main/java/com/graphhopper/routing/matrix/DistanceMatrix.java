@@ -1,6 +1,9 @@
 package com.graphhopper.routing.matrix;
 
 
+import com.carrotsearch.hppc.IntIntHashMap;
+import com.carrotsearch.hppc.IntIntMap;
+
 import java.util.Arrays;
 
 /**
@@ -29,6 +32,8 @@ public final class DistanceMatrix {
         return times;
     }
 
+    public IntIntMap duplicatedSources;
+
     /**
      * Creates a new GHMatrixResponse with the given dimensions
      *
@@ -41,6 +46,8 @@ public final class DistanceMatrix {
 
         distances = new double[numberOfOrigins][numberOfDestinations];
         times = new long[numberOfOrigins][numberOfDestinations];
+
+        this.duplicatedSources = new IntIntHashMap();
 
     }
 
@@ -71,6 +78,11 @@ public final class DistanceMatrix {
     public void setCell(int originIndex, int destIndex, double distance, long time) {
         distances[originIndex][destIndex] = distance;
         times[originIndex][destIndex] = time;
+    }
+
+    public void copyResult(int originIndexSource, int originIndexDestination){
+        distances[originIndexDestination] = distances[originIndexSource];
+        times[originIndexDestination] = times[originIndexSource];
     }
 
 

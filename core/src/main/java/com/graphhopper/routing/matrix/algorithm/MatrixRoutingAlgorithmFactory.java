@@ -11,9 +11,11 @@ import com.graphhopper.util.Parameters;
 
 public class MatrixRoutingAlgorithmFactory {
     private final QueryRoutingCHGraph routingCHGraph;
+    private final RoutingCHGraph graphNoVirtualNodes;
 
     public MatrixRoutingAlgorithmFactory(RoutingCHGraph routingCHGraph, QueryGraph queryGraph) {
         this.routingCHGraph = new QueryRoutingCHGraph(routingCHGraph, queryGraph);
+        this.graphNoVirtualNodes = routingCHGraph;
     }
 
 
@@ -26,9 +28,9 @@ public class MatrixRoutingAlgorithmFactory {
             algo = defaultAlgo;
         if (Parameters.Algorithms.DIJKSTRA_MANY_TO_MANY.equals(algo)) {
             if(opts.getTraversalMode() == TraversalMode.NODE_BASED){
-               return new ManyToManyNode(routingCHGraph);
+               return new ManyToManyNode(routingCHGraph,graphNoVirtualNodes);
             }else{
-                return new ManyToManyEdge(routingCHGraph);
+                return new ManyToManyEdge(routingCHGraph,graphNoVirtualNodes);
             }
         } else {
             throw new IllegalArgumentException("Algorithm " + algo + " not supported for Matrix calculation.");
