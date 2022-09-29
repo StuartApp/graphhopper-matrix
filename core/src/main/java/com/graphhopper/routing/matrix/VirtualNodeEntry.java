@@ -20,29 +20,32 @@ package com.graphhopper.routing.matrix;
 public class VirtualNodeEntry{
 
     public int node;
+    public int edge;
     public double weight;
     public double distance;
-    public double turnCostWeight;
     public long time;
     public boolean virtual;
     public boolean combined;
+    public int traversalId;
 
 
-    public VirtualNodeEntry(int node, double weight, long time, double distance) {
+    public VirtualNodeEntry(int traversalId, int node, int edge, double weight, long time, double distance) {
+        this.traversalId = traversalId;
         this.node = node;
+        this.edge = edge;
         this.weight = weight;
         this.time = time;
         this.distance = distance;
         this.combined = false;
     }
 
-    public VirtualNodeEntry(int node, double weight, long time, double distance,boolean combined) {
-        this(node,weight,time,distance);
+    public VirtualNodeEntry(int traversalId,int node, int edge, double weight, long time, double distance,boolean combined) {
+        this(traversalId,node,edge,weight,time,distance);
         this.combined = combined;
     }
 
     public VirtualNodeEntry combine(VirtualNodeEntry other) {
-        return new VirtualNodeEntry(this.node,this.weight + other.weight, this.time + other.time,
+        return new VirtualNodeEntry(this.traversalId,this.node,this.edge,this.weight + other.weight, this.time + other.time,
                 this.distance + other.distance);
     }
 

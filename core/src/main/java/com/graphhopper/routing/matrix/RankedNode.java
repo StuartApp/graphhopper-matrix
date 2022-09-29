@@ -18,14 +18,24 @@
 package com.graphhopper.routing.matrix;
 
 
+/*
+ * Model: (Edge) ---->  (Adjacency Node) -----> (Next Edge)
+ */
+
 public class RankedNode implements Comparable<RankedNode> {
-    public int node;
+    public int edge;
+    public int adjNode;
     public int rank;
+    public int traversalId;
+    public boolean virtual;
 
 
-    public RankedNode(int node, int rank) {
-        this.node = node;
+    public RankedNode(int traversalId,int edge,int adjNode,int rank, boolean virtual) {
+        this.traversalId = traversalId;
+        this.edge = edge;
+        this.adjNode = adjNode;
         this.rank = rank;
+        this.virtual = virtual;
     }
 
 
@@ -41,6 +51,6 @@ public class RankedNode implements Comparable<RankedNode> {
 
     @Override
     public String toString() {
-        return node + " rank: " + rank;
+        return "--" + edge + "--> " + adjNode  + " rank: " + rank + " traversal: " + traversalId;
     }
 }
