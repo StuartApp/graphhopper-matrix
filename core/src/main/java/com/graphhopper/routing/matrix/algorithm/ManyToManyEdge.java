@@ -22,9 +22,9 @@ public class ManyToManyEdge extends AbstractManyToMany {
     }
 
     @Override
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse){
+    protected int getTraversalId(RoutingCHEdgeIteratorState edge, Boolean reverse){
 
-        return traversalMode.createTraversalId(edge.getBaseNode(),edge.getAdjNode(),origEdgeId,reverse);
+        return traversalMode.createTraversalId(edge.getBaseNode(),edge.getAdjNode(),edge.getEdge(),reverse);
     }
 
     @Override
@@ -54,7 +54,6 @@ public class ManyToManyEdge extends AbstractManyToMany {
                 : graphNoVirtualNodes.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
 
         return edgeWeight + turnCosts;
-
     }
 
     @Override

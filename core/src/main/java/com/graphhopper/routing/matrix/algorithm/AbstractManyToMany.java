@@ -229,7 +229,7 @@ Backward
         alreadyRun = true;
     }
 
-    protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse);
+    protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, Boolean reverse);
 
     protected abstract int getTraversalId(EdgeIteratorState state,Boolean reverse);
 
@@ -299,8 +299,7 @@ Backward
                 while (downIterator.next()) {
 
                     int adjNode = downIterator.getAdjNode();
-                    int originId = getOrigEdgeId(downIterator,true);
-                    int traversalId = getTraversalId(downIterator, originId,true);
+                    int traversalId = getTraversalId(downIterator,true);
 
                     System.out.println( baseNode + " <--" + "(" + downIterator.getEdge() + ")-- " + adjNode + " Traversal: " + traversalId);
 
@@ -362,7 +361,7 @@ Backward
             }
 
             if (inEdges == 0 && uniqueIn != null) {
-                int traversalId = getTraversalId(uniqueIn,snap.getClosestEdge().getEdge(),true);
+                int traversalId = getTraversalId(uniqueIn,true);
 
                 heap.add(new RankedNode(traversalId,uniqueIn.getEdge(),uniqueIn.getAdjNode(), graph.getLevel(uniqueIn.getAdjNode()),true));
                 nodesAdded.add(uniqueIn.getAdjNode());
@@ -460,7 +459,7 @@ Backward
                         queue.add(new VirtualNodeEntry(snapTraversalId,adjNode,current.edge, weight, time, distance));
                     } else if (adjNode != closestNode && !processed.contains(adjNode)) {
 
-                        int traversalId = getTraversalId(outIterator, originId,false);
+                        int traversalId = getTraversalId(outIterator,false);
 
                         this.heap.add(new RankedNode(traversalId,edge,adjNode, graph.getLevel(adjNode),true));
                         this.nodesAdded.add(adjNode);
@@ -497,12 +496,13 @@ Backward
 
         RoutingCHEdgeIterator downIterator = explorer.setBaseNode(baseNode.adjNode);
 
+        System.out.println("Rank: " + graph.getLevel(baseNode.adjNode));
+
         while (downIterator.next()) {
 
             int adjNode = downIterator.getAdjNode();
             int edge = downIterator.getEdge();
-            int traversalId = getTraversalId(downIterator, baseNode.edge,reverse);
-
+            int traversalId = getTraversalId(downIterator,reverse);
 
                 int adjRank = graph.getLevel(adjNode);
                 boolean accept = this.sbiLevelEdgeFilter.accept(downIterator);
@@ -514,9 +514,9 @@ Backward
 
                 if (accept) {
 
-                    double weight = calcWeightNoVirtual(downIterator, baseNode.edge, reverse);;
+                    double weight = calcWeightNoVirtual(downIterator, baseNode.edge, reverse);
 
-                    System.out.println("    Id:" + traversalId + " --" + edge + "--> " + adjNode + " weight: " + weight );
+                    System.out.println("    Id:" + traversalId + " --" + edge + "--> " + adjNode + " weight: " + weight + " Rank: " + adjRank );
 
                     if (weight < Double.POSITIVE_INFINITY) {
 
@@ -544,7 +544,6 @@ Backward
                     }
                 }
         }
-
     }
 
     private void initializePruningVertices(RankedNode baseNode, RoutingCHEdgeExplorer explorer, boolean reverse) {
@@ -555,8 +554,7 @@ Backward
 
             if (accept) {
 
-                int originId = getOrigEdgeId(upIterator,reverse);
-                int traversalId = getTraversalId(upIterator, originId,reverse);
+                int traversalId = getTraversalId(upIterator,reverse);
 
                 ObjectArrayList<PruningVertex> uVertices = prunningVertices.get(traversalId);
                 if (uVertices == null) {
@@ -759,9 +757,11 @@ Backward
                         final double savedWeight = tentativeWeights.get(uniqueId);
                         final double currentWeight = forwardEntry.weight + entry.weight;
 
+                        System.out.println(" Current:" + currentWeight + " Saved: " + savedWeight);
+
                         if (savedWeight == 0.0 || (currentWeight < savedWeight)) {
 
-                            System.out.println(" Current:" + currentWeight + " Saved: " + savedWeight);
+                            System.out.println(" (SAVE) Current:" + currentWeight + " Saved: " + savedWeight);
 
                             final long time = forwardEntry.time + entry.time;
                             final double distance = forwardEntry.distance + entry.distance;
