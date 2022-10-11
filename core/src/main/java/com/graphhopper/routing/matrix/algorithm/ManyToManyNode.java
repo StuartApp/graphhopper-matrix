@@ -19,24 +19,48 @@ public class ManyToManyNode extends AbstractManyToMany {
     }
 
     @Override
-    protected int getTraversalId(RoutingCHEdgeIteratorState state, int origEdgeId,Boolean reverse){
+    protected int getTraversalId(RoutingCHEdgeIteratorState state,Boolean reverse){
         return traversalMode.createTraversalId(state.getBaseNode(),state.getAdjNode(),state.getEdge(),reverse);
+    }
+
+    @Override
+    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
+        return edge.getEdge();
     }
 
 
    @Override
-    protected double calcWeight(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean reverse){
-        return iter.getWeight(reverse) + currEdge.getWeightOfVisitedPath();
+    protected double calcWeight(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                                boolean reverse, boolean accumulate){
+
+        if(accumulate){
+            return iter.getWeight(reverse) + currEdge.getWeightOfVisitedPath();
+        }else{
+            return iter.getWeight(reverse);
+        }
+
     }
 
     @Override
-    protected long calcTime(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean reverse){
-        return iter.getTime(reverse) + currEdge.time;
+    protected long calcTime(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                            boolean reverse, boolean accumulate){
+
+        if(accumulate){
+            return iter.getTime(reverse) + currEdge.time;
+        }else{
+            return iter.getTime(reverse);
+        }
     }
 
     @Override
-    protected double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge){
-        return iter.getDistance() + currEdge.distance;
+    protected double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean accumulate){
+
+
+        if(accumulate){
+            return iter.getDistance() + currEdge.distance;
+        }else{
+            return iter.getDistance();
+        }
     }
 
     @Override

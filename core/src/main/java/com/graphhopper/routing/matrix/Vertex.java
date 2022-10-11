@@ -5,14 +5,22 @@ public class Vertex {
     public double weight;
     public long time;
     public double distance;
-    public int adj;
 
 
-    public Vertex(int base, int adj,double weight, long time, double distance) {
+    public Vertex(int base,double weight, long time, double distance) {
         this.base = base;
         this.weight = weight;
         this.time = time;
         this.distance = distance;
-        this.adj = adj;
+    }
+
+    @Override
+    public String toString() {
+        return "Vertex{" +
+                "base=" + base +
+                ", weight=" + weight +
+                ", time=" + time +
+                ", distance=" + distance +
+                '}';
     }
 }

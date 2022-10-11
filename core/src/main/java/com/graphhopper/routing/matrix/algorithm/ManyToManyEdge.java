@@ -4,7 +4,9 @@ package com.graphhopper.routing.matrix.algorithm;
 import com.graphhopper.routing.matrix.MatrixEntry;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.GHUtility;
 
 
 public class ManyToManyEdge extends AbstractManyToMany {
@@ -20,38 +22,55 @@ public class ManyToManyEdge extends AbstractManyToMany {
     }
 
     @Override
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse){
+    protected int getTraversalId(RoutingCHEdgeIteratorState edge, Boolean reverse){
 
-        return traversalMode.createTraversalId(edge.getBaseNode(),edge.getAdjNode(),origEdgeId,reverse);
+
+        //int origEdgeId = getOrigEdgeId(edge,reverse);
+        //int baseNode = getOtherNode(origEdgeId,edge.getAdjNode());
+
+        //return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
+
+        return GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), reverse);
+    }
+
+    @Override
+    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
+        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
     }
 
 
     private double calcWeight(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId){
 
         double edgeWeight = edgeState.getWeight(reverse);
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
-        double turnCosts = reverse
-                ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-        return edgeWeight + turnCosts;
+        int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
 
+        double turnCosts = reverse
+                    ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
+                    : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+
+        return edgeWeight + turnCosts;
     }
 
     @Override
-    protected double calcWeight(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean reverse){
-        return calcWeight(iter,reverse,getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
+    protected double calcWeight(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                                boolean reverse, boolean accumulate){
+
+        double w = calcWeight(iter,reverse,currEdge.originalEdge);
+        if(accumulate){
+            return  w + currEdge.getWeightOfVisitedPath();
+        }else{
+            return w;
+        }
     }
 
-    private long calcTime(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId){
+    private long calcTime(RoutingCHEdgeIteratorState edgeState, Boolean reverse,
+                          int prevOrNextEdgeId){
 
         long time = edgeState.getTime(reverse);
-        int origEdgeId;
-        if(reverse){
-            origEdgeId = edgeState.getOrigEdgeLast();
-        }else{
-            origEdgeId = edgeState.getOrigEdgeFirst();
-        }
+        int origEdgeId = getOrigEdgeId(edgeState,reverse);
+
         long turnCost;
+
         if(reverse){
             turnCost = weighting.calcTurnMillis(origEdgeId,edgeState.getBaseNode(),prevOrNextEdgeId);
         }else{
@@ -62,22 +81,33 @@ public class ManyToManyEdge extends AbstractManyToMany {
     }
 
     @Override
-    protected long calcTime(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean reverse){
-        return calcTime(iter,reverse,getIncomingEdge(currEdge)) + currEdge.time;
+    protected long calcTime(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                            boolean reverse, boolean accumulate){
+
+        long time = calcTime(iter,reverse,currEdge.originalEdge);
+        if(accumulate){
+             return  time + currEdge.time;
+         }else{
+             return time;
+         }
+
     }
 
     protected int getIncomingEdge(MatrixEntry entry) {
-        return entry.incEdge;
+        return entry.edge;
     }
 
-    @Override
-    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
-    }
+
 
     @Override
-    protected double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge){
-        return iter.getDistance() + currEdge.distance;
+    protected double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean accumulate){
+
+       if(accumulate){
+           return iter.getDistance() + currEdge.distance;
+       }else{
+           return iter.getDistance();
+       }
+
     }
 
     @Override

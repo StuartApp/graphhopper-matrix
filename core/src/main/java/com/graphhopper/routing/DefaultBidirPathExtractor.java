@@ -87,16 +87,13 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
         SPTEntry currEntry = sptEntry;
         SPTEntry parentEntry = currEntry.parent;
         while (EdgeIterator.Edge.isValid(currEntry.edge)) {
-            double distance = path.getDistance();
+            double distance = path.getTime();
 
             onEdge(currEntry.edge, currEntry.adjNode, reverse, getIncEdge(parentEntry));
 
+            double diff = (path.getTime() - distance);
 
-            double diff = (path.getDistance() - distance);
-            double result = distance - diff;
-
-
-            System.out.println(currEntry.adjNode + " -> " + path.getDistance() + " : " + diff);
+            System.out.println(currEntry.adjNode + " -> " + path.getTime() + " : " + diff);
             currEntry = parentEntry;
             parentEntry = currEntry.parent;
         }

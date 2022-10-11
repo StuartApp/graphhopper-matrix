@@ -80,7 +80,8 @@ public class QueryGraphWeighting implements Weighting {
         if (isVirtualEdge(outEdge)) {
             outEdge = getOriginalEdge(outEdge);
         }
-        return weighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        double w =weighting.calcTurnWeight(inEdge, viaNode, outEdge);
+        return w;
     }
 
     private boolean isUTurn(int inEdge, int outEdge) {

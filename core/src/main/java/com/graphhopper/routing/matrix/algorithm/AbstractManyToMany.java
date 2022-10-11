@@ -8,7 +8,6 @@ import com.carrotsearch.hppc.procedures.ObjectProcedure;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.matrix.*;
 import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
-import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
@@ -28,6 +27,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     protected RoutingCHGraph graphNoVirtualNodes;
 
     protected Weighting weighting;
+    protected Weighting noVirtualWeighting;
 
     protected RoutingCHEdgeExplorer inEdgeExplorer;
     protected RoutingCHEdgeExplorer inEdgeExplorerNoVirtual;
@@ -39,6 +39,8 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     protected IntObjectMap<IntObjectMap<BucketEntry>> backwardBuckets;
     protected IntObjectMap<IntObjectMap<BucketEntry>> forwardBuckets;
 
+    IntObjectMap<MatrixEntry> bestWeightMap;
+
     protected boolean alreadyRun = false;
 
     protected int size;
@@ -47,17 +49,20 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     protected int maxNodes;
 
-    protected PriorityQueue<RankedNode> heap;
+    protected PriorityQueue<MatrixEntry> heap;
 
     protected LongDoubleMap tentativeWeights;
 
     protected IntSet visited = new IntHashSet();
 
-    IntObjectMap<ObjectArrayList<Vertex>> inVertices;
+    IntObjectMap<IntObjectHashMap<Vertex>> inVertices;
     IntObjectMap<ObjectArrayList<PruningVertex>> prunningVertices;
-    IntObjectMap<ObjectArrayList<Vertex>> outVertices;
+    IntObjectMap<IntObjectHashMap<Vertex>> outVertices;
+
+    IntObjectHashMap<Vertex> shortcutSelfVertices;
 
     IntSet nodesAdded;
+    IntSet traversed;
     IntIntHashMap terminals;
 
     public AbstractManyToMany(QueryRoutingCHGraph graph, RoutingCHGraph graphNoVirtualNodes) {
@@ -69,11 +74,15 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         this.maxNodes = graph.getBaseGraph().getBaseGraph().getNodes();
 
         this.graphNoVirtualNodes = graphNoVirtualNodes;
+        this.noVirtualWeighting = graphNoVirtualNodes.getWeighting();
         this.inEdgeExplorerNoVirtual = graphNoVirtualNodes.createInEdgeExplorer();
         this.outEdgeExplorerNoVirtual = graphNoVirtualNodes.createOutEdgeExplorer();
 
         this.nodesAdded = new IntHashSet();
+        this.traversed = new IntHashSet();
         this.terminals = new IntIntHashMap();
+
+        this.bestWeightMap = new IntObjectHashMap<>();
 
         this.sbiLevelEdgeFilter = new CHEdgeFilter() {
 
@@ -83,13 +92,13 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                 int base = edgeState.getBaseNode();
                 int adj = edgeState.getAdjNode();
 
-                if (base == adj) return false;
-
                 // always accept virtual edges, see #288
                 if (base >= maxNodes || adj >= maxNodes) return true;
 
                 // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
                 if (edgeState.isShortcut()) return true;
+
+                if (base == adj) return false;
 
                 return graph.getLevel(base) <= graph.getLevel(adj);
             }
@@ -102,60 +111,15 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         this.heap = new PriorityQueue<>(size);
         this.tentativeWeights = new LongDoubleHashMap(100);
 
-        this.inVertices = new IntObjectHashMap<>(this.graph.getNodes());
         this.prunningVertices = new IntObjectHashMap<>(this.graph.getNodes());
+        this.inVertices = new IntObjectHashMap<>(this.graph.getNodes());
         this.outVertices = new IntObjectHashMap<>(this.graph.getNodes());
+        this.shortcutSelfVertices = new IntObjectHashMap<>();
 
     }
 
     @Override
     public DistanceMatrix calcMatrix(List<Snap> sources, List<Snap> targets) {
-
-        //TODO - To debug purposes
-        /*
-        #######################################
-Forward
-748099 -> 251.02300000000002 : 251.02300000000002
-2096490 -> 415.50300000000004 : 164.48000000000002
-1730181 -> 555.494 : 139.99099999999999
-2094484 -> 561.2948955243202 : 5.80089552432014
-Backward
-748099 -> 1292.48489552432 : 731.1899999999999
-2904594 -> 6495.7658955243205 : 5203.281000000001
-537 -> 8233.81689552432 : 1738.0509999999995
-2966295 -> 9245.26689552432 : 1011.4500000000007
-139912 -> 9642.285895524321 : 397.01900000000023
- -> 9654.79689552432 : 12.510999999998603
-
-         */
-/*
-        int base = 2966295;
-        RoutingCHEdgeIterator iter = inEdgeExplorerNoVirtual.setBaseNode(base);
-        while (iter.next()) {
-
-            if(sbiLevelEdgeFilter.accept(iter)){
-                int adjNode = iter.getAdjNode();
-                double weight = calcWeight(iter, true, base);
-                double distance = calcDistance(iter);
-                long time = calcTime(iter, true, base);
-                int originId = getOrigEdgeId(iter,true);
-                int traversalId = getTraversalId(iter, originId,true);
-
-                if(adjNode == 537){
-                    System.out.println("#### "+ base + " -> " + adjNode + " distance: " + distance + "(" + weight + ")" + " --- " + iter.isShortcut() + " -->" + traversalId + "(" + iter.getEdge() + " - " + iter.getOrigEdgeFirst() + "/" + iter.getOrigEdgeLast());
-                }
-
-
-            }
-
-        }
-        //System.exit(1);
-
-
- */
-
-
-                //
 
         checkAlreadyRun();
 
@@ -182,7 +146,7 @@ Backward
             idxTarget++;
         }
 
-        //System.out.println("############################## BACKWARD");
+        System.out.println("############################## BACKWARD");
 
         simultaneousBucketInitializationBackward(targets);
 
@@ -210,7 +174,7 @@ Backward
             idxSource++;
         }
 
-        //System.out.println("############################## FORWARD");
+        System.out.println("############################## FORWARD");
 
         simultaneousBucketInitializationForward(sources, matrix, targetIdxsNodes);
 
@@ -224,55 +188,22 @@ Backward
         alreadyRun = true;
     }
 
-    protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse);
-
-    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
+    protected int getOtherNode(int edge, int node) {
+        return graph.getBaseGraph().getOtherNode(edge, node);
     }
 
-    protected abstract double calcWeight(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean reverse);
+    protected abstract int getTraversalId(RoutingCHEdgeIteratorState edge, Boolean reverse);
 
-    protected abstract long calcTime(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge, boolean reverse);
+    protected abstract int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse);
 
-    protected int getIncomingEdge(MatrixEntry entry) {
-        return entry.edge;
-    }
+    protected abstract double calcWeight(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                                         boolean reverse, boolean accumulate);
 
-    protected abstract double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge);
+    protected abstract long calcTime(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                                     boolean reverse, boolean accumulate);
 
-
-    private double calcWeight(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId) {
-
-        double edgeWeight = edgeState.getWeight(reverse);
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
-        double turnCosts = reverse
-                ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
-                : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-        return edgeWeight + turnCosts;
-
-    }
-
-
-    private long calcTime(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId) {
-
-        long time = edgeState.getTime(reverse);
-        long turnCost;
-        int origEdgeId;
-        if (reverse) {
-            origEdgeId = edgeState.getOrigEdgeLast();
-            turnCost = weighting.calcTurnMillis(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId);
-        } else {
-            origEdgeId = edgeState.getOrigEdgeFirst();
-            turnCost = weighting.calcTurnMillis(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
-        }
-
-        return time + turnCost;
-    }
-
-
-    protected double calcDistance(RoutingCHEdgeIteratorState iter) {
-        return iter.getDistance();
-    }
+    protected abstract double calcDistance(RoutingCHEdgeIteratorState iter, MatrixEntry currEdge,
+                                           boolean accumulate);
 
     @Override
     public int getVisitedNodes() {
@@ -288,11 +219,20 @@ Backward
         return node >= maxNodes;
     }
 
+    private int getLevel(int node) {
+        if (isVirtual(node)) {
+            return 0;
+        } else {
+            return graph.getLevel(node);
+        }
+    }
+
     private void findInitialNodesBackward(Snap snap, int idx) {
-        //System.out.println("Backward Init **********************");
 
         int closestNode = snap.getClosestNode();
         IntSet processed = new IntHashSet();
+
+        //System.out.println("Backward Init ********************** : " + closestNode);
 
         //During the initialization, we add pair (t, 0) to B(t) for each t ∈ T. By adding
         //such a pair, we indicate that t can be reached from t, with a shortest path of length zero.
@@ -300,95 +240,46 @@ Backward
         bucketTargets.put(closestNode, new BucketEntry(0, 0, 0, idx));
         backwardBuckets.put(closestNode, bucketTargets);
 
-        //Closest Node is Virtual
-        if (isVirtual(closestNode)) {
+        MatrixEntry initial = new MatrixEntry(closestNode, 0, 0, 0, getLevel(closestNode));
+        Deque<MatrixEntry> queue = new ArrayDeque<>();
+        queue.add(initial);
 
-            Deque<VirtualNodeEntry> queue = new ArrayDeque<>();
-            queue.add(new VirtualNodeEntry(closestNode, 0, 0, 0));
+        while (!queue.isEmpty()) {
 
-            while (!queue.isEmpty()) {
+            MatrixEntry current = queue.poll();
+            int baseNode = current.adjNode;
 
-                VirtualNodeEntry current = queue.poll();
-                int baseNode = current.node;
-
-
-                RoutingCHEdgeIterator downIterator = inEdgeExplorer.setBaseNode(baseNode);
-                while (downIterator.next()) {
-
-                    int adjNode = downIterator.getAdjNode();
-                    //System.out.println("Base:" + baseNode + " --> " + adjNode);
-
-                    boolean isVirtualAdj = isVirtual(adjNode);
-
-
-                    if (isVirtualAdj && adjNode != closestNode && !processed.contains(adjNode)) {
-                        processed.add(adjNode);
-                        double weight = calcWeight(downIterator, true, baseNode) + current.weight;
-                        double distance = calcDistance(downIterator) + current.distance;
-                        long time = calcTime(downIterator, true, baseNode) + current.time;
-                        queue.add(new VirtualNodeEntry(adjNode, weight, time, distance));
-                    } else if (adjNode != closestNode && !processed.contains(adjNode)) {
-                        heap.add(new RankedNode(adjNode, graph.getLevel(adjNode)));
-                        nodesAdded.add(adjNode);
-
-                        //Down Vertices
-                        ObjectArrayList<Vertex> dVertices = inVertices.get(adjNode);
-                        if (dVertices == null) {
-                            dVertices = new ObjectArrayList<>();
-                            inVertices.put(adjNode, dVertices);
-                        }
-
-                        double weight = calcWeight(downIterator, true, baseNode) + current.weight;
-
-                        if (weight < Double.POSITIVE_INFINITY) {
-                            double distance = calcDistance(downIterator) + current.distance;
-                            long time = calcTime(downIterator, true, baseNode) + current.time;
-                            dVertices.add(new Vertex(closestNode, adjNode, weight, time, distance));
-                        }
-                    }
-                }
-            }
-
-        } else {
-            //Closest Node is not virtual
-
-            int inEdges = 0;
-            RoutingCHEdgeIterator uniqueIn = null;
-            RoutingCHEdgeIterator downIterator = inEdgeExplorer.setBaseNode(closestNode);
+            RoutingCHEdgeIterator downIterator = inEdgeExplorer.setBaseNode(baseNode);
             while (downIterator.next()) {
 
+                int adjNode = downIterator.getAdjNode();
+                int origEdgeId = getOrigEdgeId(downIterator, true);
+                int traversalId = getTraversalId(downIterator, true);
 
-                boolean accept = this.sbiLevelEdgeFilter.accept(downIterator);
-                if (accept) {
-                    break;
-                } else {
-                    uniqueIn = downIterator;
-                }
-            }
+                double weight = calcWeight(downIterator, current, true, true);
 
-            if (inEdges == 0 && uniqueIn != null) {
-                heap.add(new RankedNode(uniqueIn.getAdjNode(), graph.getLevel(uniqueIn.getAdjNode())));
-                nodesAdded.add(uniqueIn.getAdjNode());
-
-                double weight = calcWeight(uniqueIn, true, closestNode);
-
-                //Down Vertices
-                ObjectArrayList<Vertex> dVertices = inVertices.get(uniqueIn.getAdjNode());
-                if (dVertices == null) {
-                    dVertices = new ObjectArrayList<>();
-                    inVertices.put(uniqueIn.getAdjNode(), dVertices);
+                if (weight == Double.POSITIVE_INFINITY) {
+                    continue;
                 }
 
-                if (weight < Double.POSITIVE_INFINITY) {
-                    double distance = calcDistance(uniqueIn);
-                    long time = calcTime(uniqueIn, true, closestNode);
-                    dVertices.add(new Vertex(closestNode,uniqueIn.getAdjNode(), weight, time, distance));
+                boolean isVirtualAdj = isVirtual(adjNode);
+                double distance = calcDistance(downIterator, current, true);
+                long time = calcTime(downIterator, current, true, true);
+
+                MatrixEntry entry = new MatrixEntry(downIterator.getEdge(), origEdgeId, adjNode, current.adjNode, getLevel(adjNode), weight, time, distance);
+
+                if (isVirtualAdj && adjNode != closestNode && !processed.contains(adjNode)) {
+                    processed.add(adjNode);
+                    queue.add(entry);
+                    addVertices(inVertices, closestNode, adjNode, weight, time, distance,downIterator.isShortcut());
+                } else if (adjNode != closestNode && !processed.contains(adjNode)) {
+                    heap.add(entry);
+                    nodesAdded.add(traversalId);
+                    addVertices(inVertices, closestNode, adjNode, weight, time, distance,downIterator.isShortcut());
                 }
-            } else {
-                heap.add(new RankedNode(closestNode, graph.getLevel(closestNode)));
-                nodesAdded.add(closestNode);
             }
         }
+
     }
 
     private void findInitialNodesForward(Snap snap, int idx,
@@ -403,131 +294,143 @@ Backward
         bucketTargets.put(closestNode, new BucketEntry(0, 0, 0, idx));
         forwardBuckets.put(closestNode, bucketTargets);
 
-        Deque<VirtualNodeEntry> queue = new ArrayDeque<>();
-        queue.add(new VirtualNodeEntry(closestNode, 0, 0, 0));
+        MatrixEntry initial = new MatrixEntry(closestNode, 0, 0, 0, getLevel(closestNode));
 
-        //Process Queue
+        Deque<MatrixEntry> queue = new ArrayDeque<>();
+        queue.add(initial);
 
         while (!queue.isEmpty()) {
 
-            VirtualNodeEntry current = queue.poll();
-            int baseNode = current.node;
+            MatrixEntry current = queue.poll();
+            int baseNode = current.adjNode;
 
             RoutingCHEdgeIterator outIterator = outEdgeExplorer.setBaseNode(baseNode);
             while (outIterator.next()) {
 
                 int adjNode = outIterator.getAdjNode();
+                int traversalId = getTraversalId(outIterator, false);
+                int origEdgeId = getOrigEdgeId(outIterator, false);
 
                 boolean isVirtualAdj = isVirtual(adjNode);
 
-                double weight = calcWeight(outIterator, false, baseNode) + current.weight;
+                double weight = calcWeight(outIterator, current, false, true);
 
-                if (weight < Double.POSITIVE_INFINITY) {
+                if (weight == Double.POSITIVE_INFINITY) {
+                    continue;
+                }
 
+                if (targets.containsKey(adjNode)) {
+                    long uniqueId = PairingUtils.pair(closestNode, adjNode);
 
-                    if (targets.containsKey(adjNode)) {
-                        long uniqueId = PairingUtils.pair(closestNode, adjNode);
+                    final double savedWeight = tentativeWeights.get(uniqueId);
 
-                        final double savedWeight = tentativeWeights.get(uniqueId);
+                    if ((savedWeight == 0.0 || (weight < savedWeight)) && closestNode != adjNode) {
 
-                        if ((savedWeight == 0.0 || (weight < savedWeight)) && closestNode != adjNode) {
+                        double distance = calcDistance(outIterator, current, true);
+                        long time = calcTime(outIterator, current, false, true);
 
-                            double distance = calcDistance(outIterator) + current.distance;
-                            long time = calcTime(outIterator, false, baseNode) + current.time;
+                        tentativeWeights.put(uniqueId, weight);
 
-                            tentativeWeights.put(uniqueId, weight);
-
-                            targets.get(adjNode).forEach(new IntProcedure() {
-                                @Override
-                                public void apply(int i) {
-                                    dm.setCell(idx, i, distance, time);
-                                }
-                            });
-                        }
+                        targets.get(adjNode).forEach(new IntProcedure() {
+                            @Override
+                            public void apply(int i) {
+                                dm.setCell(idx, i, distance, time);
+                            }
+                        });
                     }
+                }
 
-                    if (isVirtualAdj && adjNode != closestNode && !processed.contains(adjNode)) {
+                double distance = calcDistance(outIterator, current, true);
+                long time = calcTime(outIterator, current, false, true);
 
-                        double distance = calcDistance(outIterator) + current.distance;
-                        long time = calcTime(outIterator, false, baseNode) + current.time;
-                        processed.add(adjNode);
-                        queue.add(new VirtualNodeEntry(adjNode, weight, time, distance));
-                    } else if (adjNode != closestNode && !processed.contains(adjNode)) {
-                        this.heap.add(new RankedNode(adjNode, graph.getLevel(adjNode)));
-                        this.nodesAdded.add(adjNode);
+                MatrixEntry entry = new MatrixEntry(outIterator.getEdge(), origEdgeId, adjNode, current.adjNode, getLevel(adjNode), weight, time, distance);
 
-                        //Out Vertices
-                        ObjectArrayList<Vertex> nodeOutVertices = outVertices.get(adjNode);
-                        if (nodeOutVertices == null) {
-                            nodeOutVertices = new ObjectArrayList<>();
-                            outVertices.put(adjNode, nodeOutVertices);
-                        }
-
-                        double distance = calcDistance(outIterator) + current.distance;
-                        long time = calcTime(outIterator, false, baseNode) + current.time;
-
-                        nodeOutVertices.add(new Vertex(closestNode, adjNode, weight, time, distance));
-                    }
+                if (isVirtualAdj && adjNode != closestNode && !processed.contains(adjNode)) {
+                    processed.add(adjNode);
+                    queue.add(entry);
+                } else if (adjNode != closestNode && !processed.contains(adjNode)) {
+                    this.heap.add(entry);
+                    //System.out.println("Add Heap:" + entry);
+                    this.nodesAdded.add(traversalId);
+                    addVertices(outVertices, closestNode, adjNode, weight, time, distance, outIterator.isShortcut());
                 }
             }
         }
     }
 
-    private void initializeVertices(int baseNode, RoutingCHEdgeExplorer explorer,
-                                    IntObjectMap<ObjectArrayList<Vertex>> vertices, boolean reverse) {
+    private void initializeVertices(MatrixEntry currentEdge, RoutingCHEdgeExplorer explorer,
+                                    IntObjectMap<IntObjectHashMap<Vertex>> vertices, boolean reverse) {
 
-        RoutingCHEdgeIterator downIterator = explorer.setBaseNode(baseNode);
-        IntObjectMap<Vertex> vertexs = new IntObjectHashMap<>();
+        RoutingCHEdgeIterator iter = explorer.setBaseNode(currentEdge.adjNode);
+        System.out.println("################ Current:" + currentEdge.adjNode + " - " + currentEdge.edge);
 
-        while (downIterator.next()) {
+        while (iter.next()) {
 
-            int adjNode = downIterator.getAdjNode();
-
-                int adjRank = graph.getLevel(adjNode);
-                boolean accept = this.sbiLevelEdgeFilter.accept(downIterator);
-
-                if ((accept && !nodesAdded.contains(adjNode))) {
-                    nodesAdded.add(adjNode);
-                    heap.add(new RankedNode(adjNode, adjRank));
-                }
-
-                if (accept) {
-
-                    double weight = calcWeight(downIterator, reverse, baseNode);
-
-                    if (weight < Double.POSITIVE_INFINITY) {
-
-                        int originId = getOrigEdgeId(downIterator,reverse);
-                        int traversalId = getTraversalId(downIterator, originId,reverse);
-
-                        Vertex storedVertex = vertexs.get(traversalId);
-                        if(storedVertex == null || storedVertex.weight > weight){
-                            double distance = calcDistance(downIterator);
-                            long time = calcTime(downIterator, reverse, baseNode);
-                            vertexs.put(traversalId,new Vertex(baseNode, adjNode, weight, time, distance));
-                        }
-                    }
-                }
-        }
-
-        //Because we saw that from a node can exists multiples edges to adj node, we take into consideration
-        //only the edges with less weight
-        vertexs.forEach(new IntObjectProcedure<Vertex>() {
-            @Override
-            public void apply(int traversalId, Vertex vertex) {
-                ObjectArrayList<Vertex> dVertices = vertices.get(vertex.adj);
-                if (dVertices == null) {
-                    dVertices = new ObjectArrayList<>();
-                    vertices.put(vertex.adj, dVertices);
-                }
-                dVertices.add(vertex);
+            if (!this.sbiLevelEdgeFilter.accept(iter)) {
+                continue;
             }
-        });
 
+            final double weight = calcWeight(iter, currentEdge, reverse, false);
+            final int origEdgeId = getOrigEdgeId(iter, reverse);
+            final int traversalId = getTraversalId(iter, reverse);
+
+            if (Double.isInfinite(weight)) {
+                continue;
+            }
+
+            if(traversed.contains(traversalId)){
+                continue;
+            }
+
+
+            int adjNode = iter.getAdjNode();
+            int adjRank = getLevel(adjNode);
+
+            double distance = calcDistance(iter, currentEdge, false);
+            long time = calcTime(iter, currentEdge, reverse, false);
+
+            System.out.println("Edge:" + iter.getEdge());
+            MatrixEntry entry = new MatrixEntry(iter.getEdge(), origEdgeId, adjNode, currentEdge.adjNode, adjRank, weight, time, distance);
+            heap.add(entry);
+            addVertices(vertices, currentEdge.adjNode, adjNode, weight, time, distance, iter.isShortcut());
+            traversed.add(traversalId);
+        }
+    }
+
+    private void addVertices(IntObjectMap<IntObjectHashMap<Vertex>> vertices,
+                             int baseNode, int adjNode, double weight, long time, double distance,
+                             boolean shortcut) {
+
+        if(baseNode == adjNode && shortcut){
+            Vertex v = shortcutSelfVertices.get(baseNode);
+            if(v == null || v.weight > weight){
+                System.out.println("Add Self Shortcut Vertex " + baseNode + " " + weight);
+                shortcutSelfVertices.put(adjNode,new Vertex(baseNode, weight, time, distance));
+            }
+
+        }else{
+            IntObjectHashMap<Vertex> dVertices = vertices.get(adjNode);
+            if (dVertices == null) {
+                dVertices = new IntObjectHashMap<>();
+                vertices.put(adjNode, dVertices);
+            }
+
+            Vertex vertex = dVertices.get(baseNode);
+            if(vertex == null){
+                vertex = new Vertex(baseNode, weight, time, distance);
+                dVertices.put(baseNode,vertex);
+                System.out.println("Add vertex " + baseNode + "-->" + adjNode + " " + weight);
+            }else if(vertex.weight > weight){
+                System.out.println("Add vertex " + baseNode + "-->" + adjNode + " " + weight);
+                vertex = new Vertex(baseNode, weight, time, distance);
+                dVertices.put(baseNode,vertex);
+            }
+        }
     }
 
     private void initializePruningVertices(int baseNode, RoutingCHEdgeExplorer explorer, boolean reverse) {
 
+        /*
         RoutingCHEdgeIterator upIterator = explorer.setBaseNode(baseNode);
         while (upIterator.next()) {
             int adjNode = upIterator.getAdjNode();
@@ -546,6 +449,8 @@ Backward
                 }
             }
         }
+
+         */
     }
 
     private void applyRetrospectivePruningAlgorithm(int baseNode, double[] weights,
@@ -576,17 +481,25 @@ Backward
         }
     }
 
-    private void discoverBucketEntriesToCopy(int baseNode, IntObjectMap<ObjectArrayList<Vertex>> vertices,
+    private void discoverBucketEntriesToCopy(int baseNode, IntObjectMap<IntObjectHashMap<Vertex>> vertices,
                                              double[] distances, long[] times, double[] weights,
                                              IntObjectMap<IntObjectMap<BucketEntry>> buckets,
                                              IntIntHashMap terminals) {
 
 
-        ObjectArrayList<Vertex> downList = vertices.get(baseNode);
+        Vertex shortcut = shortcutSelfVertices.get(baseNode);
+
+        //final double shortcutWeight = (shortcut != null) ? shortcut.weight : 0;
+        //final double shortcutDistance= (shortcut != null) ? shortcut.distance : 0;
+        //final long shortcutTime= (shortcut != null) ? shortcut.time : 0;
+
+        IntObjectHashMap<Vertex> downList = vertices.get(baseNode);
         if (downList != null) {
-            downList.forEach(new ObjectProcedure<Vertex>() {
+
+            downList.forEach(new IntObjectProcedure<Vertex>() {
+
                 @Override
-                public void apply(Vertex vertex) {
+                public void apply(int i, Vertex vertex) {
                     int w = vertex.base;
                     double weight = vertex.weight;
 
@@ -603,10 +516,12 @@ Backward
                                 terminals.putIfAbsent(t, targetIdx);
 
                                 double currentWeight = pathWeight + weight;
+                                System.out.println("Bucket Current:" + weights[targetIdx]);
+                                System.out.println("Bucket : " + baseNode + " -> " + w + " -> " + entry.weight + " - " + vertex.weight);
                                 if (currentWeight < weights[targetIdx] || weights[targetIdx] == 0) {
-                                    //if(find.contains(w)) {
-                                      System.out.println("Bucket: " + baseNode + " -> " + w + " -> " + entry.distance + " - "  + vertex.distance);
-                                    //}
+
+                                    System.out.println("Bucket Saved: " + baseNode + " -> " + w + " -> " + entry.weight + " - " + vertex.weight);
+
                                     weights[targetIdx] = currentWeight;
                                     distances[targetIdx] = entry.distance + vertex.distance;
                                     times[targetIdx] = entry.time + vertex.time;
@@ -638,7 +553,9 @@ Backward
 
                 BucketEntry entry = new BucketEntry(weights[sourceIdx], times[sourceIdx], distances[sourceIdx], sourceIdx);
                 b.put(source, entry);
-                System.out.println("Saving Bucket:" + baseNode + " - " +  source + " -> " + entry);
+
+                    System.out.println("Saving Bucket:" + baseNode + " - " +  source + " -> " + entry);
+
                 if (saveBestPath) {
                     saveBestPath(source, sourceIdx, baseNode, entry, targets, dm);
                 }
@@ -661,33 +578,42 @@ Backward
         System.out.println("##################################");
         System.out.println("BACKWARD");
 
+        int previousNode = -1;
+
         while (!heap.isEmpty()) {
 
-            RankedNode rn = heap.poll();
-            int baseNode = rn.node;
-            System.out.println(" Processing Backward " + baseNode);
+            //System.out.println("Heap:" + heap);
 
-            initializeVertices(baseNode, inEdgeExplorerNoVirtual, inVertices, true);
+            MatrixEntry rn = heap.poll();
+            int baseNode = rn.adjNode;
 
-            //initializePruningVertices(baseNode, outEdgeExplorerNoVirtual, false);
+            if(baseNode != previousNode && previousNode != -1){
 
-            discoverBucketEntriesToCopy(baseNode, inVertices, distances, times, weights, backwardBuckets, terminals);
+                //initializePruningVertices(baseNode, outEdgeExplorerNoVirtual, false);
 
-            //applyRetrospectivePruningAlgorithm(baseNode, weights, backwardBuckets);
+                discoverBucketEntriesToCopy(previousNode, inVertices, distances, times, weights, backwardBuckets, terminals);
 
-            copyBucketsEntriesToCurrentVertex(baseNode, backwardBuckets, distances, times, weights, false, null, null, terminals);
+                //applyRetrospectivePruningAlgorithm(previousNode, weights, backwardBuckets);
 
-            if(baseNode == 8187){
-                System.out.println("####################### " + backwardBuckets.get(8187));
+                copyBucketsEntriesToCurrentVertex(previousNode, backwardBuckets, distances, times, weights, false, null, null, terminals);
+
+                terminals.clear();
             }
 
-            terminals.clear();
+            //if(rn.adjNode == 2865619){
+              //  System.out.println("## Backward " + rn);
+            //}
+            //System.out.println(" ** Processing Backward " + baseNode + " - " + rn.level);
+            //System.out.println(" Processing Backward " + rn);
+
+            initializeVertices(rn, inEdgeExplorerNoVirtual, inVertices, true);
+            previousNode = baseNode;
 
         }
 
-
-        System.out.println("??####################### " + backwardBuckets.get(8187));
     }
+
+    
 
     private void simultaneousBucketInitializationForward(List<Snap> sources,
                                                          DistanceMatrix dm, IntObjectMap<IntArrayList> targets) {
@@ -698,25 +624,31 @@ Backward
         long[] times = new long[sources.size()];
         double[] weights = new double[sources.size()];
 
+        int previousNode = -1;
+
         while (!heap.isEmpty()) {
 
-            RankedNode rn = heap.poll();
-            int baseNode = rn.node;
-            System.out.println("Processing Forward: " + baseNode);
+            MatrixEntry rn = heap.poll();
+            int baseNode = rn.adjNode;
+            //System.out.println("** Processing Forward: " + baseNode);
+            //System.out.println(" Processing Forward " + rn);
 
-            initializeVertices(baseNode, outEdgeExplorerNoVirtual, outVertices, false);
+            if(baseNode != previousNode && previousNode != -1){
+                //initializePruningVertices(baseNode, inEdgeExplorerNoVirtual, true);
 
-            initializePruningVertices(baseNode, inEdgeExplorerNoVirtual, true);
+                discoverBucketEntriesToCopy(previousNode, outVertices, distances, times, weights, forwardBuckets, terminals);
 
+                //applyRetrospectivePruningAlgorithm(previousNode, weights, forwardBuckets);
 
-            discoverBucketEntriesToCopy(baseNode, outVertices, distances, times, weights, forwardBuckets, terminals);
+                copyBucketsEntriesToCurrentVertex(previousNode, forwardBuckets, distances, times, weights,
+                        true, dm, targets, terminals);
 
-            applyRetrospectivePruningAlgorithm(baseNode, weights, forwardBuckets);
+                terminals.clear();
+            }
 
-            copyBucketsEntriesToCurrentVertex(baseNode, forwardBuckets, distances, times, weights,
-                    true, dm, targets, terminals);
+            initializeVertices(rn, outEdgeExplorerNoVirtual, outVertices, false);
+            previousNode = baseNode;
 
-            terminals.clear();
         }
     }
 
@@ -724,9 +656,11 @@ Backward
                               IntObjectMap<IntArrayList> targets, DistanceMatrix dm) {
 
         final IntObjectMap<BucketEntry> backwardEntries = backwardBuckets.get(currNode);
-        System.out.println(" Saving: " + currNode + " - " + backwardEntries);
+
 
         if (backwardEntries != null) {
+
+            //System.out.println("$$$$$ Saving: " + currNode + " - " + backwardEntries);
 
             backwardEntries.forEach(new IntObjectProcedure<BucketEntry>() {
                 @Override
@@ -741,18 +675,21 @@ Backward
 
                         if (savedWeight == 0.0 || (currentWeight < savedWeight)) {
 
-                            System.out.println(" Current:" + currentWeight + " Saved: " + savedWeight);
+
+                                System.out.println(currNode + " $$$$$ Current:" + currentWeight + " Saved: " + savedWeight);
+
 
                             final long time = forwardEntry.time + entry.time;
                             final double distance = forwardEntry.distance + entry.distance;
                             tentativeWeights.put(uniqueId, currentWeight);
+
+                            //System.out.println(" $$$$$ Saved Distance:" + distance);
 
                             IntArrayList targetsIdxs = targets.get(target);
                             int[] buffer = targetsIdxs.buffer;
                             int size = targetsIdxs.size();
 
                             for (int i = 0; i < size; i++) {
-                                System.out.println("Saved Distance: " + distance);
                                 dm.setCell(idxSource, buffer[i], distance, time);
                             }
                         }

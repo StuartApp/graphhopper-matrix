@@ -173,16 +173,23 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
         while (iter.next()) {
 
 
+
+            //System.out.println("## --"  + origEdgeId +  "-->" + iter.getBaseNode() + " --" + iter.getEdge() + "--> " + iter.getAdjNode() + " reverse : " + reverse + " w:" + (weight - currEdge.weight) );
+
+
+            final double weight = calcWeight(iter, currEdge, reverse);
+
+            final int origEdgeId = getOrigEdgeId(iter, reverse);
+            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
+
             if (!accept(iter, currEdge, reverse))
                 continue;
 
-            final double weight = calcWeight(iter, currEdge, reverse);
+
             if (Double.isInfinite(weight)) {
                 continue;
             }
 
-            final int origEdgeId = getOrigEdgeId(iter, reverse);
-            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
@@ -205,9 +212,22 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     protected double calcWeight(RoutingCHEdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double edgeWeight = edgeState.getWeight(reverse);
         final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+
+
+
         double turnCosts = reverse
                 ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
+
+        if(edgeState.getBaseNode() == 2863){
+            if(reverse){
+                System.out.println(origEdgeId + " --> " + edgeState.getBaseNode() + " --> " + prevOrNextEdgeId + " w: " + edgeWeight + " tc:" + turnCosts);
+            }else{
+                System.out.println(prevOrNextEdgeId + " --> " + edgeState.getBaseNode() + " --> " + origEdgeId + " w: " + edgeWeight + " tc:" + turnCosts);
+            }
+        }
+
+
         return edgeWeight + turnCosts;
     }
 

@@ -18,28 +18,43 @@
 package com.graphhopper.routing.matrix;
 
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.Objects;
 
 
 public class MatrixEntry implements Comparable<MatrixEntry> {
 
     public int edge;
     public int adjNode;
+    public int baseNode;
     public double weight;
     public double distance;
     public long time;
-    public int incEdge;
+    public int level;
 
-    public MatrixEntry(int node, double weight, long time, double distance) {
-        this(EdgeIterator.NO_EDGE,EdgeIterator.NO_EDGE, node, weight,time,distance);
+    /**
+     * The id of the incoming original edge at this shortest path tree entry. For original edges this is the same
+     * as the edge id, but for shortcuts this is the id of the last original edge of the shortcut.
+     *
+     * @see EdgeIteratorState#getOrigEdgeLast()
+     */
+    public int originalEdge;
+
+
+    public MatrixEntry(int node, double weight, long time, double distance, int level) {
+        this(EdgeIterator.NO_EDGE,EdgeIterator.NO_EDGE, node,node, level, weight,time,distance);
     }
 
-    public MatrixEntry(int edge, int incEdge,int adjNode, double weight, long time, double distance) {
+    public MatrixEntry(int edge, int origEdgeId,int adjNode, int baseNode, int level, double weight, long time, double distance) {
         this.edge = edge;
+        this.originalEdge = origEdgeId;
         this.adjNode = adjNode;
+        this.baseNode = baseNode;
         this.weight = weight;
         this.time = time;
         this.distance = distance;
-        this.incEdge = incEdge;
+        this.level = level;
     }
 
     public double getWeightOfVisitedPath() {
@@ -48,16 +63,43 @@ public class MatrixEntry implements Comparable<MatrixEntry> {
 
     @Override
     public String toString() {
-        return adjNode + " (" + edge + ") weight: " + weight + ", incEdge: " + incEdge + " time: " + time + " distance :" + distance;
+        return "MatrixEntry{" +
+                "edge=" + edge +
+                ", adjNode=" + adjNode +
+                ", baseNode=" + baseNode +
+                ", weight=" + weight +
+                ", distance=" + distance +
+                ", time=" + time +
+                ", level=" + level +
+                ", originalEdge=" + originalEdge +
+                '}';
     }
 
     @Override
     public int compareTo(MatrixEntry o) {
 
-        if (weight < o.weight)
-            return -1;
+        //if(level < o.level){
+            //return -1;
+        //}else {
+            if (level < o.level)
+                return -1;
 
-        // assumption no NaN and no -0
-        return weight > o.weight ? 1 : 0;
+            // assumption no NaN and no -0
+            return level > o.level ? 1 : 0;
+        //}
+
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        MatrixEntry that = (MatrixEntry) o;
+        return edge == that.edge && adjNode == that.adjNode && baseNode == that.baseNode && originalEdge == that.originalEdge;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(edge, adjNode, baseNode, originalEdge);
     }
 }
