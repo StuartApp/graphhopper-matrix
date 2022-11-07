@@ -170,32 +170,45 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     private void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
                            IntObjectMap<SPTEntry> bestWeightMap, RoutingCHEdgeExplorer explorer, boolean reverse) {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
+
+        if(reverse) {
+            //System.out.println("******* Current: " + currEdge.adjNode + " Reverse: " + reverse );
+        }
         while (iter.next()) {
-
-
-
-            //System.out.println("## --"  + origEdgeId +  "-->" + iter.getBaseNode() + " --" + iter.getEdge() + "--> " + iter.getAdjNode() + " reverse : " + reverse + " w:" + (weight - currEdge.weight) );
-
-
-            final double weight = calcWeight(iter, currEdge, reverse);
 
             final int origEdgeId = getOrigEdgeId(iter, reverse);
             final int traversalId = getTraversalId(iter, origEdgeId, reverse);
 
+            if(reverse) {
+                //System.out.println(" Iter: " + iter.getAdjNode() + " -- id: " + traversalId);
+            }
+
+            final double weight = calcWeight(iter, currEdge, reverse);
+
+
+
             if (!accept(iter, currEdge, reverse))
                 continue;
+
 
 
             if (Double.isInfinite(weight)) {
                 continue;
             }
 
+
             SPTEntry entry = bestWeightMap.get(traversalId);
             if (entry == null) {
                 entry = createEntry(iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 bestWeightMap.put(traversalId, entry);
+                if(reverse) {
+                    //System.out.println("Add w:" + weight + " traversal Id:" + traversalId);
+                }
                 prioQueue.add(entry);
             } else if (entry.getWeightOfVisitedPath() > weight) {
+                if(reverse) {
+                    //System.out.println("Add w:" + weight + " traversal Id:" + traversalId);
+                }
                 prioQueue.remove(entry);
                 updateEntry(entry, iter.getEdge(), iter.getAdjNode(), origEdgeId, weight, currEdge, reverse);
                 prioQueue.add(entry);
@@ -219,14 +232,10 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
 
-        if(edgeState.getBaseNode() == 2863){
-            if(reverse){
-                System.out.println(origEdgeId + " --> " + edgeState.getBaseNode() + " --> " + prevOrNextEdgeId + " w: " + edgeWeight + " tc:" + turnCosts);
-            }else{
-                System.out.println(prevOrNextEdgeId + " --> " + edgeState.getBaseNode() + " --> " + origEdgeId + " w: " + edgeWeight + " tc:" + turnCosts);
-            }
+        if(reverse){
+            System.out.println(edgeState.getBaseNode() + " --> " + edgeState.getAdjNode() + " origEdgeId: " +
+                    origEdgeId + " prevOrNextEgeId: " + prevOrNextEdgeId + " tc: " + turnCosts + " w:" + edgeWeight);
         }
-
 
         return edgeWeight + turnCosts;
     }
@@ -260,8 +269,9 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
     }
 
     protected double calcWeight(RoutingCHEdgeIteratorState iter, SPTEntry currEdge, boolean reverse) {
-        double w = calcWeight(iter, reverse, getIncomingEdge(currEdge)) + currEdge.getWeightOfVisitedPath();
-        return w;
+        double w = calcWeight(iter, reverse, getIncomingEdge(currEdge)) ;
+        //System.out.println("iter w:" + w + " path: " + currEdge.getWeightOfVisitedPath());
+        return w + currEdge.getWeightOfVisitedPath();
     }
 
     @Override

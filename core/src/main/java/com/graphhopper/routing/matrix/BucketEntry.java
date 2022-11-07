@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.matrix;
 
+import java.util.Objects;
+
 public class BucketEntry {
 
     public double weight;
@@ -41,5 +43,18 @@ public class BucketEntry {
                 ", time=" + time +
                 ", idx=" + idx +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        BucketEntry that = (BucketEntry) o;
+        return idx == that.idx;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(idx);
     }
 }

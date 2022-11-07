@@ -35,7 +35,7 @@ public class ManyToManyEdge extends AbstractManyToMany {
 
     @Override
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
+        return reverse ? edge.getOrigEdgeFirst() :  edge.getOrigEdgeLast();
     }
 
 
