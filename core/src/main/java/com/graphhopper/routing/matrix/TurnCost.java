@@ -11,7 +11,6 @@ public class TurnCost {
         this.cost = turncost;
     }
 
-
     public double weightWithTurnCost(){
         return weight + cost;
     }

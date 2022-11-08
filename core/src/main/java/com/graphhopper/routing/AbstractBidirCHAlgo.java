@@ -233,8 +233,8 @@ public abstract class AbstractBidirCHAlgo extends AbstractBidirAlgo implements B
                 : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
 
         if(reverse){
-            System.out.println(edgeState.getBaseNode() + " --> " + edgeState.getAdjNode() + " origEdgeId: " +
-                    origEdgeId + " prevOrNextEgeId: " + prevOrNextEdgeId + " tc: " + turnCosts + " w:" + edgeWeight);
+           // System.out.println(edgeState.getBaseNode() + " --> " + edgeState.getAdjNode() + " origEdgeId: " +
+           //         origEdgeId + " prevOrNextEgeId: " + prevOrNextEdgeId + " tc: " + turnCosts + " w:" + edgeWeight);
         }
 
         return edgeWeight + turnCosts;

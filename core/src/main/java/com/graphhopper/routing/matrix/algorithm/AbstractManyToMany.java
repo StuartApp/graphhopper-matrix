@@ -510,100 +510,77 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     }
 
-
-    private TurnCost obtainVertexAccessMinCost(int currentNode,Vertex v,NodeInVertices ins, boolean reverse){
-
-        TurnCost minCost = new TurnCost(Double.POSITIVE_INFINITY,Double.POSITIVE_INFINITY);
-        for (int ii = 0; ii < ins.size(); ii++) {
-            VertexTerminal in = ins.values()[ii];
-
-            int inOrigEdgeId = reverse ? in.origEdgeFirst : in.origEdgeLast;
-            int vOrigEdgeId = reverse ? v.origEdgeLast : v.origEdgeFirst;
-
-
-
-            double cost = reverse
-                    ? graph.getTurnWeight(vOrigEdgeId, currentNode, inOrigEdgeId)
-                    : graph.getTurnWeight(inOrigEdgeId, currentNode, vOrigEdgeId);
-
-            //System.out.println("Orig Ids " + inOrigEdgeId + " -- " + vOrigEdgeId + " : " + cost );
-
-            TurnCost c = new TurnCost(in.weight,cost);
-
-            if(c.weightWithTurnCost() < minCost.weightWithTurnCost()){
-                minCost = c;
-            }
-        }
-
-        return minCost;
-    }
-
     private void saveAccessibleOutVertices(int currentNode,NodeInVertices ins,NodeOutVertices outs, boolean reverse){
 
         IntObjectMap<OutVertexCost> mins = new IntObjectHashMap();
 
         if(outs.hasOutValues()){
 
-            //OUTS
-            //For every out vertex we check if we have access from any in vertex. If we have access we get the path with
-            //min weight and store it for use in the next nodes
-            for (int i = 0; i < outs.outsSize(); i++) {
-
-                Vertex out = outs.outValues()[i];
-
-                TurnCost minCost;
-
-                if(ins.isNotEmpty()){
-                    minCost = obtainVertexAccessMinCost(currentNode,out,ins,reverse);
-                }else{
-                    minCost = new TurnCost(0,0);
-                }
-
-                System.out.println("Possible Out:" + out.adjNode + " tc:" + minCost.turnCost());
-                if(Double.isFinite(minCost.turnCost())){
-                    OutVertexCost outCost = new OutVertexCost(out,minCost);
-                    System.out.println("Out Cost:" + outCost.cost());
+            if(ins.isEmpty()){
+                //Save all the outputs
+                TurnCost tc = new TurnCost(0,0);
+                for (int i = 0; i < outs.outsSize(); i++) {
+                    Vertex out = outs.outValues()[i];
                     OutVertexCost min = mins.get(out.origEdgeId);
-                    if(min == null || min.cost() > outCost.cost()){
+                    if(min == null || min.cost() > out.weight){
+                        OutVertexCost outCost = new OutVertexCost(out,tc);
                         mins.put(out.origEdgeId,outCost);
                     }
                 }
-            }
+            }else{
+                for (int i = 0; i < ins.size(); i++) {
 
-            //SELFS
-            //For every self vertex we check if we have access from any in vertex. If we have access we check if for
-            //the self vertex we have access to any out vertex.
-            if(outs.hasSelfLoops()){
+                    VertexTerminal in = ins.values()[i];
+                    int inOrigEdgeId = reverse ? in.origEdgeFirst : in.origEdgeLast;
 
-                for (int i = 0; i < outs.selfSize(); i++) {
+                    System.out.println("In " + in);
 
-                    Vertex self = outs.selfValues()[i];
-                    TurnCost minCost = obtainVertexAccessMinCost(currentNode,self,ins,reverse);
+                    for (int ii = 0; ii < outs.outsSize(); ii++) {
 
-                    //Self is Accesible
-                    if(Double.isFinite(minCost.turnCost())){
+                        Vertex out = outs.outValues()[ii];
+                        int outOrigEdgeId = reverse ? out.origEdgeLast : out.origEdgeFirst;
 
-                        for (int ii = 0; ii < outs.outsSize(); ii++) {
+                        double cost = reverse
+                                ? graph.getTurnWeight(outOrigEdgeId, currentNode, inOrigEdgeId)
+                                : graph.getTurnWeight(inOrigEdgeId, currentNode, outOrigEdgeId);
 
-                            Vertex out = outs.outValues()[ii];
-
-                            //TODO ? Reverse Order Important!!!!
-                            //int origEdgeIdForWeight =  reverse ? iter.getOrigEdgeLast() : iter.getOrigEdgeFirst();
-                            // IMPORTANT - Reverse order
-
-                            double cost = reverse
-                                    ? graph.getTurnWeight(out.origEdgeId, currentNode, self.origEdgeId)
-                                    : graph.getTurnWeight(self.origEdgeId, currentNode, out.origEdgeId);
-
-                            if(Double.isFinite(cost)){
-                                Vertex v = out.withSelf(self);
-                                OutVertexCost outCost = new OutVertexCost(v,minCost);
-                                OutVertexCost min = mins.get(v.origEdgeId);
-                                if(min == null || min.cost() > outCost.cost()){
-                                    mins.put(v.origEdgeId,outCost);
-                                }
+                        if(isVertexAccessible(cost)){
+                            TurnCost tc = new TurnCost(in.weight,cost);
+                            OutVertexCost outCost = new OutVertexCost(out,tc);
+                            OutVertexCost min = mins.get(out.origEdgeId);
+                            if(min == null || min.cost() > outCost.cost()){
+                                mins.put(out.origEdgeId,outCost);
                             }
                         }
+
+                            //Check Selfs
+                            if(outs.hasSelfLoops()){
+                                for (int iii = 0; iii < outs.selfSize(); iii++) {
+                                    Vertex self = outs.selfValues()[iii];
+                                    int selfOrigEdgeId = reverse ? self.origEdgeLast : self.origEdgeFirst;
+
+                                    double costInToSelf = reverse
+                                            ? graph.getTurnWeight(selfOrigEdgeId, currentNode, inOrigEdgeId)
+                                            : graph.getTurnWeight(inOrigEdgeId, currentNode, selfOrigEdgeId);
+
+                                    if(isVertexAccessible(costInToSelf)){
+                                        double costSelfToOut = reverse
+                                                ? graph.getTurnWeight(outOrigEdgeId, currentNode,selfOrigEdgeId )
+                                                : graph.getTurnWeight(selfOrigEdgeId, currentNode, outOrigEdgeId);
+
+                                        if(isVertexAccessible((costSelfToOut))){
+                                            Vertex accessibleOut = out.withSelf(self);
+                                            TurnCost tc = new TurnCost(accessibleOut.weight,costInToSelf + costSelfToOut);
+                                            OutVertexCost outCost = new OutVertexCost(out,tc);
+
+                                            OutVertexCost min = mins.get(out.origEdgeId);
+                                            if(min == null || min.cost() > outCost.cost()){
+                                                mins.put(out.origEdgeId,outCost);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                     }
                 }
             }
@@ -612,8 +589,8 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             mins.forEach(new IntObjectProcedure<OutVertexCost>() {
                 @Override
                 public void apply(int i, OutVertexCost outCost) {
-
                     Vertex out = outCost.getOut();
+                    System.out.println("Out: " + out);
 
                     ObjectArrayList<Vertex> adjNodeIns = verticesNode.get(out.adjNode);
                     if(adjNodeIns == null){
@@ -628,7 +605,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                         RankedNode rankedNode = new RankedNode(out.adjNode,getLevel(out.adjNode),false);
                         heap.add(rankedNode);
                     }
-
                 }
             });
         }
