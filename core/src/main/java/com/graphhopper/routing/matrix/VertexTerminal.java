@@ -15,6 +15,9 @@ public class VertexTerminal {
     public int origEdgeFirst;
     public int origEdgeLast;
 
+    private double bw;
+    private double vw;
+
 
     public VertexTerminal(Vertex vert, int terminal, BucketEntry entry) {
         this.baseNode = vert.baseNode;
@@ -28,6 +31,9 @@ public class VertexTerminal {
         this.terminalIdx = entry.idx;
         this.origEdgeFirst = vert.origEdgeFirst;
         this.origEdgeLast = vert.origEdgeLast;
+
+        this.bw = entry.weight;
+        this.vw = vert.weight;
     }
 
     public boolean isSelfLoop(){
@@ -46,6 +52,8 @@ public class VertexTerminal {
                 ", time=" + time +
                 ", distance=" + distance +
                 ", terminal=" + terminal +
+                ", entry w=" + bw +
+                ", vert w=" + vw +
                 '}';
     }
 }

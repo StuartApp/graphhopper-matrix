@@ -22,13 +22,13 @@ public class RankedNode implements Comparable<RankedNode> {
 
     public int node;
     public int level;
-    public boolean terminal;
+    public boolean noAccessibleNodes;
 
 
-    public RankedNode(int node, int level, boolean terminal) {
+    public RankedNode(int node, int level, boolean noAccessibleNodes) {
         this.node = node;
         this.level = level;
-        this.terminal = terminal;
+        this.noAccessibleNodes = noAccessibleNodes;
     }
 
     @Override
