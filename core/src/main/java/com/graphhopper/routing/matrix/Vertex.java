@@ -66,4 +66,23 @@ public class Vertex {
     public int hashCode() {
         return Objects.hash(baseNode, edge, weight);
     }
+
+    public Vertex withTurnCost(double cost) {
+        return new Vertex(this.baseNode,this.edge,this.adjNode,this.origEdgeId,
+                this.weight + cost, this.time + turnCostInMillis(cost), this.distance ,
+                this.origEdgeFirst, this.origEdgeLast);
+
+
+    }
+
+    public Vertex withSelfTurnCost(double inToSelfCost, double selfToOutCost) {
+        return new Vertex(this.baseNode,this.edge,this.adjNode,this.origEdgeId,
+                this.weight + inToSelfCost + selfToOutCost,
+                this.time + turnCostInMillis(inToSelfCost)  + turnCostInMillis(selfToOutCost),
+                this.distance ,this.origEdgeFirst, this.origEdgeLast);
+    }
+
+    private long turnCostInMillis(double turnCost){
+        return (long) turnCost * 1000;
+    }
 }

@@ -21,17 +21,6 @@ public class ManyToManyEdge extends AbstractManyToMany {
         }
     }
 
-    @Override
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, Boolean reverse){
-
-
-        //int origEdgeId = getOrigEdgeId(edge,reverse);
-        //int baseNode = getOtherNode(origEdgeId,edge.getAdjNode());
-
-        //return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
-
-        return GHUtility.createEdgeKey(edge.getBaseNode(), edge.getAdjNode(), edge.getEdge(), reverse);
-    }
 
     @Override
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {

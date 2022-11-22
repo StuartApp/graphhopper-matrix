@@ -20,14 +20,25 @@ public class NodeOutVertices {
     public void add(Vertex v){
 
         if(v.isSelfLoop()){
-            Vertex self = selfs.get(v.origEdgeId);
+            Vertex self = selfs.get(v.edge);
             if(self == null || self.weight > v.weight){
-                selfs.put(v.origEdgeId,v);
+                selfs.put(v.edge,v);
             }
         }else{
-            Vertex out = outs.get(v.origEdgeId);
+
+
+            Vertex out = outs.get(v.edge);
+
+            if(v.baseNode == 2966296 && v.adjNode == 2318131 && out != null){
+                System.out.println(v.edge + " - current:" + out.weight + " vertex: " + v.weight);
+            }else if(v.baseNode == 2966296 && v.adjNode == 2318131 && out == null){
+                    System.out.println(v.edge + " - current:" + 0 + " vertex: " + v.weight);
+
+            }
+
             if(out == null || out.weight > v.weight){
-                outs.put(v.origEdgeId,v);
+
+                outs.put(v.edge,v);
             }
         }
     }

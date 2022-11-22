@@ -79,9 +79,9 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         int oppositeEdge = reverse ? fromOutEdge : toInEdge;
         boolean oppositeEdgeRestricted = reverse ? (fromOutEdge != ANY_EDGE) : (toInEdge != ANY_EDGE);
         if (entry.adjNode == oppositeNode && (!oppositeEdgeRestricted || origEdgeId == oppositeEdge)) {
-            System.out.println("Saving best:" + bestWeight + " new:" + entry.getWeightOfVisitedPath());
+            //System.out.println("Saving best:" + bestWeight + " new:" + entry.getWeightOfVisitedPath());
             if (entry.getWeightOfVisitedPath() < bestWeight) {
-                System.out.println("SAVED!!!!");
+                //System.out.println("SAVED!!!!");
                 bestFwdEntry = reverse ? new CHEntry(oppositeNode, 0) : entry;
                 bestBwdEntry = reverse ? entry : new CHEntry(oppositeNode, 0);
                 bestWeight = entry.getWeightOfVisitedPath();
@@ -104,14 +104,13 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                     graph.getTurnWeight(edgeId, iter.getBaseNode(), origEdgeId) :
                     graph.getTurnWeight(origEdgeId, iter.getBaseNode(), edgeId);
 
-            System.out.println("Turn Cost:" +turnCostsAtBridgeNode + " Iter:" + iter);
+            //System.out.println("Turn Cost:" +turnCostsAtBridgeNode + " Iter:" + iter);
 
             double newWeight = entry.getWeightOfVisitedPath() + entryOther.getWeightOfVisitedPath() + turnCostsAtBridgeNode;
 
-
             if (newWeight < bestWeight) {
-                System.out.println("Turn Cost Brigde Node:" + turnCostsAtBridgeNode);
-                System.out.println("SAVE:" + newWeight + " PREV:" + bestWeight);
+                //System.out.println("Turn Cost Brigde Node:" + turnCostsAtBridgeNode);
+                //System.out.println("SAVE:" + newWeight + " PREV:" + bestWeight);
                 bestFwdEntry = reverse ? entryOther : entry;
                 bestBwdEntry = reverse ? entry : entryOther;
                 bestWeight = newWeight;

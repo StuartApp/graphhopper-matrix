@@ -54,14 +54,19 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
 
         StopWatch sw = new StopWatch().start();
         System.out.println("#######################################");
+        System.out.println(path);
         System.out.println("Forward");
         extractFwdPath(fwdEntry);
+        System.out.println("Total Forward " + path.getTime());
         processMeetingPoint(fwdEntry, bwdEntry);
+        System.out.println("Total Meeting Point " + path.getTime());
         System.out.println("Backward");
         extractBwdPath(bwdEntry);
+        System.out.println("Total Backward " + path.getTime());
         setExtractionTime(sw.stop().getNanos());
         path.setFound(true);
         path.setWeight(weight);
+
         return path;
     }
 
@@ -93,7 +98,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
 
             double diff = (path.getTime() - distance);
 
-            System.out.println(currEntry.adjNode + " -> " + path.getTime() + " : " + diff);
+            System.out.println(currEntry.adjNode + " ("  + currEntry.edge  + ") -> " + path.getTime() + " : " + diff);
             currEntry = parentEntry;
             parentEntry = currEntry.parent;
         }
@@ -125,9 +130,11 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
     }
 
     protected void onMeetingPoint(int inEdge, int viaNode, int outEdge) {
+
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
             return;
         }
+
         path.addTime(weighting.calcTurnMillis(inEdge, viaNode, outEdge));
     }
 

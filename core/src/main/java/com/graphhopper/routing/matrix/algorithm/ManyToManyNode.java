@@ -19,11 +19,6 @@ public class ManyToManyNode extends AbstractManyToMany {
     }
 
     @Override
-    protected int getTraversalId(RoutingCHEdgeIteratorState state,Boolean reverse){
-        return traversalMode.createTraversalId(state.getBaseNode(),state.getAdjNode(),state.getEdge(),reverse);
-    }
-
-    @Override
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
         return edge.getEdge();
     }

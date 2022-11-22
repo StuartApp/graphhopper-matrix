@@ -1,7 +1,5 @@
 package com.graphhopper.routing.matrix;
 
-import java.util.Objects;
-
 public class VertexTerminal {
     public int baseNode;
     public int adjNode;
@@ -15,9 +13,12 @@ public class VertexTerminal {
     public int origEdgeFirst;
     public int origEdgeLast;
 
-    private double bw;
-    private double vw;
-
+    public double bucketWeight;
+    public long bucketTime;
+    public double bucketDistance;
+    public double vertexWeight;
+    public long vertexTime;
+    public double vertexDistance;
 
     public VertexTerminal(Vertex vert, int terminal, BucketEntry entry) {
         this.baseNode = vert.baseNode;
@@ -32,8 +33,12 @@ public class VertexTerminal {
         this.origEdgeFirst = vert.origEdgeFirst;
         this.origEdgeLast = vert.origEdgeLast;
 
-        this.bw = entry.weight;
-        this.vw = vert.weight;
+        this.bucketWeight = entry.weight;
+        this.bucketTime = entry.time;
+        this.bucketDistance = entry.distance;
+        this.vertexWeight = vert.weight;
+        this.vertexTime = vert.time;
+        this.vertexDistance = vert.distance;
     }
 
     public boolean isSelfLoop(){
@@ -52,8 +57,8 @@ public class VertexTerminal {
                 ", time=" + time +
                 ", distance=" + distance +
                 ", terminal=" + terminal +
-                ", entry w=" + bw +
-                ", vert w=" + vw +
+                ", entry w=" + bucketWeight +
+                ", vert w=" + vertexWeight +
                 '}';
     }
 }

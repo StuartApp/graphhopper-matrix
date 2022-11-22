@@ -54,6 +54,8 @@ public class EdgeBasedCHBidirPathExtractor extends DefaultBidirPathExtractor {
         if (!EdgeIterator.Edge.isValid(inEdge) || !EdgeIterator.Edge.isValid(outEdge)) {
             return;
         }
+
+       // System.out.println("Meeting Point time:" + weighting.calcTurnMillis(inEdge, viaNode, outEdge));
         // its important to use the wrapped weighting here, otherwise turn costs involving virtual edges will be wrong
         path.addTime(weighting.calcTurnMillis(inEdge, viaNode, outEdge));
     }
