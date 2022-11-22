@@ -53,16 +53,16 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
             throw new IllegalStateException("forward and backward entries must have same adjacent nodes, fwdEntry:" + fwdEntry + ", bwdEntry:" + bwdEntry);
 
         StopWatch sw = new StopWatch().start();
-        System.out.println("#######################################");
-        System.out.println(path);
-        System.out.println("Forward");
+        //System.out.println("#######################################");
+        //System.out.println(path);
+        //System.out.println("Forward");
         extractFwdPath(fwdEntry);
-        System.out.println("Total Forward " + path.getTime());
+        //System.out.println("Total Forward " + path.getTime());
         processMeetingPoint(fwdEntry, bwdEntry);
-        System.out.println("Total Meeting Point " + path.getTime());
-        System.out.println("Backward");
+        //System.out.println("Total Meeting Point " + path.getTime());
+        //System.out.println("Backward");
         extractBwdPath(bwdEntry);
-        System.out.println("Total Backward " + path.getTime());
+        //System.out.println("Total Backward " + path.getTime());
         setExtractionTime(sw.stop().getNanos());
         path.setFound(true);
         path.setWeight(weight);
@@ -98,7 +98,7 @@ public class DefaultBidirPathExtractor implements BidirPathExtractor {
 
             double diff = (path.getTime() - distance);
 
-            System.out.println(currEntry.adjNode + " ("  + currEntry.edge  + ") -> " + path.getTime() + " : " + diff);
+            //System.out.println(currEntry.adjNode + " ("  + currEntry.edge  + ") -> " + path.getTime() + " : " + diff);
             currEntry = parentEntry;
             parentEntry = currEntry.parent;
         }

@@ -1,7 +1,6 @@
 package com.graphhopper.routing.matrix;
 
 import com.carrotsearch.hppc.*;
-import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.PairingUtils;
@@ -24,10 +23,10 @@ public class SBIAlgorithm {
     LongDoubleMap shortestRoutes;
 
 
-    IntDoubleMap forwardComparator = new IntDoubleHashMap();
-    IntIntMap forwardComparatorOrder = new IntIntHashMap();
-    IntDoubleMap backwardComparator = new IntDoubleHashMap();
-    IntIntMap backwardComparatorOrder = new IntIntHashMap();
+    //IntDoubleMap forwardComparator = new IntDoubleHashMap();
+    //IntIntMap forwardComparatorOrder = new IntIntHashMap();
+    //IntDoubleMap backwardComparator = new IntDoubleHashMap();
+    //IntIntMap backwardComparatorOrder = new IntIntHashMap();
 
 
     public SBIAlgorithm(RoutingCHGraph graph, PriorityQueue<RankedNode> heap, DistanceMatrix dm ) {
@@ -41,47 +40,46 @@ public class SBIAlgorithm {
         this.shortestRoutes = new LongDoubleHashMap();
         this.traversed = new IntHashSet();
 
-        this.forwardComparator.put(2094485,696.0);
-        this.forwardComparator.put(2096491,36535.0);
-        this.forwardComparator.put(748100,26852.0);
+        /*
+        this.forwardComparator.put(2966296,8010.0);
+        this.forwardComparator.put(2966296,69626.0);
+        this.forwardComparator.put(150209,18021.0);
+        this.forwardComparator.put(490,10150.0);
 
-        this.forwardComparatorOrder.put(2094485,2096491);
-        this.forwardComparatorOrder.put(2096491,748100);
+        this.forwardComparatorOrder.put(2966296,2966296);
+        this.forwardComparatorOrder.put(150209,2966296);
+        this.forwardComparatorOrder.put(490,150209);
 
-        this.backwardComparator.put(748100,306669.0);
-        this.backwardComparator.put(2318131,433584.0);
-        this.backwardComparator.put(2966296,121361.0);
-        this.backwardComparator.put(139912,47636.0);
-        this.backwardComparator.put(13071,2280.0);
-        this.backwardComparator.put(3690244,1631.0);
 
-        this.backwardComparatorOrder.put(3690244,13071);
-        this.backwardComparatorOrder.put(13071,139912);
-        this.backwardComparatorOrder.put(139912,2966296);
-        this.backwardComparatorOrder.put(2966296,2318131);
-        this.backwardComparatorOrder.put(2318131,748100);
+        this.backwardComparator.put(2966296,229917.0);
+        this.backwardComparator.put(1612521,162879.0);
+        this.backwardComparator.put(65376,63344.0);
+        this.backwardComparator.put(284578,28668.0);
+        this.backwardComparator.put(284580,2042.0);
 
+        this.backwardComparatorOrder.put(1612521,2966296);
+        this.backwardComparatorOrder.put(65376,1612521);
+        this.backwardComparatorOrder.put(284578,65376);
+        this.backwardComparatorOrder.put(284580,284578);
+
+         */
 
     }
 
     public void addSource(int sourceNode, int sourceIdx){
-
-        System.out.println(" Add Source: " + sourceNode + " - " + sourceIdx);
 
         IntArrayList sourceIdxs = sourcesIndexesNodes.get(sourceNode);
         if(sourceIdxs == null){
             sourceIdxs = new IntArrayList();
             sourcesIndexesNodes.put(sourceNode,sourceIdxs);
             initializeTerminals(sourceNode,sourceIdx,false);
-            findRoutes(sourceNode);
+            findRoutes(sourceNode,null);
         }
 
         sourceIdxs.add(sourceIdx);
     }
 
     public void addTarget(int targetNode, int targetIdx){
-
-        //System.out.println("Add target: " + targetNode + " - " + targetIdx);
 
         IntArrayList targetIdxs = targetIndexesNodes.get(targetNode);
         if(targetIdxs == null){
@@ -110,29 +108,10 @@ public class SBIAlgorithm {
         terminals.addInitialTerminal(initial,reverse,-1,-1,-1);
     }
 
+    //NO REMOVE - Used for debugging routes errors purposes
     private void checkResult(VertexWithTerminals in,
                              int node, int adjNode, double weight, long time, double distance, boolean reverse){
-
         /*
-#######################################
-found: false, weight: 1.7976931348623157E308, time: 0, distance: 0.0, edges: 0
-Forward
-402034 (17319006) -> 77158 : 77158.0
-405917 (15758695) -> 113238 : 36080.0
-402676 (12243545) -> 124765 : 11527.0
-402679 (7686910) -> 137008 : 12243.0
-621677 (877201) -> 143684 : 6676.0
-3660237 (877202) -> 144614 : 930.0
-621679 (4674639) -> 148555 : 3941.0
-3660236 (17733111) -> 155427 : 6872.0
-Total Forward 155427
-Total Meeting Point 155427
-Backward
-402034 (17373478) -> 299102 : 143675.0
-2219523 (13951741) -> 327005 : 27903.0
-Total Backward 327005
-         */
-
         if(reverse){
             if(backwardComparatorOrder.containsKey(node)){
                 if(backwardComparatorOrder.get(node) == adjNode){
@@ -165,46 +144,29 @@ Total Backward 327005
             }
 
         }
+
+         */
     }
 
     public void addInitialOutVertex(int node, int terminal, int terminalIdx, double weight, long time,
                                     double distance, boolean reverse, int origEdgeId, int origEdgeFirst, int origEdgeLast) {
 
-        if(reverse){
-            System.out.println(" Initial: " + node + " - " + time);
-        }
         NodeTerminals terminals = obtainNodeTerminals(node);
         Terminal initial = new Terminal(weight,time,distance,terminal,terminalIdx);
         terminals.addInitialTerminal(initial,reverse,origEdgeId,origEdgeFirst,origEdgeLast);
         addToHeap(node);
         if(reverse) {
-            findRoutes(node);
+            findRoutes(node,null);
         }
     }
 
     private void addOutVertex(VertexWithTerminals in, Vertex out, boolean reverse){
 
-        /*
-        if(out.adjNode == 2318131 && out.baseNode == 2966296){
-            System.out.println("----------------------------------");
-            System.out.println(out);
-            in.getTerminalsList().forEach(new IntObjectProcedure<Terminal>() {
-                @Override
-                public void apply(int i, Terminal terminal) {
-                    System.out.println(terminal);
-                }
-            });
-            System.out.println("------------------------------");
-        }
-
-         */
-
-        checkResult(in, out.baseNode, out.adjNode,out.weight,out.time,out.distance,reverse);
+        //NOT REMOVE!!! checkResult(in, out.baseNode, out.adjNode,out.weight,out.time,out.distance,reverse);
 
         NodeTerminals terminals = obtainNodeTerminals(out.adjNode);
         terminals.addTerminal(in,out,reverse);
     }
-
 
     private VertexWithTerminals[] EMPTY_INS = {};
     private VertexWithTerminals[] getIns( int node, boolean reverse){
@@ -299,8 +261,20 @@ Total Backward 327005
         if(traversed.contains(node)){
             RankedNode rankedNode = new RankedNode(node,graph.getLevel(node),false);
             heap.add(rankedNode);
-            traversed.add(node);
+            addTraversed(node);
         }
+    }
+
+    public void addTraversed(int node){
+        traversed.add(node);
+    }
+
+    public boolean containsTraversed(int node){
+        return traversed.contains(node);
+    }
+
+    public void clearTraversed(){
+        traversed.clear();
     }
 
     private void saveToDistanceMatrix(int sourceIdx, int targetNode, long time, double distance){
@@ -343,12 +317,10 @@ Total Backward 327005
 
                     if(sourceNode == targetNode){
                         saveToDistanceMatrix(sourceIdx,targetNode,0,0);
-                        //System.out.println(node +  " T: " + 0 + " D: " + 0 + " W: " + possible);
                     }else if (current == 0.0 || current > possible){
                         shortestRoutes.put(key,possible);
                         long time = ft.time + bt.time;
                         double distance = ft.distance + bt.distance;
-                        //System.out.println(node +  " T: " + time + " D: " + distance+ " W: " + possible+  " BW: " + bt.time + " FW: " +ft.time + " TC: " + turnCost);
                         saveToDistanceMatrix(sourceIdx,targetNode,time,distance);
                     }
                 }
@@ -357,7 +329,59 @@ Total Backward 327005
 
     }
 
-    public void findRoutes(int node){
+    private void saveShortRoutesWithSelfLoop(VertexWithTerminals forward, VertexWithTerminals backward, int node,
+                                             NodeOutVertices outs){
+
+        int fEdgeId = forward.origEdgeLast;
+        int bEdgeId = backward.origEdgeFirst;
+
+        Vertex[] selfs = outs.selfValues();
+        int selfsSize = outs.selfSize();
+
+        for(int i = 0; i < selfsSize; i++){
+
+            Vertex self = selfs[i];
+            double turnCostFromForwardToSelf =  calculateTurnCost(fEdgeId,self.origEdgeFirst,node,false);
+            if(isAccessible(turnCostFromForwardToSelf)){
+                double turnCostFromSelfToBackward =  calculateTurnCost(self.origEdgeLast,bEdgeId,node,false);
+                if(isAccessible(turnCostFromSelfToBackward)){
+
+                    Terminal[] fterminals = forward.getTerminals();
+                    Terminal[] bterminals = backward.getTerminals();
+
+                    int fterminalsSize = fterminals.length;
+                    int bterminalsSize = bterminals.length;
+
+                    for(int ii = 0; ii < fterminalsSize; ii++ ){
+                        Terminal ft = fterminals[ii];
+
+                        for(int iii = 0; iii < bterminalsSize; iii++ ){
+                            Terminal bt = bterminals[iii];
+
+                            int sourceNode = ft.node;
+                            int sourceIdx = ft.nodeIdx;
+                            int targetNode = bt.node;
+
+                            long key = PairingUtils.pair(sourceNode, targetNode);
+                            double possible = ft.weight + bt.weight + + self.weight + turnCostFromForwardToSelf + turnCostFromSelfToBackward;
+                            double current = shortestRoutes.get(key);
+
+                            if (current == 0.0 || current > possible){
+                                shortestRoutes.put(key,possible);
+                                long time = ft.time + bt.time + self.time;
+                                double distance = ft.distance + bt.distance + self.distance;
+                                saveToDistanceMatrix(sourceIdx,targetNode,time,distance);
+                            }
+                        }
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    public void findRoutes(int node,NodeOutVertices outs){
 
         NodeTerminals nodeTerminals = obtainNodeTerminals(node);
 
@@ -375,6 +399,9 @@ Total Backward 327005
                 for(int ii = 0; ii < backwardSize; ii++){
                     VertexWithTerminals b = backwardTerminals[ii];
                     saveShortRoutes(f,b,node);
+                    if(outs != null && outs.hasSelfLoops()){
+                        saveShortRoutesWithSelfLoop(f,b,node,outs);
+                    }
                 }
             }
         }

@@ -31,8 +31,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     protected CHEdgeFilter sbiLevelEdgeFilter;
 
-    IntObjectMap<MatrixEntry> bestWeightMap;
-
     protected boolean alreadyRun = false;
 
     protected int size;
@@ -43,7 +41,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
     protected SBIAlgorithm sbiAlgo;
     IntSet traversed;
 
-    boolean DEBUG = true;
 
     public AbstractManyToMany(QueryRoutingCHGraph graph, RoutingCHGraph graphNoVirtualNodes) {
 
@@ -60,7 +57,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
         this.traversed = new IntHashSet();
 
-        this.bestWeightMap = new IntObjectHashMap<>();
 
         this.sbiLevelEdgeFilter = new CHEdgeFilter() {
 
@@ -105,10 +101,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             idxTarget++;
         }
 
-        if(DEBUG){
-            System.out.println("############################## BACKWARD");
-        }
-
         backward();
 
         //Reset collections for forward
@@ -134,10 +126,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             }
 
             idxSource++;
-        }
-
-        if(DEBUG){
-            System.out.println("############################## FORWARD");
         }
 
         forward();
@@ -198,9 +186,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
         boolean closestIsVirtual = isVirtual(closestNode);
 
-        System.out.println("Backward Init ********************** : " + closestNode + " virtual:" + closestIsVirtual);
-
-
         if(!closestIsVirtual && !this.traversed.contains(closestNode)){
 
             boolean noAccessibleNodes = true;
@@ -218,17 +203,17 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                 double weight = calcWeight(downIterator, current, true, true);
                 boolean isVirtualAdj = isVirtual(adjNode);
                 int levelAdj = getLevel(adjNode);
+                int origEdgeId = getOrigEdgeIdV2(downIterator, true);
 
                 if (weight == Double.POSITIVE_INFINITY || isVirtualAdj) {
                     continue;
                 }
-                System.out.println("Node: " + adjNode + " w:" + weight + " virtual:" + isVirtualAdj + " level:" + levelAdj);
 
                 double distance = calcDistance(downIterator, current, true);
                 long time = calcTime(downIterator, current, true, true);
 
                 sbiAlgo.addInitialOutVertex(adjNode,closestNode,idx,weight,time,distance,true,
-                        downIterator.getOrigEdge(),downIterator.getOrigEdgeFirst(), downIterator.getOrigEdgeLast());
+                        origEdgeId,downIterator.getOrigEdgeFirst(), downIterator.getOrigEdgeLast());
                 heap.add(new RankedNode(adjNode,levelAdj,false));
                 traversed.add(adjNode);
                 noAccessibleNodes = false;
@@ -255,8 +240,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                     int origEdgeId = getOrigEdgeIdV2(downIterator, true);
                     double weight = calcWeight(downIterator, current, true, true);
                     boolean isVirtualAdj = isVirtual(adjNode);
-
-                    System.out.println("Node: " + adjNode + " w:" + weight + " virtual:" + isVirtualAdj);
 
                     if (weight == Double.POSITIVE_INFINITY) {
                         continue;
@@ -294,15 +277,12 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         boolean closestIsVirtual = isVirtual(closestNode);
         int closestLevel = getLevel(closestNode);
 
-        System.out.println("Forward Init ********************** : " + closestNode + " virtual:" + closestIsVirtual);
-
         if(!closestIsVirtual && !this.traversed.contains(closestNode)){
 
             MatrixEntry current = new MatrixEntry(closestNode, 0, 0, 0, closestLevel);
             RoutingCHEdgeIterator downIterator = outEdgeExplorer.setBaseNode(closestNode);
             boolean noAccessibleNodes = true;
             while (downIterator.next()) {
-
 
                 if(!sbiLevelEdgeFilter.accept(downIterator)){
                     continue;
@@ -312,20 +292,17 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                 double weight = calcWeight(downIterator, current, true, true);
                 boolean isVirtualAdj = isVirtual(adjNode);
                 int levelAdj = getLevel(adjNode);
-
-                System.out.println("Node: " + adjNode + " w:" + weight + " virtual:" + isVirtualAdj + " level:" + levelAdj);
-
+                int origEdgeId = getOrigEdgeIdV2(downIterator, true);
 
                 if (weight == Double.POSITIVE_INFINITY || isVirtualAdj) {
                     continue;
                 }
-                System.out.println("Node Accepted: " + adjNode + " w:" + weight + " virtual:" + isVirtualAdj + " level:" + levelAdj);
 
 
                 double distance = calcDistance(downIterator, current, true);
                 long time = calcTime(downIterator, current, true, true);
                 sbiAlgo.addInitialOutVertex(adjNode,closestNode,idx,weight,time,distance,false,
-                        downIterator.getOrigEdge(), downIterator.getOrigEdgeFirst(), downIterator.getOrigEdgeLast());
+                        origEdgeId, downIterator.getOrigEdgeFirst(), downIterator.getOrigEdgeLast());
 
 
                 heap.add(new RankedNode(adjNode,levelAdj,false));
@@ -345,8 +322,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
                 MatrixEntry current = queue.poll();
                 int baseNode = current.adjNode;
-                //sbiAlgo.addInitialOutVertex(baseNode,closestNode,idx,current.weight,current.time,current.distance,false);
-                //sbiAlgo.findRoutes(baseNode); //TODO
 
                 RoutingCHEdgeIterator outIterator = outEdgeExplorer.setBaseNode(baseNode);
                 while (outIterator.next()) {
@@ -361,8 +336,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
                     if (Double.isInfinite(weight)) {
                         continue;
                     }
-
-                    System.out.println("Node: " + adjNode + " w:" + weight + " virtual:" + isVirtualAdj );
 
                     double distance = calcDistance(outIterator, current, true);
                     long time = calcTime(outIterator, current, false, true);
@@ -388,18 +361,10 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     private void backward(){
 
-        if(DEBUG){
-            System.out.println("######### BACKWARD ################");
-        }
-
         while (!heap.isEmpty()) {
             RankedNode current = heap.poll();
             int currentNode = current.node;
             boolean isTerminal = current.noAccessibleNodes;
-
-            if(DEBUG){
-                //System.out.println("## " + currentNode + " order:" + current.level);
-            }
 
             NodeOutVertices currentNodeOuts =
                     obtainOutVerticesForCurrentNode(currentNode,inEdgeExplorerNoVirtual,true,isTerminal);
@@ -410,18 +375,10 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
     private void forward() {
 
-        if(DEBUG){
-            System.out.println("######### FORWARD ################");
-        }
-
         while (!heap.isEmpty()) {
             RankedNode current = heap.poll();
             int currentNode = current.node;
             boolean isTerminal = current.noAccessibleNodes;
-
-            if(DEBUG){
-                //System.out.println("## " + currentNode);
-            }
 
             NodeOutVertices currentNodeOuts2 =
                     obtainOutVerticesForCurrentNode(currentNode,outEdgeExplorerNoVirtual,false,isTerminal);
@@ -434,7 +391,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
         sbiAlgo.addOuts(currentNode,outs,reverse);
         if(!reverse){
-            sbiAlgo.findRoutes(currentNode);
+            sbiAlgo.findRoutes(currentNode,outs);
         }
 
     }
@@ -447,18 +404,8 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         RoutingCHEdgeIterator iter = explorer.setBaseNode(currentNode);
         while (iter.next()) {
 
-
-            if(currentNode == 2966296){
-                double w = iter.getWeight(reverse);
-                System.out.println(" XX Edge: " + iter.getEdge() + " w: " + w);
-            }
-
             if (!this.sbiLevelEdgeFilter.accept(iter) && !noAccessibleNodes) {
                 continue;
-            }
-
-            if(currentNode == 2966296){
-                System.out.println("Passing");
             }
 
             double weight = iter.getWeight(reverse);
@@ -469,17 +416,12 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
             int origEdgeId = getOrigEdgeId(iter,reverse);
 
-            if(currentNode == 2966296){
-                System.out.println(origEdgeId + " Adding ");
-            }
-
             int adjNode = iter.getAdjNode();
             long time = iter.getTime(reverse);
             double distance = iter.getDistance();
             Vertex v = new Vertex(currentNode,iter.getEdge(),adjNode,origEdgeId,weight,time,distance, iter.getOrigEdgeFirst(),iter.getOrigEdgeLast());
             outs.add(v);
 
-            //TODO - Review that?? Is that the place to put it
             //Add to the heap
             if(!traversed.contains(adjNode)){
                 traversed.add(adjNode);

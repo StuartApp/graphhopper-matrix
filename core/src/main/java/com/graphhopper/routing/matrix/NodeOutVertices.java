@@ -1,50 +1,28 @@
 package com.graphhopper.routing.matrix;
 
-import com.carrotsearch.hppc.LongObjectHashMap;
+import com.carrotsearch.hppc.ObjectArrayList;
 
 
 public class NodeOutVertices {
 
-
-    private LongObjectHashMap<Vertex> outs;
-    private LongObjectHashMap<Vertex> selfs;
+    private ObjectArrayList<Vertex> outs;
+    private ObjectArrayList<Vertex> selfs;
 
     private Vertex[] outsBuffer;
     private Vertex[] selfBuffer;
 
     public NodeOutVertices(){
-        this.outs = new LongObjectHashMap<>();
-        this.selfs = new LongObjectHashMap<>();
+        this.outs = new ObjectArrayList<>();
+        this.selfs = new ObjectArrayList<>();
     }
 
     public void add(Vertex v){
 
         if(v.isSelfLoop()){
-            Vertex self = selfs.get(v.edge);
-            if(self == null || self.weight > v.weight){
-                selfs.put(v.edge,v);
-            }
+            selfs.add(v);
         }else{
-
-
-            Vertex out = outs.get(v.edge);
-
-            if(v.baseNode == 2966296 && v.adjNode == 2318131 && out != null){
-                System.out.println(v.edge + " - current:" + out.weight + " vertex: " + v.weight);
-            }else if(v.baseNode == 2966296 && v.adjNode == 2318131 && out == null){
-                    System.out.println(v.edge + " - current:" + 0 + " vertex: " + v.weight);
-
-            }
-
-            if(out == null || out.weight > v.weight){
-
-                outs.put(v.edge,v);
-            }
+            outs.add(v);
         }
-    }
-
-    public boolean hasNoSelfLoops(){
-        return this.selfs.isEmpty();
     }
 
     public boolean hasSelfLoops(){
@@ -62,7 +40,7 @@ public class NodeOutVertices {
     public Vertex[] outValues(){
         if(hasOutValues()){
             if(outsBuffer == null){
-                this.outsBuffer = this.outs.values().toArray(Vertex.class);
+                this.outsBuffer = this.outs.toArray(Vertex.class);
             }
             return this.outsBuffer;
         }
@@ -77,7 +55,7 @@ public class NodeOutVertices {
     public Vertex[] selfValues(){
         if(hasSelfLoops()){
             if(selfBuffer == null){
-                this.selfBuffer = this.selfs.values().toArray(Vertex.class);
+                this.selfBuffer = this.selfs.toArray(Vertex.class);
             }
             return this.selfBuffer;
         }
