@@ -8,9 +8,6 @@ public class NodeOutVertices {
     private ObjectArrayList<Vertex> outs;
     private ObjectArrayList<Vertex> selfs;
 
-    private Vertex[] outsBuffer;
-    private Vertex[] selfBuffer;
-
     public NodeOutVertices(){
         this.outs = new ObjectArrayList<>();
         this.selfs = new ObjectArrayList<>();
@@ -33,38 +30,12 @@ public class NodeOutVertices {
         return !this.outs.isEmpty();
     }
 
-    public boolean hasNotOutValues(){
-        return this.outs.isEmpty();
+    public ObjectArrayList<Vertex> outVertexes() {
+        return this.outs;
     }
 
-    public Vertex[] outValues(){
-        if(hasOutValues()){
-            if(outsBuffer == null){
-                this.outsBuffer = this.outs.toArray(Vertex.class);
-            }
-            return this.outsBuffer;
-        }
-
-        throw new IllegalStateException("Out Vertices without values");
-    }
-
-    public int outsSize(){
-        return this.outs.size();
-    }
-
-    public Vertex[] selfValues(){
-        if(hasSelfLoops()){
-            if(selfBuffer == null){
-                this.selfBuffer = this.selfs.toArray(Vertex.class);
-            }
-            return this.selfBuffer;
-        }
-
-        throw new IllegalStateException("Self Vertices without values");
-    }
-
-    public int selfSize(){
-        return this.selfs.size();
+    public ObjectArrayList<Vertex> selfVertexes(){
+        return this.selfs;
     }
 
 }

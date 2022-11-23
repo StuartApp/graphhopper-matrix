@@ -145,7 +145,7 @@ public class TestMatrix {
         GHMatrixResponse matrix = gh.matrix(matrixRequest);
         GHMatrixResponse matrix2 = gh.matrix(matrixRequest);
         GHMatrixResponse matrix3 = gh.matrix(matrixRequest);
-        GHMatrixResponse matrix4 = gh.matrix(matrixRequest);
+        //GHMatrixResponse matrix4 = gh.matrix(matrixRequest);
         //GHMatrixResponse matrix5 = gh.matrix(matrixRequest);
         //GHMatrixResponse matrix6 = gh.matrix(matrixRequest);
         //GHMatrixResponse matrix7 = gh.matrix(matrixRequest);
@@ -183,6 +183,7 @@ public class TestMatrix {
                     System.out.println("Time: " + diffTime + " GH: " + response.getBest().getTime() + " Matrix: " + matrix.getMatrix().getTime(sourceIdx, targetIdx));
                     errors++;
                 }
+
                 total++;
 
                 targetIdx++;

@@ -1,22 +1,20 @@
 package com.graphhopper.routing.matrix;
 
 import com.carrotsearch.hppc.*;
+import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.carrotsearch.hppc.procedures.IntProcedure;
+import com.carrotsearch.hppc.procedures.ObjectProcedure;
 import com.graphhopper.storage.RoutingCHGraph;
 import com.graphhopper.util.PairingUtils;
-import java.util.PriorityQueue;
 
 public class SBIAlgorithm {
 
     RoutingCHGraph graph;
-    PriorityQueue<RankedNode> heap;
 
     IntObjectMap<IntArrayList> targetIndexesNodes;
     IntObjectMap<IntArrayList> sourcesIndexesNodes;
 
     IntObjectMap<NodeTerminals> nodeTerminals;
-
-    IntSet traversed;
 
     DistanceMatrix dm;
 
@@ -29,16 +27,16 @@ public class SBIAlgorithm {
     //IntIntMap backwardComparatorOrder = new IntIntHashMap();
 
 
-    public SBIAlgorithm(RoutingCHGraph graph, PriorityQueue<RankedNode> heap, DistanceMatrix dm ) {
+    public SBIAlgorithm(RoutingCHGraph graph, DistanceMatrix dm ) {
 
         this.graph = graph;
-        this.heap = heap;
-        this.targetIndexesNodes = new IntObjectHashMap<>();
-        this.sourcesIndexesNodes = new IntObjectHashMap<>();
-        this.nodeTerminals = new IntObjectHashMap<>();
+        this.targetIndexesNodes = new IntObjectHashMap<>(dm.getNumberOfDestinations());
+        this.sourcesIndexesNodes = new IntObjectHashMap<>(dm.getNumberOfOrigins());
+
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
+        this.nodeTerminals = new IntObjectHashMap<>(size);
         this.dm = dm;
-        this.shortestRoutes = new LongDoubleHashMap();
-        this.traversed = new IntHashSet();
+        this.shortestRoutes = new LongDoubleHashMap(dm.getNumberOfDestinations() * dm.getNumberOfOrigins());
 
         /*
         this.forwardComparator.put(2966296,8010.0);
@@ -94,7 +92,7 @@ public class SBIAlgorithm {
     private NodeTerminals obtainNodeTerminals(int node){
         NodeTerminals terminals = nodeTerminals.get(node);
         if(terminals == null){
-            terminals = new NodeTerminals();
+            terminals = new NodeTerminals(node);
             nodeTerminals.put(node,terminals);
         }
 
@@ -154,7 +152,6 @@ public class SBIAlgorithm {
         NodeTerminals terminals = obtainNodeTerminals(node);
         Terminal initial = new Terminal(weight,time,distance,terminal,terminalIdx);
         terminals.addInitialTerminal(initial,reverse,origEdgeId,origEdgeFirst,origEdgeLast);
-        addToHeap(node);
         if(reverse) {
             findRoutes(node,null);
         }
@@ -164,19 +161,22 @@ public class SBIAlgorithm {
 
         //NOT REMOVE!!! checkResult(in, out.baseNode, out.adjNode,out.weight,out.time,out.distance,reverse);
 
-        NodeTerminals terminals = obtainNodeTerminals(out.adjNode);
-        terminals.addTerminal(in,out,reverse);
+        NodeTerminals nodeTerminals = obtainNodeTerminals(out.adjNode);
+        nodeTerminals.addTerminal(in,out,reverse);
+
     }
 
-    private VertexWithTerminals[] EMPTY_INS = {};
-    private VertexWithTerminals[] getIns( int node, boolean reverse){
+    private ObjectContainer<VertexWithTerminals> EMPTY_INS = new ObjectArrayList<>();
+
+
+    private ObjectContainer<VertexWithTerminals> getIns(int node, boolean reverse){
 
         NodeTerminals nt = nodeTerminals.get(node);
 
         if(nt == null){
             return EMPTY_INS;
         }else{
-            return nodeTerminals.get(node).getTerminals(reverse);
+            return nt.getTerminals(reverse);
         }
     }
 
@@ -193,88 +193,62 @@ public class SBIAlgorithm {
 
     public void addOuts(int node, NodeOutVertices outs, boolean reverse){
 
-        VertexWithTerminals[] ins = getIns(node,reverse);
-        int insSize = ins.length;
-
         if(outs.hasOutValues()){
 
-            for (int i = 0; i < insSize; i++) {
-                VertexWithTerminals in = ins[i];
-                int inOrigEdgeId = reverse ? in.origEdgeFirst : in.origEdgeLast;
+            getIns(node,reverse).forEach(new ObjectProcedure<VertexWithTerminals>() {
+                @Override
+                public void apply(VertexWithTerminals in) {
+                    int inOrigEdgeId = reverse ? in.origEdgeFirst : in.origEdgeLast;
 
-                for (int ii = 0; ii < outs.outsSize(); ii++) {
+                    outs.outVertexes().forEach(new ObjectProcedure<Vertex>() {
+                        @Override
+                        public void apply(Vertex out) {
+                            //If an in vertex origEdgeId is equal of this vertex origEdgeId we discard it
+                            if(in.origEdgeId != out.origEdgeId){
+                                int outOrigEdgeId = reverse ? out.origEdgeLast : out.origEdgeFirst;
 
-                    Vertex out = outs.outValues()[ii];
+                                double cost = calculateTurnCost(inOrigEdgeId,outOrigEdgeId,node,reverse);
 
-                    //If an in vertex origEdgeId is equal of this vertex origEdgeId we discard it
-                    if(in.origEdgeId == out.origEdgeId){
-                        continue;
-                    }
+                                //Out is accessible
+                                if(isAccessible(cost)){
 
-                    int outOrigEdgeId = reverse ? out.origEdgeLast : out.origEdgeFirst;
+                                    Vertex outWithCost = out.withTurnCost(cost);
+                                    addOutVertex(in,outWithCost,reverse);
+                                }
 
-                    double cost = calculateTurnCost(inOrigEdgeId,outOrigEdgeId,node,reverse);
+                                //Check Selfs
+                                if(outs.hasSelfLoops()){
+
+                                    outs.selfVertexes().forEach(new ObjectProcedure<Vertex>() {
+                                        @Override
+                                        public void apply(Vertex self) {
+                                            if(in.origEdgeId != self.origEdgeId){
+                                                int selfOrigEdgeId = reverse ? self.origEdgeLast : self.origEdgeFirst;
+
+                                                double costInToSelf = calculateTurnCost(inOrigEdgeId,selfOrigEdgeId,node,reverse);
+
+                                                //In to self is accessible
+                                                if(isAccessible(costInToSelf)){
+
+                                                    double costSelfToOut = calculateTurnCost(selfOrigEdgeId,outOrigEdgeId,node,reverse);
+                                                    //Self to out is accessible
+                                                    if(isAccessible((costSelfToOut))){
+                                                        Vertex outWithSelfCost = out.withSelf(self).withSelfTurnCost(costInToSelf,costSelfToOut);
+                                                        addOutVertex(in,outWithSelfCost,reverse);
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
 
 
-                    //Out is accessible
-                    if(isAccessible(cost)){
-
-                        Vertex outWithCost = out.withTurnCost(cost);
-                        addOutVertex(in,outWithCost,reverse);
-                        addToHeap(out.adjNode);
-                    }
-
-                    //Check Selfs
-                    if(outs.hasSelfLoops()){
-
-                        for (int iii = 0; iii < outs.selfSize(); iii++) {
-                            Vertex self = outs.selfValues()[iii];
-
-                            if(in.origEdgeId == self.origEdgeId){
-                                continue;
-                            }
-
-                            int selfOrigEdgeId = reverse ? self.origEdgeLast : self.origEdgeFirst;
-
-                            double costInToSelf = calculateTurnCost(inOrigEdgeId,selfOrigEdgeId,node,reverse);
-
-                            //In to self is accessible
-                            if(isAccessible(costInToSelf)){
-
-                                double costSelfToOut = calculateTurnCost(selfOrigEdgeId,outOrigEdgeId,node,reverse);
-                                //Self to out is accessible
-                                if(isAccessible((costSelfToOut))){
-                                    Vertex outWithSelfCost = out.withSelf(self).withSelfTurnCost(costInToSelf,costSelfToOut);
-                                    addOutVertex(in,outWithSelfCost,reverse);
-                                    addToHeap(out.adjNode);
                                 }
                             }
                         }
-
-                    }
+                    });
                 }
-            }
+            });
         }
-    }
-
-    private void addToHeap(int node){
-        if(traversed.contains(node)){
-            RankedNode rankedNode = new RankedNode(node,graph.getLevel(node),false);
-            heap.add(rankedNode);
-            addTraversed(node);
-        }
-    }
-
-    public void addTraversed(int node){
-        traversed.add(node);
-    }
-
-    public boolean containsTraversed(int node){
-        return traversed.contains(node);
-    }
-
-    public void clearTraversed(){
-        traversed.clear();
     }
 
     private void saveToDistanceMatrix(int sourceIdx, int targetNode, long time, double distance){
@@ -294,39 +268,38 @@ public class SBIAlgorithm {
 
         double turnCost = calculateTurnCost(fEdgeId,bEdgeId,node,false);
 
+
         if(isAccessible(turnCost)){
-            Terminal[] fterminals = forward.getTerminals();
-            Terminal[] bterminals = backward.getTerminals();
 
-            int fterminalsSize = fterminals.length;
-            int bterminalsSize = bterminals.length;
+            forward.getTerminals().forEach(new IntObjectProcedure<Terminal>() {
+                @Override
+                public void apply(int i, Terminal ft) {
 
-            for(int i = 0; i < fterminalsSize; i++ ){
-                Terminal ft = fterminals[i];
+                    backward.getTerminals().forEach(new IntObjectProcedure<Terminal>() {
+                        @Override
+                        public void apply(int i, Terminal bt) {
+                            int sourceNode = ft.node;
+                            int sourceIdx = ft.nodeIdx;
+                            int targetNode = bt.node;
 
-                for(int ii = 0; ii < bterminalsSize; ii++ ){
-                    Terminal bt = bterminals[ii];
+                            long key = PairingUtils.pair(sourceNode, targetNode);
+                            double possible = ft.weight + bt.weight + turnCost;
+                            double current = shortestRoutes.get(key);
 
-                    int sourceNode = ft.node;
-                    int sourceIdx = ft.nodeIdx;
-                    int targetNode = bt.node;
+                            if(sourceNode == targetNode){
+                                saveToDistanceMatrix(sourceIdx,targetNode,0,0);
+                            }else if (current == 0.0 || current > possible){
+                                shortestRoutes.put(key,possible);
+                                long time = ft.time + bt.time;
+                                double distance = ft.distance + bt.distance;
+                                saveToDistanceMatrix(sourceIdx,targetNode,time,distance);
+                            }
+                        }
+                    });
 
-                    long key = PairingUtils.pair(sourceNode, targetNode);
-                    double possible = ft.weight + bt.weight + turnCost;
-                    double current = shortestRoutes.get(key);
-
-                    if(sourceNode == targetNode){
-                        saveToDistanceMatrix(sourceIdx,targetNode,0,0);
-                    }else if (current == 0.0 || current > possible){
-                        shortestRoutes.put(key,possible);
-                        long time = ft.time + bt.time;
-                        double distance = ft.distance + bt.distance;
-                        saveToDistanceMatrix(sourceIdx,targetNode,time,distance);
-                    }
                 }
-            }
+            });
         }
-
     }
 
     private void saveShortRoutesWithSelfLoop(VertexWithTerminals forward, VertexWithTerminals backward, int node,
@@ -335,50 +308,45 @@ public class SBIAlgorithm {
         int fEdgeId = forward.origEdgeLast;
         int bEdgeId = backward.origEdgeFirst;
 
-        Vertex[] selfs = outs.selfValues();
-        int selfsSize = outs.selfSize();
+        outs.selfVertexes().forEach(new ObjectProcedure<Vertex>() {
+            @Override
+            public void apply(Vertex self) {
+                double turnCostFromForwardToSelf =  calculateTurnCost(fEdgeId,self.origEdgeFirst,node,false);
+                if(isAccessible(turnCostFromForwardToSelf)){
+                    double turnCostFromSelfToBackward =  calculateTurnCost(self.origEdgeLast,bEdgeId,node,false);
+                    if(isAccessible(turnCostFromSelfToBackward)){
 
-        for(int i = 0; i < selfsSize; i++){
+                        //
+                        forward.getTerminals().forEach(new IntObjectProcedure<Terminal>() {
+                            @Override
+                            public void apply(int i, Terminal ft) {
 
-            Vertex self = selfs[i];
-            double turnCostFromForwardToSelf =  calculateTurnCost(fEdgeId,self.origEdgeFirst,node,false);
-            if(isAccessible(turnCostFromForwardToSelf)){
-                double turnCostFromSelfToBackward =  calculateTurnCost(self.origEdgeLast,bEdgeId,node,false);
-                if(isAccessible(turnCostFromSelfToBackward)){
+                                backward.getTerminals().forEach(new IntObjectProcedure<Terminal>() {
+                                    @Override
+                                    public void apply(int i, Terminal bt) {
+                                        int sourceNode = ft.node;
+                                        int sourceIdx = ft.nodeIdx;
+                                        int targetNode = bt.node;
 
-                    Terminal[] fterminals = forward.getTerminals();
-                    Terminal[] bterminals = backward.getTerminals();
+                                        long key = PairingUtils.pair(sourceNode, targetNode);
+                                        double possible = ft.weight + bt.weight + + self.weight + turnCostFromForwardToSelf + turnCostFromSelfToBackward;
+                                        double current = shortestRoutes.get(key);
 
-                    int fterminalsSize = fterminals.length;
-                    int bterminalsSize = bterminals.length;
+                                        if (current == 0.0 || current > possible){
+                                            shortestRoutes.put(key,possible);
+                                            long time = ft.time + bt.time + self.time;
+                                            double distance = ft.distance + bt.distance + self.distance;
+                                            saveToDistanceMatrix(sourceIdx,targetNode,time,distance);
+                                        }
+                                    }
+                                });
 
-                    for(int ii = 0; ii < fterminalsSize; ii++ ){
-                        Terminal ft = fterminals[ii];
-
-                        for(int iii = 0; iii < bterminalsSize; iii++ ){
-                            Terminal bt = bterminals[iii];
-
-                            int sourceNode = ft.node;
-                            int sourceIdx = ft.nodeIdx;
-                            int targetNode = bt.node;
-
-                            long key = PairingUtils.pair(sourceNode, targetNode);
-                            double possible = ft.weight + bt.weight + + self.weight + turnCostFromForwardToSelf + turnCostFromSelfToBackward;
-                            double current = shortestRoutes.get(key);
-
-                            if (current == 0.0 || current > possible){
-                                shortestRoutes.put(key,possible);
-                                long time = ft.time + bt.time + self.time;
-                                double distance = ft.distance + bt.distance + self.distance;
-                                saveToDistanceMatrix(sourceIdx,targetNode,time,distance);
                             }
-                        }
+                        });
                     }
                 }
             }
-
-
-        }
+        });
     }
 
     public void findRoutes(int node,NodeOutVertices outs){
@@ -387,24 +355,96 @@ public class SBIAlgorithm {
 
         if(nodeTerminals.hasPossibleShortRoutes()){
 
-            VertexWithTerminals[] backwardTerminals = nodeTerminals.getBackwardTerminals();
-            VertexWithTerminals[] forwardTerminals = nodeTerminals.getForwardTerminals();
+            nodeTerminals.getForwardTerminals().forEach(new ObjectProcedure<VertexWithTerminals>() {
+                @Override
+                public void apply(VertexWithTerminals f) {
 
-            int forwardSize = forwardTerminals.length;
-            int backwardSize = backwardTerminals.length;
-
-            for(int i = 0; i < forwardSize; i++){
-                VertexWithTerminals f = forwardTerminals[i];
-
-                for(int ii = 0; ii < backwardSize; ii++){
-                    VertexWithTerminals b = backwardTerminals[ii];
-                    saveShortRoutes(f,b,node);
-                    if(outs != null && outs.hasSelfLoops()){
-                        saveShortRoutesWithSelfLoop(f,b,node,outs);
-                    }
+                    nodeTerminals.getBackwardTerminals().forEach(new ObjectProcedure<VertexWithTerminals>() {
+                        @Override
+                        public void apply(VertexWithTerminals b) {
+                            saveShortRoutes(f,b,node);
+                            if(outs != null && outs.hasSelfLoops()){
+                                saveShortRoutesWithSelfLoop(f,b,node,outs);
+                            }
+                        }
+                    });
                 }
-            }
+            });
+
         }
     }
 
+
+    private class NodeTerminals {
+
+        private int node;
+
+        private LongObjectMap<VertexWithTerminals> forwardTerminals;
+        private LongObjectMap<VertexWithTerminals> backwardTerminals;
+
+        public NodeTerminals(int node) {
+            this.node = node;
+            this.forwardTerminals = new LongObjectHashMap<>();
+            this.backwardTerminals = new LongObjectHashMap<>();
+        }
+
+
+        public ObjectContainer<VertexWithTerminals> getTerminals(boolean reverse){
+            if(reverse){
+                return backwardTerminals.values();
+            }else{
+                return forwardTerminals.values();
+            }
+        }
+
+        public boolean hasPossibleShortRoutes(){
+            return !this.backwardTerminals.isEmpty() && !this.forwardTerminals.isEmpty();
+        }
+
+        public void addInitialTerminal(Terminal terminal, boolean reverse, int originalEdgeId, int origEdgeFirst, int origEdgeLast){
+
+            VertexWithTerminals vertex = new VertexWithTerminals(originalEdgeId,origEdgeFirst,origEdgeLast);
+
+            long key = PairingUtils.pair(terminal.node, vertex.origEdgeId);
+
+            vertex.addTerminal(terminal);
+
+            if(reverse){
+                backwardTerminals.put(key,vertex);
+            }else{
+                forwardTerminals.put(key,vertex);
+            }
+        }
+
+        public void addTerminal(VertexWithTerminals vt, Vertex out, boolean reverse){
+
+            LongObjectMap<VertexWithTerminals> search = (reverse) ? backwardTerminals : forwardTerminals;
+
+            vt.getTerminals().forEach(new IntObjectProcedure<Terminal>() {
+                @Override
+                public void apply(int i, Terminal t) {
+                    int edgeId = (reverse) ? out.origEdgeFirst : out.origEdgeLast;
+
+                    long key = PairingUtils.pair(t.node,edgeId);
+
+                    VertexWithTerminals current = search.get(key);
+                    if(current == null){
+                        current = VertexWithTerminals.createFromOut(out);
+                        search.put(key,current);
+                    }
+
+                    current.addTerminal(t.with(out.weight,out.time,out.distance));
+                }
+            });
+        }
+
+
+        public ObjectContainer<VertexWithTerminals> getBackwardTerminals() {
+            return getTerminals(true);
+        }
+
+        public ObjectContainer<VertexWithTerminals> getForwardTerminals() {
+            return getTerminals(false);
+        }
+    }
 }

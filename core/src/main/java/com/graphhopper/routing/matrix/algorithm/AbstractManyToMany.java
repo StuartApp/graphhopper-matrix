@@ -7,7 +7,9 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
+import com.graphhopper.util.StopWatch;
 
+import java.io.IOException;
 import java.util.*;
 
 /*
@@ -86,10 +88,10 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         checkAlreadyRun();
 
         DistanceMatrix matrix = new DistanceMatrix(sources.size(), targets.size());
-        this.sbiAlgo = new SBIAlgorithm(graph,heap,matrix);
-        IntObjectMap<IntArrayList> targetIdxsNodes = new GHIntObjectHashMap<>(targets.size());
+        this.sbiAlgo = new SBIAlgorithm(graph,matrix);
 
         //Backward
+
         int idxTarget = 0;
         while (idxTarget < targets.size()) {
 
@@ -101,13 +103,19 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             idxTarget++;
         }
 
+
+
         backward();
 
+
         //Reset collections for forward
+
         this.heap.clear();
         this.traversed.clear();
 
+
         //Forward
+
         int idxSource = 0;
         IntIntMap processedSources = new IntIntHashMap();
         List<IntIntPair> cloneResults = new ArrayList<>();
@@ -128,7 +136,10 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             idxSource++;
         }
 
+
+        StopWatch sw = new StopWatch().start();
         forward();
+        System.out.println(sw.stop().getMillis() + " ms");
 
         cloneResults.stream().forEach(pair -> matrix.copyResult(pair.source, pair.target));
 
@@ -369,7 +380,6 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             NodeOutVertices currentNodeOuts =
                     obtainOutVerticesForCurrentNode(currentNode,inEdgeExplorerNoVirtual,true,isTerminal);
             simultaneousBucketInitialization(currentNode,true,currentNodeOuts);
-
         }
     }
 
@@ -380,9 +390,9 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
             int currentNode = current.node;
             boolean isTerminal = current.noAccessibleNodes;
 
-            NodeOutVertices currentNodeOuts2 =
+            NodeOutVertices currentNodeOuts =
                     obtainOutVerticesForCurrentNode(currentNode,outEdgeExplorerNoVirtual,false,isTerminal);
-            simultaneousBucketInitialization(currentNode,false,currentNodeOuts2);
+            simultaneousBucketInitialization(currentNode,false,currentNodeOuts);
 
         }
     }
@@ -424,6 +434,7 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
 
             //Add to the heap
             if(!traversed.contains(adjNode)){
+                this.visitedNodes++;
                 traversed.add(adjNode);
                 RankedNode rankedNode = new RankedNode(adjNode,getLevel(adjNode),false);
                 heap.add(rankedNode);
@@ -433,4 +444,5 @@ public abstract class AbstractManyToMany implements MatrixAlgorithm {
         return outs;
 
     }
+
 }

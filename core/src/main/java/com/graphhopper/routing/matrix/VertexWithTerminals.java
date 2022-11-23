@@ -7,9 +7,6 @@ import com.graphhopper.storage.RoutingCHEdgeIterator;
 
 public class VertexWithTerminals {
 
-    public int baseNode;
-    public int adjNode;
-    public int edge;
     public int origEdgeId;
     public int origEdgeFirst;
     public int origEdgeLast;
@@ -18,15 +15,13 @@ public class VertexWithTerminals {
 
     public VertexWithTerminals(RoutingCHEdgeIterator iter){
 
-        this(iter.getBaseNode(), iter.getEdge(), iter.getAdjNode(),iter.getOrigEdge(),
+        this(iter.getOrigEdge(),
                 iter.getOrigEdgeFirst(), iter.getOrigEdgeLast());
 
     }
 
-    public VertexWithTerminals(int base, int edge, int adj, int origEdgeId, int origEdgeFirst, int origEdgeLast) {
-        this.baseNode = base;
-        this.edge = edge;
-        this.adjNode = adj;
+    public VertexWithTerminals(int origEdgeId, int origEdgeFirst, int origEdgeLast) {
+
         this.origEdgeId = origEdgeId;
         this.origEdgeFirst = origEdgeFirst;
         this.origEdgeLast = origEdgeLast;
@@ -67,24 +62,17 @@ public class VertexWithTerminals {
        return vt;
     }
 
-
-
     private long turnCostInMillis(double turnCost){
         return (long) turnCost * 1000;
     }
 
-    public Terminal[] getTerminals() {
-        return terminals.values().toArray(Terminal.class);
-    }
-
-
-    public IntObjectMap<Terminal> getTerminalsList(){
+    public IntObjectMap<Terminal> getTerminals(){
         return terminals;
     }
 
     public static VertexWithTerminals createFromOut(Vertex out){
 
-        VertexWithTerminals vt = new VertexWithTerminals(out.baseNode, out.edge, out.adjNode, out.origEdgeId,
+        VertexWithTerminals vt = new VertexWithTerminals(out.origEdgeId,
                out.origEdgeFirst, out.origEdgeLast);
 
         return vt;
@@ -94,10 +82,6 @@ public class VertexWithTerminals {
     @Override
     public String toString() {
         return "VertexWithTerminals{" +
-                "baseNode=" + baseNode +
-                ", adjNode=" + adjNode +
-                ", edge=" + edge +
-                ", origEdgeId=" + origEdgeId +
                 ", origEdgeFirst=" + origEdgeFirst +
                 ", origEdgeLast=" + origEdgeLast +
                 '}';
