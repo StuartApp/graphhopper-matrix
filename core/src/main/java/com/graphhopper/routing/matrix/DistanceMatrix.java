@@ -80,12 +80,6 @@ public final class DistanceMatrix {
         times[originIndex][destIndex] = time;
     }
 
-    public void copyResult(int originIndexSource, int originIndexDestination){
-        distances[originIndexDestination] = distances[originIndexSource];
-        times[originIndexDestination] = times[originIndexSource];
-    }
-
-
     public double getDistance(int originIndex, int destIndex) {
         return distances[originIndex][destIndex];
     }

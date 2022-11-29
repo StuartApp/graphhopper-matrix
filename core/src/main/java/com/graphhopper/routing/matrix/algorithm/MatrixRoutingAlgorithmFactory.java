@@ -27,11 +27,7 @@ public class MatrixRoutingAlgorithmFactory {
         if (Helper.isEmpty(algo))
             algo = defaultAlgo;
         if (Parameters.Algorithms.DIJKSTRA_MANY_TO_MANY.equals(algo)) {
-            if(opts.getTraversalMode() == TraversalMode.NODE_BASED){
-               return new ManyToManyNode(routingCHGraph,graphNoVirtualNodes);
-            }else{
-                return new ManyToManyEdge(routingCHGraph,graphNoVirtualNodes);
-            }
+                return new ManyToManySBI(routingCHGraph,graphNoVirtualNodes);
         } else {
             throw new IllegalArgumentException("Algorithm " + algo + " not supported for Matrix calculation.");
         }

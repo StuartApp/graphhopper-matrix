@@ -19,7 +19,7 @@ package com.graphhopper.routing.matrix;
 
 import java.util.Objects;
 
-public class BucketEntry {
+public class Bucket {
 
     public double weight;
     public double distance;
@@ -28,7 +28,7 @@ public class BucketEntry {
 
 
 
-    public BucketEntry(double weight, long time, double distance, int idx) {
+    public Bucket(double weight, long time, double distance, int idx) {
         this.weight = weight;
         this.time = time;
         this.distance = distance;
@@ -49,7 +49,7 @@ public class BucketEntry {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        BucketEntry that = (BucketEntry) o;
+        Bucket that = (Bucket) o;
         return idx == that.idx;
     }
 
