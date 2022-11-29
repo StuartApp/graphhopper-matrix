@@ -6,10 +6,6 @@ import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.ViaRouting;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.matrix.DistanceMatrix;
-import com.graphhopper.routing.matrix.GHMatrixRequest;
-import com.graphhopper.routing.matrix.GHMatrixResponse;
-import com.graphhopper.routing.matrix.MatrixCalculator;
 import com.graphhopper.routing.matrix.solver.CHMatrixSolver;
 import com.graphhopper.routing.matrix.solver.MatrixSolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -32,10 +28,6 @@ public class RouterMatrix extends Router {
     }
 
     public GHMatrixResponse matrix(GHMatrixRequest request) {
-
-        Profile profile = profilesByName.get(request.getProfile());
-        RoutingCHGraph chGraph = chGraphs.get(profile.getName());
-
 
         MatrixSolver solver = createMatrixSolver(request);
         solver.checkRequest();

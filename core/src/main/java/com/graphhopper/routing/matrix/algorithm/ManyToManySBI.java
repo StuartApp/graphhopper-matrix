@@ -156,9 +156,18 @@ public class ManyToManySBI implements MatrixAlgorithm {
 
     private void addInitialBucket(int node,int idx, IntObjectMap<IntObjectMap<Bucket>> buckets){
         Bucket bucket = new Bucket(idx,0,0,0);
-        IntObjectMap<Bucket> bucketsDistance = new IntObjectHashMap<>();
+        IntObjectMap<Bucket> bucketsDistance = obtainNodeBuckets(node,buckets);
         bucketsDistance.put(idx,bucket);
         copyBucketsToCurrentVertex(node,bucketsDistance, buckets);
+    }
+
+    private  IntObjectMap<Bucket> obtainNodeBuckets(int node, IntObjectMap<IntObjectMap<Bucket>> buckets){
+        IntObjectMap<Bucket>  nodeBuckets = buckets.get(node);
+        if(nodeBuckets == null){
+            nodeBuckets = new IntObjectScatterMap<>();
+        }
+
+        return nodeBuckets;
     }
 
     private void addInitialNode(int idx, int nonVirtualNode, RoutingCHEdgeExplorer explorer,
@@ -242,7 +251,7 @@ public class ManyToManySBI implements MatrixAlgorithm {
                 }
             }
             if(current.node != virtualNode){
-                IntObjectMap<Bucket> nodeBucketsDistance = new IntObjectScatterMap<>();
+                IntObjectMap<Bucket> nodeBucketsDistance = obtainNodeBuckets(current.node,buckets);
                 discoverBucketsEntriesToCopy(current.node, buckets,nodeBucketsDistance);
                 copyBucketsToCurrentVertex(current.node,nodeBucketsDistance, buckets);
             }
@@ -277,7 +286,7 @@ public class ManyToManySBI implements MatrixAlgorithm {
 
         while (!heap.isEmpty()) {
             RankedNode current = heap.poll();
-            IntObjectMap<Bucket> bucketsDistances = new IntObjectScatterMap<>();
+            IntObjectMap<Bucket> bucketsDistances = obtainNodeBuckets(current.node,backwardBuckets);
             processDownEdgesForCurrentNode(current,inEdgeExplorerNoVirtual,true,false);
             processUpEdgesForCurrentNode(current,outEdgeExplorerNoVirtual,true);
             discoverBucketsEntriesToCopy(current.node, backwardBuckets,bucketsDistances);
@@ -290,7 +299,7 @@ public class ManyToManySBI implements MatrixAlgorithm {
 
         while (!heap.isEmpty()) {
             RankedNode current = heap.poll();
-            IntObjectMap<Bucket> bucketsDistances = new IntObjectScatterMap<>();
+            IntObjectMap<Bucket> bucketsDistances = obtainNodeBuckets(current.node,forwardBuckets);
             processDownEdgesForCurrentNode(current,outEdgeExplorerNoVirtual,false,false);
             processUpEdgesForCurrentNode(current,inEdgeExplorerNoVirtual,false);
             discoverBucketsEntriesToCopy(current.node, forwardBuckets,bucketsDistances);
