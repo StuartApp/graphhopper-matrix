@@ -110,7 +110,7 @@ public class GraphHopperMatrixTest {
         final MatrixText matrixText = parseRawMatrix(matrix);
 
         Profile carProfile = new Profile("car");
-        carProfile.setTurnCosts(true);
+        carProfile.setTurnCosts(false);
         CHProfile chCarProfile = new CHProfile("car");
 
         List<Profile> profiles = new ArrayList<>();

@@ -275,16 +275,15 @@ public class ManyToManySBI implements MatrixAlgorithm {
 
         if(!closestIsVirtual && !this.traversedNodes.contains(closestNode)){
             addInitialNode(idx,closestNode,explorer,buckets,reverse,dm);
-        }else if(!this.traversedNodes.contains(closestNode)){
-            addInitialVirtualNode(idx,closestNode,explorer,buckets,reverse,dm);
         }else{
-            addInitialBucket(idx,closestNode,buckets);
+            addInitialVirtualNode(idx,closestNode,explorer,buckets,reverse,dm);
         }
     }
 
     private void backward(){
 
         while (!heap.isEmpty()) {
+
             RankedNode current = heap.poll();
             IntObjectMap<Bucket> bucketsDistances = obtainNodeBuckets(current.node,backwardBuckets);
             processDownEdgesForCurrentNode(current,inEdgeExplorerNoVirtual,true,false);
