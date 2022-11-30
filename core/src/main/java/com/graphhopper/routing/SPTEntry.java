@@ -30,6 +30,7 @@ public class SPTEntry implements Comparable<SPTEntry> {
     public int adjNode;
     public double weight;
     public SPTEntry parent;
+    public boolean deleted;
 
     public SPTEntry(int node, double weight) {
         this(EdgeIterator.NO_EDGE, node, weight, null);
@@ -40,6 +41,14 @@ public class SPTEntry implements Comparable<SPTEntry> {
         this.adjNode = adjNode;
         this.weight = weight;
         this.parent = parent;
+    }
+
+    public void setDeleted() {
+        deleted = true;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
     }
 
     /**

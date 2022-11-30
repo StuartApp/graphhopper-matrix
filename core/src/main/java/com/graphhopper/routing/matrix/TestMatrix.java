@@ -155,14 +155,14 @@ public class TestMatrix {
             GHMatrixResponse matrix = gh.matrix(matrixRequest);
         }
 
-        exit(-1);
+        //exit(-1);
 
         GHMatrixResponse matrix = gh.matrix(matrixRequest);
-        GHMatrixResponse matrix2 = gh.matrix(matrixRequest);
-        GHMatrixResponse matrix3 = gh.matrix(matrixRequest);
-        GHMatrixResponse matrix4 = gh.matrix(matrixRequest);
-        GHMatrixResponse matrix5 = gh.matrix(matrixRequest);
-        GHMatrixResponse matrix6 = gh.matrix(matrixRequest);
+        //GHMatrixResponse matrix2 = gh.matrix(matrixRequest);
+        //GHMatrixResponse matrix3 = gh.matrix(matrixRequest);
+        //GHMatrixResponse matrix4 = gh.matrix(matrixRequest);
+        //GHMatrixResponse matrix5 = gh.matrix(matrixRequest);
+        //GHMatrixResponse matrix6 = gh.matrix(matrixRequest);
         //GHMatrixResponse matrix7 = gh.matrix(matrixRequest);
         //GHMatrixResponse matrix8 = gh.matrix(matrixRequest);
         //System.out.println(matrix.getMatrix());
@@ -192,11 +192,11 @@ public class TestMatrix {
 
 
                 if(diffDistance > 1 || Math.abs(diffTime) > 10){
-                    System.out.println("");
-                    System.out.println("++++++++++++++++++++++++++++++++++++++++++");
-                    System.out.println(points);
-                    System.out.println("Distance: " + diffDistance + " GH: " + response.getBest().getDistance() + " Matrix: " + matrix.getMatrix().getDistance(sourceIdx, targetIdx));
-                    System.out.println("Time: " + diffTime + " GH: " + response.getBest().getTime() + " Matrix: " + matrix.getMatrix().getTime(sourceIdx, targetIdx));
+                    //System.out.println("");
+                    //System.out.println("++++++++++++++++++++++++++++++++++++++++++");
+                    //System.out.println(points);
+                    //System.out.println("Distance: " + diffDistance + " GH: " + response.getBest().getDistance() + " Matrix: " + matrix.getMatrix().getDistance(sourceIdx, targetIdx));
+                    //System.out.println("Time: " + diffTime + " GH: " + response.getBest().getTime() + " Matrix: " + matrix.getMatrix().getTime(sourceIdx, targetIdx));
                     errors++;
                 }
 

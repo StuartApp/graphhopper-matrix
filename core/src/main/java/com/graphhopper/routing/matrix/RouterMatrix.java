@@ -61,7 +61,6 @@ public class RouterMatrix extends Router {
     }
 
     protected MatrixSolver createMatrixSolver(GHMatrixRequest request) {
-        // TODO For now MatrixSolver is just implemented with CHMatrixSolver
         return new CHMatrixSolver(request, profilesByName, routerConfig, encodingManager, chGraphs);
     }
 }

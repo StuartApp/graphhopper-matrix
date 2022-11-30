@@ -18,7 +18,10 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.BooleanEncodedValue;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
+import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.IntsRef;
@@ -34,19 +37,44 @@ import static org.junit.jupiter.api.Assertions.*;
 public class Bike2WeightTagParserTest extends BikeTagParserTest {
 
     @Override
-    protected BikeTagParser createBikeTagParser() {
-        return new Bike2WeightTagParser(new PMap("block_fords=true"));
+    protected EncodingManager createEncodingManager() {
+        return EncodingManager.create("bike2");
+    }
+
+    @Override
+    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
+        Bike2WeightTagParser parser = new Bike2WeightTagParser(lookup, pMap) {
+            @Override
+            public IntsRef applyWayTags(ReaderWay way, IntsRef intsRef) {
+                if (!way.hasTag("point_list") || !way.hasTag("edge_distance"))
+                    return intsRef;
+                else
+                    return super.applyWayTags(way, intsRef);
+            }
+        };
+        parser.init(new DateRangeParser());
+        return parser;
+    }
+
+    @Override
+    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
+        return new OSMParsers()
+                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
+                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
+                .addVehicleTagParser(parser);
     }
 
     private Graph initExampleGraph() {
-        BaseGraph gs = new BaseGraph.Builder(encodingManager.getEncodingManager()).set3D(true).create();
+        BaseGraph gs = new BaseGraph.Builder(encodingManager).set3D(true).create();
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
         na.setNode(1, 51.1, 12.002, 60);
         EdgeIteratorState edge = gs.edge(0, 1).
+                setDistance(100).
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
-        GHUtility.setSpeed(10, 15, parser, edge.setDistance(100));
+        edge.set(avgSpeedEnc, 10, 15);
+        edge.set(parser.getAccessEnc(), true, true);
         return gs;
     }
 
@@ -55,7 +83,9 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         ReaderWay way = new ReaderWay(1);
-        parser.applyWayTags(way, edge);
+        way.setTag("point_list", edge.fetchWayGeometry(FetchMode.ALL));
+        way.setTag("edge_distance", edge.getDistance());
+        edge.setFlags(((Bike2WeightTagParser) parser).applyWayTags(way, edge.getFlags()));
 
         IntsRef flags = edge.getFlags();
         // decrease speed
@@ -71,16 +101,20 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
         IntsRef oldFlags = IntsRef.deepCopyOf(edge.getFlags());
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
-        parser.applyWayTags(way, edge);
+        way.setTag("point_list", edge.fetchWayGeometry(FetchMode.ALL));
+        way.setTag("edge_distance", edge.getDistance());
+        edge.setFlags(((Bike2WeightTagParser) parser).applyWayTags(way, edge.getFlags()));
 
         assertEquals(oldFlags, edge.getFlags());
     }
 
     @Test
     public void testSetSpeed0_issue367() {
-        IntsRef edgeFlags = GHUtility.setSpeed(10, 10, parser, encodingManager.createEdgeFlags());
-        assertEquals(10, avgSpeedEnc.getDecimal(false, edgeFlags), .1);
-        assertEquals(10, avgSpeedEnc.getDecimal(true, edgeFlags), .1);
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        avgSpeedEnc.setDecimal(false, edgeFlags, 10);
+        avgSpeedEnc.setDecimal(true, edgeFlags, 10);
+        parser.getAccessEnc().setBool(false, edgeFlags, true);
+        parser.getAccessEnc().setBool(true, edgeFlags, true);
 
         parser.setSpeed(false, edgeFlags, 0);
 
@@ -92,22 +126,21 @@ public class Bike2WeightTagParserTest extends BikeTagParserTest {
 
     @Test
     public void testRoutingFailsWithInvalidGraph_issue665() {
-        BaseGraph graph = new BaseGraph.Builder(encodingManager.getEncodingManager()).set3D(true).create();
+        BaseGraph graph = new BaseGraph.Builder(encodingManager).set3D(true).create();
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "ferry");
         way.setTag("edge_distance", 500.0);
 
-        assertNotEquals(EncodingManager.Access.CAN_SKIP, parser.getAccess(way));
-        IntsRef wayFlags = encodingManager.handleWayTags(way, encodingManager.createRelationFlags());
-        graph.edge(0, 1).setDistance(247).setFlags(wayFlags);
+        assertNotEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
+        IntsRef edgeFlags = encodingManager.createEdgeFlags();
+        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, encodingManager.createRelationFlags());
+        graph.edge(0, 1).setDistance(247).setFlags(edgeFlags);
 
-        assertTrue(isGraphValid(graph, parser));
+        assertTrue(isGraphValid(graph, parser.getAccessEnc()));
     }
 
-    private boolean isGraphValid(Graph graph, FlagEncoder encoder) {
+    private boolean isGraphValid(Graph graph, BooleanEncodedValue accessEnc) {
         EdgeExplorer explorer = graph.createEdgeExplorer();
-
-        BooleanEncodedValue accessEnc = encoder.getAccessEnc();
         // iterator at node 0 considers the edge 0-1 to be undirected
         EdgeIterator iter0 = explorer.setBaseNode(0);
         iter0.next();

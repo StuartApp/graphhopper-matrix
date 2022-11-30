@@ -1,3 +1,5 @@
+
+
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for
@@ -201,14 +203,14 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                     // shortcuts cannot be in the removed edge set because this was determined on the (base) query graph
                     if (iter.isShortcut()) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), NO_EDGE,
-                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
+                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(),
                                 iter.getSkippedEdge1(), iter.getSkippedEdge2(),
                                 iter.getWeight(false), iter.getWeight(true),
                                 iter.getTime(false),iter.getTime(true), iter.getDistance()
                         ));
                     } else if (!edgeChanges.getRemovedEdges().contains(iter.getOrigEdge())) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
-                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
+                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(),
                                 NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true),
                                 iter.getTime(false),iter.getTime(true),iter.getDistance()
                         ));
@@ -290,7 +292,7 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                                           double weightFwd, double weightBwd,
                                           long timeFwd, long timeBwd,
                                           double distance
-                                          ) {
+        ) {
             this.edge = edge;
             this.origEdge = origEdge;
             this.baseNode = baseNode;
@@ -317,12 +319,12 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getOrigEdgeFirst() {
+        public int getOrigEdgeKeyFirst() {
             return origEdgeFirst;
         }
 
         @Override
-        public int getOrigEdgeLast() {
+        public int getOrigEdgeKeyLast() {
             return origEdgeLast;
         }
 
@@ -399,13 +401,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getOrigEdgeFirst() {
-            return getCurrent().getOrigEdgeFirst();
+        public int getOrigEdgeKeyFirst() {
+            return getCurrent().getOrigEdgeKeyFirst();
         }
 
         @Override
-        public int getOrigEdgeLast() {
-            return getCurrent().getOrigEdgeLast();
+        public int getOrigEdgeKeyLast() {
+            return getCurrent().getOrigEdgeKeyLast();
         }
 
         @Override

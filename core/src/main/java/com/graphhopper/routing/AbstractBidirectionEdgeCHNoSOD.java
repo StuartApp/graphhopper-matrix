@@ -55,7 +55,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (fromOutEdge == ANY_EDGE) {
             fillEdgesFromUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
-            fillEdgesFromUsingFilter(edgeState -> edgeState.getOrigEdgeFirst() == fromOutEdge);
+            fillEdgesFromUsingFilter(edgeState -> GHUtility.getEdgeFromEdgeKey(edgeState.getOrigEdgeKeyFirst()) == fromOutEdge);
         }
     }
 
@@ -64,7 +64,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         if (toInEdge == ANY_EDGE) {
             fillEdgesToUsingFilter(CHEdgeFilter.ALL_EDGES);
         } else {
-            fillEdgesToUsingFilter(edgeState -> edgeState.getOrigEdgeLast() == toInEdge);
+            fillEdgesToUsingFilter(edgeState -> GHUtility.getEdgeFromEdgeKey(edgeState.getOrigEdgeKeyLast()) == toInEdge);
         }
     }
 
@@ -94,7 +94,7 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
         EdgeIterator iter = innerExplorer.setBaseNode(entry.adjNode);
         while (iter.next()) {
             final int edgeId = iter.getEdge();
-            int key = GHUtility.createEdgeKey(iter.getAdjNode(), iter.getBaseNode(), edgeId, !reverse);
+            int key = traversalMode.createTraversalId(iter, reverse);
             SPTEntry entryOther = bestWeightMapOther.get(key);
             if (entryOther == null) {
                 continue;
@@ -113,25 +113,15 @@ public abstract class AbstractBidirectionEdgeCHNoSOD extends AbstractBidirCHAlgo
                 //System.out.println("SAVE:" + newWeight + " PREV:" + bestWeight);
                 bestFwdEntry = reverse ? entryOther : entry;
                 bestBwdEntry = reverse ? entry : entryOther;
+                assert bestFwdEntry.adjNode == bestBwdEntry.adjNode;
                 bestWeight = newWeight;
             }
         }
     }
 
     @Override
-    protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
-    }
-
-    @Override
     protected int getIncomingEdge(SPTEntry entry) {
         return ((CHEntry) entry).incEdge;
-    }
-
-    @Override
-    protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, boolean reverse) {
-        int baseNode = getOtherNode(origEdgeId, edge.getAdjNode());
-        return GHUtility.createEdgeKey(baseNode, edge.getAdjNode(), origEdgeId, reverse);
     }
 
     @Override
