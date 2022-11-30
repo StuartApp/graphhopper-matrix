@@ -74,7 +74,7 @@ public class RoutingAlgorithmWithOSMTest {
         GraphHopper hopper = createHopper(MONACO, new Profile("car").setVehicle("car").setWeighting("shortest"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoCarQueries());
-        Graph g = hopper.getGraphHopperStorage();
+        Graph g = hopper.getBaseGraph();
 
         // When OSM file stays unchanged make static edge and node IDs a requirement
         assertEquals(GHUtility.asSet(9, 111, 182), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
@@ -268,7 +268,7 @@ public class RoutingAlgorithmWithOSMTest {
                 new Profile("foot").setVehicle("foot").setWeighting("shortest"));
         hopper.importOrLoad();
         checkQueries(hopper, createMonacoFoot());
-        Graph g = hopper.getGraphHopperStorage();
+        Graph g = hopper.getBaseGraph();
 
         // see testMonaco for a similar ID test
         assertEquals(GHUtility.asSet(2, 909, 571), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
@@ -335,7 +335,7 @@ public class RoutingAlgorithmWithOSMTest {
         // 1.
         queries.add(new Query(43.727687, 7.418737, 43.730864, 7.420771, 2599, 115));
         queries.add(new Query(43.74958, 7.436566, 43.728499, 7.417907, 4180, 165));
-        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 3244, 179));
+        queries.add(new Query(43.739213, 7.427806, 43.728677, 7.41016, 2805, 145));
         // 4. avoid tunnel(s)!
         queries.add(new Query(43.739662, 7.424355, 43.733802, 7.413433, 2436, 112));
         GraphHopper hopper = createHopper(MONACO, new Profile("bike2").setVehicle("bike2").setWeighting("fastest"));
@@ -387,7 +387,8 @@ public class RoutingAlgorithmWithOSMTest {
     @Test
     public void testMonacoMountainBike() {
         List<Query> queries = new ArrayList<>();
-        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2593, 110));
+        // for mtb it is also ok to go over steps (43.7318,7.423) -> 1900m vs 2600m (in latest OSM data all bikes are forbidden and steps aren't taken)
+        queries.add(new Query(43.730864, 7.420771, 43.727687, 7.418737, 2594, 111));
         queries.add(new Query(43.727687, 7.418737, 43.74958, 7.436566, 3655, 176));
         queries.add(new Query(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
         // hard to select between secondary and primary (both are AVOID for mtb)
@@ -440,7 +441,7 @@ public class RoutingAlgorithmWithOSMTest {
                 new Profile("bike").setVehicle("bike").setWeighting("fastest"));
         hopper.importOrLoad();
         checkQueries(hopper, queries);
-        hopper.getGraphHopperStorage();
+        hopper.getBaseGraph();
 
         Helper.removeDir(new File(GH_LOCATION));
 
@@ -584,7 +585,6 @@ public class RoutingAlgorithmWithOSMTest {
 
         GraphHopper hopper = createHopper(DIR + "/krautsand.osm.gz",
                 new Profile("car").setVehicle("car").setWeighting("fastest"));
-        hopper.setElevationProvider(new SRTMProvider(DIR));
         hopper.importOrLoad();
 
         for (Function<Query, GHRequest> requestFactory : createRequestFactories()) {

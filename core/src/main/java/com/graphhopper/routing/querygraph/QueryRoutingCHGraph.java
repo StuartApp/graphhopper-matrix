@@ -201,17 +201,18 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
                     // shortcuts cannot be in the removed edge set because this was determined on the (base) query graph
                     if (iter.isShortcut()) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), NO_EDGE,
-                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
+                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(),
                                 iter.getSkippedEdge1(), iter.getSkippedEdge2(),
                                 iter.getWeight(false), iter.getWeight(true),
                                 iter.getTime(false),iter.getTime(true), iter.getDistance()
                         ));
                     } else if (!edgeChanges.getRemovedEdges().contains(iter.getOrigEdge())) {
                         virtualEdges.add(new VirtualCHEdgeIteratorState(iter.getEdge(), iter.getOrigEdge(),
-                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeFirst(), iter.getOrigEdgeLast(),
+                                iter.getBaseNode(), iter.getAdjNode(), iter.getOrigEdgeKeyFirst(), iter.getOrigEdgeKeyLast(),
                                 NO_EDGE, NO_EDGE, iter.getWeight(false), iter.getWeight(true),
                                 iter.getTime(false),iter.getTime(true),iter.getDistance()
                         ));
+
                     }
                 }
                 virtualEdgesAtRealNodes.put(node, virtualEdges);
@@ -239,7 +240,6 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
     }
 
     private VirtualCHEdgeIteratorState buildVirtualCHEdgeState(EdgeIteratorState edgeState, int edgeID) {
-        int origEdge = edgeState.getEdge();
         double fwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, false);
         double bwdWeight = weighting.calcEdgeWeightWithAccess(edgeState, true);
 
@@ -249,8 +249,9 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         double distance = edgeState.getDistance();
 
 
-        return new VirtualCHEdgeIteratorState(edgeID, origEdge, edgeState.getBaseNode(), edgeState.getAdjNode(),
-                origEdge, origEdge, NO_EDGE, NO_EDGE, fwdWeight, bwdWeight, fwdTime,bwdTime,distance);
+        return new VirtualCHEdgeIteratorState(edgeID, edgeState.getEdge(), edgeState.getBaseNode(), edgeState.getAdjNode(),
+                edgeState.getEdgeKey(), edgeState.getEdgeKey(), NO_EDGE, NO_EDGE, fwdWeight, bwdWeight, fwdTime,bwdTime,distance);
+
     }
 
     private int shiftVirtualEdgeIDForCH(int edge) {
@@ -274,8 +275,8 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         private final int origEdge;
         private final int baseNode;
         private final int adjNode;
-        private final int origEdgeFirst;
-        private final int origEdgeLast;
+        private final int origEdgeKeyFirst;
+        private final int origEdgeKeyLast;
         private final int skippedEdge1;
         private final int skippedEdge2;
         private final double weightFwd;
@@ -285,18 +286,19 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         private final long timeBwd;
         private final double distance;
 
-        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeFirst,
-                                          int origEdgeLast, int skippedEdge1, int skippedEdge2,
+        public VirtualCHEdgeIteratorState(int edge, int origEdge, int baseNode, int adjNode, int origEdgeKeyFirst,
+                                          int origEdgeKeyLast, int skippedEdge1, int skippedEdge2,
                                           double weightFwd, double weightBwd,
                                           long timeFwd, long timeBwd,
                                           double distance
                                           ) {
+
             this.edge = edge;
             this.origEdge = origEdge;
             this.baseNode = baseNode;
             this.adjNode = adjNode;
-            this.origEdgeFirst = origEdgeFirst;
-            this.origEdgeLast = origEdgeLast;
+            this.origEdgeKeyFirst = origEdgeKeyFirst;
+            this.origEdgeKeyLast = origEdgeKeyLast;
             this.skippedEdge1 = skippedEdge1;
             this.skippedEdge2 = skippedEdge2;
             this.weightFwd = weightFwd;
@@ -317,13 +319,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getOrigEdgeFirst() {
-            return origEdgeFirst;
+        public int getOrigEdgeKeyFirst() {
+            return origEdgeKeyFirst;
         }
 
         @Override
-        public int getOrigEdgeLast() {
-            return origEdgeLast;
+        public int getOrigEdgeKeyLast() {
+            return origEdgeKeyLast;
         }
 
         @Override
@@ -399,13 +401,13 @@ public class QueryRoutingCHGraph implements RoutingCHGraph {
         }
 
         @Override
-        public int getOrigEdgeFirst() {
-            return getCurrent().getOrigEdgeFirst();
+        public int getOrigEdgeKeyFirst() {
+            return getCurrent().getOrigEdgeKeyFirst();
         }
 
         @Override
-        public int getOrigEdgeLast() {
-            return getCurrent().getOrigEdgeLast();
+        public int getOrigEdgeKeyLast() {
+            return getCurrent().getOrigEdgeKeyLast();
         }
 
         @Override

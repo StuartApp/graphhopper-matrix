@@ -22,14 +22,14 @@ public class ManyToManyEdge extends AbstractManyToMany {
     @Override
     protected int getTraversalId(RoutingCHEdgeIteratorState edge, int origEdgeId, Boolean reverse){
 
-        return traversalMode.createTraversalId(edge.getBaseNode(),edge.getAdjNode(),origEdgeId,reverse);
+        return 0;
     }
 
 
     private double calcWeight(RoutingCHEdgeIteratorState edgeState, Boolean reverse, int prevOrNextEdgeId){
 
         double edgeWeight = edgeState.getWeight(reverse);
-        final int origEdgeId = reverse ? edgeState.getOrigEdgeLast() : edgeState.getOrigEdgeFirst();
+        final int origEdgeId = reverse ? edgeState.getOrigEdgeKeyLast() : edgeState.getOrigEdgeKeyFirst();
         double turnCosts = reverse
                 ? graph.getTurnWeight(origEdgeId, edgeState.getBaseNode(), prevOrNextEdgeId)
                 : graph.getTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), origEdgeId);
@@ -47,9 +47,9 @@ public class ManyToManyEdge extends AbstractManyToMany {
         long time = edgeState.getTime(reverse);
         int origEdgeId;
         if(reverse){
-            origEdgeId = edgeState.getOrigEdgeLast();
+            origEdgeId = edgeState.getOrigEdgeKeyLast();
         }else{
-            origEdgeId = edgeState.getOrigEdgeFirst();
+            origEdgeId = edgeState.getOrigEdgeKeyFirst();
         }
         long turnCost;
         if(reverse){
@@ -72,7 +72,7 @@ public class ManyToManyEdge extends AbstractManyToMany {
 
     @Override
     protected int getOrigEdgeId(RoutingCHEdgeIteratorState edge, boolean reverse) {
-        return reverse ? edge.getOrigEdgeFirst() : edge.getOrigEdgeLast();
+        return reverse ? edge.getOrigEdgeKeyFirst() : edge.getOrigEdgeKeyLast();
     }
 
     @Override
