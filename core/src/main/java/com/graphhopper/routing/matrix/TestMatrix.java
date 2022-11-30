@@ -151,9 +151,11 @@ public class TestMatrix {
                 .importOrLoad();
 
 
-        //for(int i = 0; i < 100; i++){
-            //GHMatrixResponse matrix = gh.matrix(matrixRequest);
-        //}
+        for(int i = 0; i < 100; i++){
+            GHMatrixResponse matrix = gh.matrix(matrixRequest);
+        }
+
+        exit(-1);
 
         GHMatrixResponse matrix = gh.matrix(matrixRequest);
         GHMatrixResponse matrix2 = gh.matrix(matrixRequest);
@@ -166,7 +168,7 @@ public class TestMatrix {
         //System.out.println(matrix.getMatrix());
         //System.out.println("0 -0 " + matrix.getMatrix().getDistance(0,0));
 
-        //exit(-1);
+
 
         int errors = 0;
         int sourceIdx = 0;

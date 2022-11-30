@@ -8,6 +8,8 @@ import com.graphhopper.routing.querygraph.QueryRoutingCHGraph;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.PairingUtils;
+import com.graphhopper.util.StopWatch;
+
 
 import java.util.*;
 
@@ -94,6 +96,7 @@ public class ManyToManySBI implements MatrixAlgorithm {
         DistanceMatrix matrix = new DistanceMatrix(numSources, numTargets);
 
         //Backward
+
         int idxTarget = 0;
         while (idxTarget < numTargets) {
             int closestNode = targets.get(idxTarget).getClosestNode();
