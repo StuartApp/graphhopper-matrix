@@ -140,6 +140,34 @@ public class CHStorage {
 
     /**
      * Creates a new storage. Alternatively we could load an existing one using {@link #loadExisting()}}.
+     */
+    public void create() {
+        // We have to create the DataAccess here before we flush it. Otherwise we get an error when calling
+        // loadExisting() later, see #2384
+        nodesCH.create(0);
+        shortcuts.create(0);
+    }
+
+    /**
+     * Initializes the storage. The number of nodes must be given here while the expected number of shortcuts can
+     * be given to prevent some memory allocations, but is not a requirement. When in doubt rather use a small value
+     * so the resulting files/byte arrays won't be unnecessarily large.
+     * todo: we could also trim down the shortcuts DataAccess when we are done adding shortcuts
+     */
+    public void init(int nodes, int expectedShortcuts) {
+        if (nodeCount >= 0)
+            throw new IllegalStateException("CHStorage can only be initialized once");
+        if (nodes < 0)
+            throw new IllegalStateException("CHStorage must be initialized with a positive number of nodes");
+        nodesCH.ensureCapacity((long) nodes * nodeCHEntryBytes);
+        nodeCount = nodes;
+        shortcuts.ensureCapacity((long) expectedShortcuts * shortcutEntryBytes);
+        for (int node = 0; node < nodes; node++)
+            setLastShortcut(toNodePointer(node), -1);
+    }
+
+    /**
+     * Creates a new storage. Alternatively we could load an existing one using {@link #loadExisting()}}.
      * The number of nodes must be given here while the expected number of shortcuts can
      * be given to prevent some memory allocations, but is not a requirement. When in doubt rather use a small value
      * so the resulting files/byte arrays won't be unnecessarily large.
