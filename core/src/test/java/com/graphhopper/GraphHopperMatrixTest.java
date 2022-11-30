@@ -48,7 +48,7 @@ public class GraphHopperMatrixTest {
     private static final String MONACO = DIR + "/monaco.osm.gz";
 
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
-    private static final String GH_LOCATION = "target/graphhopper-test-gh";
+    private static final String GH_LOCATION = "target/graphhopper-matrix-test-gh";
 
     @BeforeEach
     @AfterEach
