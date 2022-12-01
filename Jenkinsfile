@@ -24,7 +24,7 @@ pipeline {
         JENKINS_GROUP_ID = "${sh(script: 'id -g', returnStdout: true).trim()}"
         JENKINS_DOCKER_GROUP_ID = "${sh(script: 'getent group docker | cut -d: -f3', returnStdout: true).trim()}"
         SLACK_NOTIFICATION_CHANNEL = "dsc_jenkins"
-        SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL = "route-planner-notifications"
+        SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL = "graphhoper-matrix-notifications"
     }
 
     stages {
@@ -61,6 +61,8 @@ pipeline {
                             artifactVersion = sh(returnStdout: true, script: 'mvn help:evaluate -Dexpression=project.version -q -DforceStdout').trim()
                             echo "Artifact version: $artifactVersion"
 
+                            def credentials = sh(script: "cat .credentials", returnStdout: true)
+                            echo "Credentials: $credentials"
                             def userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
                             def userPrefix = "user="
                             nexusUser = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"", returnStdout: true).trim()
