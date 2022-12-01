@@ -22,11 +22,14 @@
             <artifactId>slf4j-api</artifactId>
         </dependency>
         <dependency>
+<<<<<<< HEAD
             <groupId>com.stuart.platform.graphhopper</groupId>
             <artifactId>hmm-lib-external</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
+=======
+>>>>>>> 6.1
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <scope>test</scope>
