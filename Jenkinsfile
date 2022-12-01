@@ -144,11 +144,11 @@ pipeline {
         failure {
             script {
                 if (env.BRANCH_NAME == developBranch) {
-                    slackNotification("Error generating `Snapshot` ${project} version `${artifactVersion}`: ${env.BUILD_URL}", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'red')
+                    slackNotification("Error generating `Snapshot` ${project} version `${artifactVersion}`: <${env.BUILD_URL}|Build ${env.BUILD_NUMBER}>", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'red')
                 }
 
                 if (env.BRANCH_NAME == masterBranch) {
-                    slackNotification("Error generating `release` branch ${project}` version `${artifactVersion}`: ${env.BUILD_URL}", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'red')
+                    slackNotification("Error generating `release` branch ${project}` version `${artifactVersion}`: <${env.BUILD_URL}|Build ${env.BUILD_NUMBER}>", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'red')
                 }
             }
         }
@@ -156,11 +156,11 @@ pipeline {
         success {
             script {
                 if (env.BRANCH_NAME == developBranch) {
-                    slackNotification("`New Snapshot generated` ${project} version `${artifactVersion}`: ${env.BUILD_URL}", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'green')
+                    slackNotification("New Snapshot generated `${project}` version `${artifactVersion}`: <${env.BUILD_URL}|Build ${env.BUILD_NUMBER}>", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'green')
                 }
 
                 if (env.BRANCH_NAME == masterBranch) {
-                    slackNotification("`New release generated` ${project} version `${artifactVersion}`: ${env.BUILD_URL}", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'green')
+                    slackNotification("New release generated `${project}` version `${artifactVersion}`: <${env.BUILD_URL}|Build ${env.BUILD_NUMBER}>", SLACK_ROUTE_PLANNER_NOTIFICATION_CHANNEL, 'green')
                 }
             }
         }
