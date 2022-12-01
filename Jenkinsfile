@@ -62,7 +62,7 @@ pipeline {
                             echo "Artifact version: $artifactVersion"
 
                             def credentials = sh(script: "cat .credentials", returnStdout: true)
-                            echo $credentials
+                            echo "Credentials: $credentials"
                             def userLine = sh(script: "cat .credentials | grep user=", returnStdout: true).trim()
                             def userPrefix = "user="
                             nexusUser = sh(script: "echo '$userLine' | sed -e \"s/^$userPrefix//\"", returnStdout: true).trim()
