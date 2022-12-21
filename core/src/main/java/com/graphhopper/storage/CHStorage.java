@@ -541,8 +541,7 @@ public class CHStorage {
             return Double.POSITIVE_INFINITY;
         double distance = distanceLong / DISTANCE_FACTOR;
         if (distance >= MAX_DISTANCE)
-            throw new IllegalArgumentException("too large shortcut distance " + distance + " should get infinity marker bits "
-                    + MAX_STORED_INTEGER);
+            return MAX_DISTANCE;
         return distance;
     }
 
@@ -552,15 +551,10 @@ public class CHStorage {
     }
 
     private long timeToLong(int intTime) {
-        // If the value is too large (> Integer.MAX_VALUE) the `int` is negative. Converted to `long` the JVM fills the
-        // high bits with 1's which we remove via "& 0xFFFFFFFFL" to get the unsigned value. (The L is necessary or prepend 8 zeros.)
         long timeLong = (long) intTime & 0xFFFFFFFFL;
-        if (timeLong == MAX_STORED_INTEGER)
-            return Integer.MAX_VALUE;
+        if (timeLong >= MAX_STORED_INTEGER)
+            return MAX_TIME;
 
-        if (timeLong >= MAX_TIME)
-            throw new IllegalArgumentException("too large shortcut time " + timeLong + " should get infinity marker bits "
-                    + MAX_STORED_INTEGER);
         return timeLong;
     }
 
