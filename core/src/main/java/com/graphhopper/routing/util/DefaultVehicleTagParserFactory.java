@@ -29,6 +29,8 @@ public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
             return new RoadsTagParser(lookup, configuration);
         if (name.equals(CAR))
             return new CarTagParser(lookup, configuration);
+        if (name.equals(MATRIXCAR))
+            return new MatrixCarTagParser(lookup, configuration);
         if (name.equals(BIKE))
             return new BikeTagParser(lookup, configuration);
         if (name.equals(BIKE2))

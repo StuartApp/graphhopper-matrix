@@ -33,6 +33,9 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(CAR))
             return VehicleEncodedValues.car(configuration);
 
+        if (name.equals(MATRIXCAR))
+            return VehicleEncodedValues.matrixcar(configuration);
+
         if (name.equals("car4wd"))
             throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see web/src/test/resources/com/graphhopper/application/resources/car4wd.yml");
 

@@ -25,6 +25,7 @@ import com.graphhopper.util.PMap;
 public interface VehicleEncodedValuesFactory {
     String ROADS = "roads";
     String CAR = "car";
+    String MATRIXCAR = "matrixcar";
     String BIKE = "bike";
     String BIKE2 = "bike2";
     String RACINGBIKE = "racingbike";
