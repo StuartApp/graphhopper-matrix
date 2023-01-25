@@ -226,11 +226,13 @@ public class MatrixCarTagParser extends VehicleTagParser {
         if (!access.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
+
             speed = applyMaxSpeed(way, speed);
 
             speed = applyBadSurfaceSpeed(way, speed);
 
             setSpeed(false, edgeFlags, speed);
+
             if (avgSpeedEnc.isStoreTwoDirections())
                 setSpeed(true, edgeFlags, speed);
 
@@ -263,11 +265,12 @@ public class MatrixCarTagParser extends VehicleTagParser {
      * @return The assumed speed.
      */
     protected double applyMaxSpeed(ReaderWay way, double speed) {
+        
         double maxSpeed = getMaxSpeed(way);
         // We obey speed limits
         if (isValidSpeed(maxSpeed)) {
-            // We assume that the average speed is 90% of the allowed maximum
-            return maxSpeed * 0.9;
+            // We assume that the average speed is 80% of the allowed maximum
+            return maxSpeed * 0.8;
         }
         return speed;
     }
