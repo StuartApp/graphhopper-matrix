@@ -48,6 +48,15 @@ public class RouterMatrix extends Router {
         List<Double> headings = new ArrayList<>();
         List<String> pointHints = new ArrayList<>();
         List<String> snapPreventions = new ArrayList<>();
+
+        //
+        MatrixSnapResult originsResult = ViaRouting.lookupMatrixV2(encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
+                snapPreventions, pointHints, directedEdgeFilter, headings);
+        MatrixSnapResult destinationsResult = ViaRouting.lookupMatrixV2(encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
+                snapPreventions, pointHints, directedEdgeFilter, headings);
+        //
+
+        //TODO - Check the errors during snap
         List<Snap> origins = ViaRouting.lookupMatrix(encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
                 snapPreventions, pointHints, directedEdgeFilter, headings);
 

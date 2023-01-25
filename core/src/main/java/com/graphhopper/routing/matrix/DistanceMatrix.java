@@ -1,7 +1,9 @@
 package com.graphhopper.routing.matrix;
 
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * Holds the resulting distance matrix for a given set of
@@ -20,6 +22,9 @@ public final class DistanceMatrix {
     private final double[][] distances;
 
     private final long[][] times;
+
+    private List<Integer> snapOriginsErrors;
+    private List<Integer> snapDestinationErrors;
 
     public double[][] getDistances() {
         return distances;
@@ -41,6 +46,9 @@ public final class DistanceMatrix {
 
         distances = new double[numberOfOrigins][numberOfDestinations];
         times = new long[numberOfOrigins][numberOfDestinations];
+
+        this.snapOriginsErrors = new ArrayList<>();
+        this.snapDestinationErrors = new ArrayList<>();
 
     }
 
