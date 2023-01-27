@@ -54,6 +54,10 @@ public class VehicleEncodedValues {
         return foot(new PMap(properties).putObject("name", properties.getString("name", "hike")));
     }
 
+    public static VehicleEncodedValues matrixfoot(PMap properties) {
+        return foot(new PMap(properties).putObject("name", properties.getString("name", "matrixfoot")));
+    }
+
     public static VehicleEncodedValues wheelchair(PMap properties) {
         if (properties.has("speed_two_directions"))
             throw new IllegalArgumentException("wheelchair always uses two directions");
@@ -83,6 +87,10 @@ public class VehicleEncodedValues {
                 .putObject("name", properties.getString("name", "bike2"))
                 .putObject("speed_two_directions", true)
         );
+    }
+
+    public static VehicleEncodedValues matrixbike(PMap properties) {
+        return bike(new PMap(properties).putObject("name", properties.getString("name", "matrixbike")));
     }
 
     public static VehicleEncodedValues racingbike(PMap properties) {
@@ -121,6 +129,10 @@ public class VehicleEncodedValues {
         DecimalEncodedValue curvatureEnc = new DecimalEncodedValueImpl(getKey(name, "curvature"), 4, 0.1, false);
         DecimalEncodedValue turnCostEnc = maxTurnCosts > 0 ? TurnCost.create(name, maxTurnCosts) : null;
         return new VehicleEncodedValues(name, accessEnc, speedEnc, priorityEnc, curvatureEnc, turnCostEnc);
+    }
+
+    public static VehicleEncodedValues matrixmotorcycle(PMap properties) {
+        return motorcycle(new PMap(properties).putObject("name", properties.getString("name", "matrixmotorcycle")));
     }
 
     public static VehicleEncodedValues roads() {

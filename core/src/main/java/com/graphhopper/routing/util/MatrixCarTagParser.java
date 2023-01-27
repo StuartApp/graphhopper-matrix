@@ -265,7 +265,7 @@ public class MatrixCarTagParser extends VehicleTagParser {
      * @return The assumed speed.
      */
     protected double applyMaxSpeed(ReaderWay way, double speed) {
-        
+
         double maxSpeed = getMaxSpeed(way);
         // We obey speed limits
         if (isValidSpeed(maxSpeed)) {
