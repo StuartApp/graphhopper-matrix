@@ -189,10 +189,6 @@ public abstract class VehicleTagParser implements TagParser {
         if (isValidSpeed(backSpeed) && (!isValidSpeed(maxSpeed) || backSpeed < maxSpeed))
             maxSpeed = backSpeed;
 
-        if(way.getId() == 624681921){
-            System.out.println("Max Speed: " + maxSpeed);
-        }
-
         return maxSpeed;
     }
 
