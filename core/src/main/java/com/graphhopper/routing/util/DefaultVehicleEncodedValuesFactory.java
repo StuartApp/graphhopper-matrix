@@ -42,6 +42,9 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(BIKE))
             return VehicleEncodedValues.bike(configuration);
 
+        if (name.equals(MATRIXBIKE))
+            return VehicleEncodedValues.matrixbike(configuration);
+
         if (name.equals(BIKE2))
             return VehicleEncodedValues.bike2(configuration);
 
@@ -54,11 +57,17 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(FOOT))
             return VehicleEncodedValues.foot(configuration);
 
+        if (name.equals(MATRIXFOOT))
+            return VehicleEncodedValues.matrixfoot(configuration);
+
         if (name.equals(HIKE))
             return VehicleEncodedValues.hike(configuration);
 
         if (name.equals(MOTORCYCLE))
             return VehicleEncodedValues.motorcycle(configuration);
+
+        if (name.equals(MATRIXMOTORCYCLE))
+            return VehicleEncodedValues.matrixmotorcycle(configuration);
 
         if (name.equals(WHEELCHAIR))
             return VehicleEncodedValues.wheelchair(configuration);

@@ -33,6 +33,8 @@ public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
             return new MatrixCarTagParser(lookup, configuration);
         if (name.equals(BIKE))
             return new BikeTagParser(lookup, configuration);
+        if (name.equals(MATRIXBIKE))
+            return new MatrixBikeTagParser(lookup, configuration);
         if (name.equals(BIKE2))
             return new Bike2WeightTagParser(lookup, configuration);
         if (name.equals(RACINGBIKE))
@@ -41,10 +43,14 @@ public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
             return new MountainBikeTagParser(lookup, configuration);
         if (name.equals(FOOT))
             return new FootTagParser(lookup, configuration);
+        if (name.equals(MATRIXFOOT))
+            return new MatrixFootTagParser(lookup, configuration);
         if (name.equals(HIKE))
             return new HikeTagParser(lookup, configuration);
         if (name.equals(MOTORCYCLE))
             return new MotorcycleTagParser(lookup, configuration);
+        if (name.equals(MATRIXMOTORCYCLE))
+            return new MatrixMotorcycleTagParser(lookup, configuration);
         if (name.equals(WHEELCHAIR))
             return new WheelchairTagParser(lookup, configuration);
 
