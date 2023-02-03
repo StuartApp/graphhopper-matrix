@@ -1,6 +1,7 @@
 package com.graphhopper.routing.matrix.algorithm;
 
 import com.graphhopper.routing.matrix.DistanceMatrix;
+import com.graphhopper.routing.matrix.MatrixSnapResult;
 import com.graphhopper.storage.index.Snap;
 
 import java.util.List;
@@ -21,6 +22,8 @@ public interface MatrixAlgorithm {
      * @throws IllegalArgumentException Thrown when origin.size() < 1 or desitnations.size() < 1
      */
     DistanceMatrix calcMatrix(List<Snap> origins, List<Snap> destinations);
+
+    DistanceMatrix calcMatrixV2(MatrixSnapResult origins, MatrixSnapResult destinations);
 
     /**
      * Limit the search to numberOfNodes. See #681

@@ -47,9 +47,28 @@ public class CHMatrixCalculator implements MatrixCalculator {
         return calcMatrix(origins, destinations, algo);
     }
 
+    @Override
+    public DistanceMatrix calcMatrixV2(MatrixSnapResult origins, MatrixSnapResult destinations) {
+        MatrixAlgorithm algo = createAlgo();
+        return calcMatrixV2(origins, destinations, algo);
+    }
+
     private DistanceMatrix calcMatrix(List<Snap> origins, List<Snap> destinations, MatrixAlgorithm algo) {
         StopWatch sw = new StopWatch().start();
         DistanceMatrix matrix = algo.calcMatrix(origins, destinations);
+
+        int maxVisitedNodes = algoOpts.getHints().getInt(MAX_VISITED_NODES, Integer.MAX_VALUE);
+        if (algo.getVisitedNodes() >= maxVisitedNodes)
+            throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded " + maxVisitedNodes, maxVisitedNodes);
+        visitedNodes = algo.getVisitedNodes();
+        debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
+        System.out.println(debug);
+        return matrix;
+    }
+
+    private DistanceMatrix calcMatrixV2(MatrixSnapResult origins, MatrixSnapResult destinations, MatrixAlgorithm algo) {
+        StopWatch sw = new StopWatch().start();
+        DistanceMatrix matrix = algo.calcMatrixV2(origins, destinations);
 
         int maxVisitedNodes = algoOpts.getHints().getInt(MAX_VISITED_NODES, Integer.MAX_VALUE);
         if (algo.getVisitedNodes() >= maxVisitedNodes)

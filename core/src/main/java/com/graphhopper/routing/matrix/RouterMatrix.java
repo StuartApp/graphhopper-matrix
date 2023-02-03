@@ -54,6 +54,9 @@ public class RouterMatrix extends Router {
                 snapPreventions, pointHints, directedEdgeFilter, headings);
         MatrixSnapResult destinationsResult = ViaRouting.lookupMatrixV2(encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
                 snapPreventions, pointHints, directedEdgeFilter, headings);
+
+        List<Snap> allCorrectSnaps = new ArrayList<>(originsResult.snaps);
+        allCorrectSnaps.addAll(destinationsResult.snaps);
         //
 
         //TODO - Check the errors during snap
@@ -65,13 +68,13 @@ public class RouterMatrix extends Router {
 
         // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
         // the (possibly implementation specific) query graph used by PathCalculator
-        List<Snap> allSnaps = new ArrayList<>(origins);
-        allSnaps.addAll(destinations);
-        QueryGraph queryGraph = QueryGraph.create(graph, allSnaps);
-
+        //List<Snap> allSnaps = new ArrayList<>(origins);
+        //allSnaps.addAll(destinations);
+        QueryGraph queryGraph = QueryGraph.create(graph, allCorrectSnaps);
 
         MatrixCalculator matrixCalculator = solver.createMatrixCalculator(queryGraph);
         DistanceMatrix matrix = matrixCalculator.calcMatrix(origins, destinations);
+        DistanceMatrix matrixV2 = matrixCalculator.calcMatrixV2(originsResult, destinationsResult);
         ghMtxRsp.setMatrix(matrix);
 
         return ghMtxRsp;

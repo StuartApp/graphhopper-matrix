@@ -1,9 +1,7 @@
 package com.graphhopper.routing.matrix;
 
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Holds the resulting distance matrix for a given set of
@@ -16,6 +14,9 @@ import java.util.List;
  */
 public final class DistanceMatrix {
 
+    public static double DISTANCE_SNAP_ERROR_VALUE = -1;
+    public static long TIME_SNAP_ERROR_VALUE = -1;
+
     private final int numberOfOrigins;
     private final int numberOfDestinations;
 
@@ -23,8 +24,8 @@ public final class DistanceMatrix {
 
     private final long[][] times;
 
-    private List<Integer> snapOriginsErrors;
-    private List<Integer> snapDestinationErrors;
+    private Set<Integer> snapOriginsErrors;
+    private Set<Integer> snapDestinationErrors;
 
     public double[][] getDistances() {
         return distances;
@@ -47,9 +48,36 @@ public final class DistanceMatrix {
         distances = new double[numberOfOrigins][numberOfDestinations];
         times = new long[numberOfOrigins][numberOfDestinations];
 
-        this.snapOriginsErrors = new ArrayList<>();
-        this.snapDestinationErrors = new ArrayList<>();
+        this.snapOriginsErrors = new HashSet<>();
+        this.snapDestinationErrors = new HashSet<>();
 
+    }
+
+    public DistanceMatrix(int numberOfOrigins, int numberOfDestinations, HashSet<Integer> originsErrors, HashSet<Integer> destinationsErros) {
+        this.numberOfOrigins = numberOfOrigins;
+        this.numberOfDestinations = numberOfDestinations;
+
+        distances = new double[numberOfOrigins][numberOfDestinations];
+        times = new long[numberOfOrigins][numberOfDestinations];
+
+        this.snapOriginsErrors = originsErrors;
+        this.snapDestinationErrors = destinationsErros;
+
+    }
+
+    private void setSnapErrorValue(int origin, int destination){
+        distances[origin][destination] = DISTANCE_SNAP_ERROR_VALUE;
+        times[origin][destination] = TIME_SNAP_ERROR_VALUE;
+    }
+
+    public void setSnapErrorsValues(int originIdx){
+
+        boolean originError = snapOriginsErrors.contains(originIdx);
+        for(int i = 0; i < numberOfDestinations; i++){
+            if(originError || snapDestinationErrors.contains(i)){
+                setSnapErrorValue(originIdx,i);
+            }
+        }
     }
 
     /**

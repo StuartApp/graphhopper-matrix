@@ -11,8 +11,25 @@ public class MatrixSnapResult {
     List<Snap> snaps;
     IntArrayList pointsNotFound = new IntArrayList();
 
+    int size;
+
     public MatrixSnapResult(List<Snap> snaps, IntArrayList pointsNotFound) {
         this.snaps = snaps;
         this.pointsNotFound = pointsNotFound;
+        this.size = snaps.size() + pointsNotFound.size();
     }
+
+    public int size(){
+        return size;
+    }
+
+    public Snap get(int idx){
+        return this.snaps.get(idx);
+    }
+
+    public boolean isNotFound(int idx){
+        return this.pointsNotFound.contains(idx);
+    }
+
+
 }
