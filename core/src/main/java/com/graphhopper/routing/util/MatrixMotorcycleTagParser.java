@@ -165,6 +165,17 @@ public class MatrixMotorcycleTagParser extends MatrixCarTagParser {
             return WayAccess.WAY;
     }
 
+    protected double applyMaxSpeed(ReaderWay way, double speed) {
+
+        double maxSpeed = getMaxSpeed(way);
+        // We obey speed limits
+        if (isValidSpeed(maxSpeed)) {
+            // We assume that the average speed is 80% of the allowed maximum
+            return maxSpeed * 0.8;
+        }
+        return speed;
+    }
+
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
@@ -174,11 +185,13 @@ public class MatrixMotorcycleTagParser extends MatrixCarTagParser {
         if (!access.isFerry()) {
             // get assumed speed from highway type
             double speed = getSpeed(way);
+
             speed = applyMaxSpeed(way, speed);
 
             double maxMCSpeed = OSMValueExtractor.stringToKmh(way.getTag("maxspeed:motorcycle"));
+
             if (isValidSpeed(maxMCSpeed) && maxMCSpeed < speed)
-                speed = maxMCSpeed * 0.9;
+                speed = maxMCSpeed * 0.8;
 
             // limit speed to max 30 km/h if bad surface
             if (isValidSpeed(speed) && speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))

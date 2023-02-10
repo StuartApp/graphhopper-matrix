@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import static com.graphhopper.routing.ev.RouteNetwork.*;
@@ -148,4 +150,125 @@ public class MatrixBikeTagParser extends BikeCommonTagParser {
 
         setSpecificClassBicycle("touring");
     }
+
+    @Override
+    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
+        WayAccess access = getAccess(way);
+
+        if (access.canSkip())
+            return edgeFlags;
+
+        Integer priorityFromRelation = routeMap.get(bikeRouteEnc.getEnum(false, edgeFlags));
+        double wayTypeSpeed = getSpeed(way);
+        if (!access.isFerry()) {
+            wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
+            Smoothness smoothness = smoothnessEnc.getEnum(false, edgeFlags);
+            wayTypeSpeed = Math.max(MIN_SPEED, smoothnessFactor.get(smoothness) * wayTypeSpeed);
+
+            avgSpeedEnc.setDecimal(false, edgeFlags, wayTypeSpeed);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                avgSpeedEnc.setDecimal(true, edgeFlags, wayTypeSpeed);
+            handleAccess(edgeFlags, way);
+            handlerBikePush(edgeFlags, way);
+        } else {
+            double ferrySpeed = ferrySpeedCalc.getSpeed(way);
+            avgSpeedEnc.setDecimal(false, edgeFlags, ferrySpeed);
+            if (avgSpeedEnc.isStoreTwoDirections())
+                avgSpeedEnc.setDecimal(true, edgeFlags, ferrySpeed);
+            accessEnc.setBool(false, edgeFlags, true);
+            accessEnc.setBool(true, edgeFlags, true);
+            priorityFromRelation = SLIGHT_AVOID.getValue();
+        }
+
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
+        return edgeFlags;
+    }
+
+    private void handlerBikePush(IntsRef edgeFlags,ReaderWay way){
+
+        boolean backwardInaccessible = !accessEnc.getBool(true,edgeFlags);
+        boolean forwardInaccessible = !accessEnc.getBool(false,edgeFlags);
+
+        double backwardSpeed = avgSpeedEnc.getDecimal(true,edgeFlags);
+        double forwardSpeed = avgSpeedEnc.getDecimal(false,edgeFlags);
+
+        String highwayTag = way.getTag("highway");
+        double pushHighwaySpeed = PUSHING_SECTION_SPEED;
+        if(highwaySpeeds.containsKey(highwayTag)){
+            double highwaySpeed = highwaySpeeds.get(highwayTag);
+            if(highwaySpeed < pushHighwaySpeed) {
+                pushHighwaySpeed = highwaySpeed;
+            }
+        }
+
+        // pushing bikes - if no other mode found
+        if(forwardInaccessible || backwardInaccessible
+                || forwardSpeed == Double.POSITIVE_INFINITY
+                || backwardSpeed == Double.POSITIVE_INFINITY){
+
+            if(!way.hasTag("foot", "no")){
+
+                boolean implyOneWay = way.hasTag("junction", "roundabout")
+                        || way.hasTag("junction", "circular")
+                        || way.hasTag("highway", "motorway");
+
+                boolean wayTypeAllowPushing = way.hasTag("railway","platform")
+                        || way.hasTag("bridge","movable")
+                        || way.hasTag("public_transport","platform")
+                        || way.hasTag("amenity","parking","parking_entrance")
+                        || highwaySpeeds.containsKey(highwayTag)
+                        || way.hasTag("access","yes","permissive","designated"); //intendedValues?
+
+                double pushForwardSpeed = Double.POSITIVE_INFINITY;
+                double pushBackwardSpeed = Double.POSITIVE_INFINITY;
+
+                if (way.hasTag("highway", pushingSectionsHighways)){
+                    pushForwardSpeed = pushHighwaySpeed;
+                    pushBackwardSpeed = pushHighwaySpeed;
+                }else{
+                    if(way.hasTag("foot", "yes")){
+
+                        pushForwardSpeed = pushHighwaySpeed;
+                        if(!implyOneWay){
+                            pushBackwardSpeed = pushHighwaySpeed;
+                        }
+                    }else if(way.hasTag("foot:forward", "yes")){
+                        pushForwardSpeed = pushHighwaySpeed;
+                    }else if(way.hasTag("foot:backward", "yes")) {
+                        pushBackwardSpeed = pushHighwaySpeed;
+                    }else if(wayTypeAllowPushing) {
+                        pushForwardSpeed = pushHighwaySpeed;
+                        if(!implyOneWay){
+                            pushBackwardSpeed = pushHighwaySpeed;
+                        }
+                    }
+                }
+
+                if(pushForwardSpeed != Double.POSITIVE_INFINITY && (forwardInaccessible || forwardSpeed == Double.POSITIVE_INFINITY)){
+                    accessEnc.setBool(false, edgeFlags, true);
+                    avgSpeedEnc.setDecimal(false, edgeFlags, pushForwardSpeed);
+                }
+
+                if(pushBackwardSpeed != Double.POSITIVE_INFINITY && (backwardInaccessible || backwardSpeed == Double.POSITIVE_INFINITY)){
+                    if(accessEnc.isStoreTwoDirections() && avgSpeedEnc.isStoreTwoDirections()) {
+                        accessEnc.setBool(true, edgeFlags, true);
+                        avgSpeedEnc.setDecimal(true, edgeFlags, pushBackwardSpeed);
+                    }
+                }
+            }
+        }
+
+        // dismount
+        if (way.hasTag("bicycle", "dismount")){
+            accessEnc.setBool(false, edgeFlags, true);
+            avgSpeedEnc.setDecimal(false, edgeFlags, PUSHING_SECTION_SPEED);
+
+            if(accessEnc.isStoreTwoDirections() && avgSpeedEnc.isStoreTwoDirections()){
+                accessEnc.setBool(true, edgeFlags, true);
+                avgSpeedEnc.setDecimal(true, edgeFlags, PUSHING_SECTION_SPEED);
+            }
+        }
+
+    }
+
 }
