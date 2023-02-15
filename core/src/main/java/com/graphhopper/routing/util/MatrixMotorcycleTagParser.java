@@ -38,7 +38,7 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
  * @author boldtrn
  */
 public class MatrixMotorcycleTagParser extends MatrixCarTagParser {
-    public static final double MOTOR_CYCLE_MAX_SPEED = 60;
+    public static final double MOTOR_CYCLE_MAX_SPEED = 90;
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
     private final DecimalEncodedValue priorityWayEncoder;
@@ -66,6 +66,16 @@ public class MatrixMotorcycleTagParser extends MatrixCarTagParser {
 
         barriers.remove("bus_trap");
         barriers.remove("sump_buster");
+        barriers.remove("cattle_grid");
+        barriers.remove("border_control");
+        barriers.remove("toll_booth");
+        barriers.remove("sally_port");
+        barriers.remove("gate");
+        barriers.remove("lift_gate");
+        barriers.remove("no");
+        barriers.remove("entrance");
+        barriers.remove("height_restrictor");
+        barriers.remove("arch");
 
         trackTypeSpeedMap.clear();
         defaultSpeedMap.clear();
@@ -76,10 +86,14 @@ public class MatrixMotorcycleTagParser extends MatrixCarTagParser {
         trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
         trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
 
-        avoidSet.add("motorway");
-        avoidSet.add("trunk");
-        avoidSet.add("motorroad");
-        avoidSet.add("residential");
+        avoidSet.add("area");
+        avoidSet.add("reversible");
+        avoidSet.add("impassable");
+        avoidSet.add("hov_lanes");
+        avoidSet.add("steps");
+        avoidSet.add("construction");
+        avoidSet.add("proposed");
+        avoidSet.add("service");
 
         preferSet.add("primary");
         preferSet.add("secondary");
