@@ -47,8 +47,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     protected final Set<String> unpavedSurfaceTags = new HashSet<>();
     private final Map<String, Integer> trackTypeSpeeds = new HashMap<>();
     private final Map<String, Integer> surfaceSpeeds = new HashMap<>();
-    private final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
-    private final Map<String, Integer> highwaySpeeds = new HashMap<>();
+    protected final Map<Smoothness, Double> smoothnessFactor = new HashMap<>();
+    protected final Map<String, Integer> highwaySpeeds = new HashMap<>();
     protected final DecimalEncodedValue priorityEnc;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
@@ -280,6 +280,7 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
     @Override
     public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
         WayAccess access = getAccess(way);
+
         if (access.canSkip())
             return edgeFlags;
 
@@ -307,6 +308,8 @@ abstract public class BikeCommonTagParser extends VehicleTagParser {
         priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getValue(handlePriority(way, wayTypeSpeed, priorityFromRelation)));
         return edgeFlags;
     }
+
+
 
     int getSpeed(ReaderWay way) {
         int speed = PUSHING_SECTION_SPEED;
