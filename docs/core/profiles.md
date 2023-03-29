@@ -35,14 +35,11 @@ The vehicle field must correspond to one of GraphHopper's built-in vehicle types
 - wheelchair
 - bike
 - racingbike
-- bike2
 - mtb
 - car
 - motorcycle
 
 By choosing a vehicle GraphHopper determines the accessibility and a default travel speed for the different road types.
-If you are interested in the low-level Java API note that the vehicles correspond to implementations of the
-`FlagEncoder` interface.
 
 The weighting determines the 'cost function' for the route calculation and must match one of the following built-in
 weightings:
@@ -86,7 +83,7 @@ profiles:
 The name and vehicle fields are the same as for standard profiles and the vehicle field is used as the 'base' vehicle
 for the custom profile. The weighting must be always set to `custom` for custom profiles. The custom model itself goes
 into the `custom_model` property. Alternatively, you can also set a path to a custom model file using the
-`custom_model_folder` and `custom_model_file` properties.
+`custom_models.directory` and `custom_model_file` properties.
 
 Using custom profiles for your routing requests works just the same way as for standard profiles. Simply add
 `profile=my_custom_profile` as request parameter to your routing request.
