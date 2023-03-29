@@ -9,7 +9,7 @@ import java.util.List;
 public class MatrixSnapResult {
 
     List<Snap> snaps;
-    IntArrayList pointsNotFound = new IntArrayList();
+    private IntArrayList pointsNotFound = new IntArrayList();
 
     int size;
 
@@ -28,8 +28,16 @@ public class MatrixSnapResult {
     }
 
     public boolean isNotFound(int idx){
-        return this.pointsNotFound.contains(idx);
+        return this.getPointsNotFound().contains(idx);
     }
 
+    public boolean isFound(int idx){
+        return !isNotFound(idx);
+    }
+
+
+    public IntArrayList getPointsNotFound() {
+        return pointsNotFound;
+    }
 
 }

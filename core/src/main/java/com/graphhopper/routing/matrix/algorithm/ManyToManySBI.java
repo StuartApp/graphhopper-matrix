@@ -87,19 +87,19 @@ public class ManyToManySBI implements MatrixAlgorithm {
     }
 
     @Override
-    public DistanceMatrix calcMatrixV2(MatrixSnapResult sources, MatrixSnapResult targets) {
+    public DistanceMatrix calcMatrix(MatrixSnapResult sources, MatrixSnapResult targets) {
 
         checkAlreadyRun();
 
         int numTargets = targets.size();
         int numSources = sources.size();
-        DistanceMatrix matrix = new DistanceMatrix(numSources, numTargets);
+        DistanceMatrix matrix = new DistanceMatrix(numSources, numTargets,sources.getPointsNotFound(),targets.getPointsNotFound());
 
         //Backward
 
         int idxTarget = 0;
         while (idxTarget < numTargets) {
-            if(!targets.isNotFound(idxTarget)){
+            if(targets.isFound(idxTarget)){
                 int closestNode = targets.get(idxTarget).getClosestNode();
                 findInitialNodesBackward(closestNode, idxTarget,null);
             }
@@ -117,12 +117,9 @@ public class ManyToManySBI implements MatrixAlgorithm {
         //Forward
         int idxSource = 0;
         while (idxSource < numSources) {
-            if(!targets.isNotFound(idxTarget)) {
+            if(sources.isFound(idxSource)) {
                 int closestNode = sources.get(idxSource).getClosestNode();
                 findInitialNodesForward(closestNode, idxSource, matrix);
-            }else{
-                //Si no se ha podido hacer snap del source
-                //Si de los targets no se ha podido hacer snap
             }
             idxSource++;
         }
@@ -131,45 +128,6 @@ public class ManyToManySBI implements MatrixAlgorithm {
 
         return matrix;
 
-    }
-
-    @Override
-    public DistanceMatrix calcMatrix(List<Snap> sources, List<Snap> targets) {
-
-        checkAlreadyRun();
-
-        int numTargets = targets.size();
-        int numSources = sources.size();
-        DistanceMatrix matrix = new DistanceMatrix(numSources, numTargets);
-
-        //Backward
-
-        int idxTarget = 0;
-        while (idxTarget < numTargets) {
-            int closestNode = targets.get(idxTarget).getClosestNode();
-            findInitialNodesBackward(closestNode, idxTarget,null);
-            idxTarget++;
-        }
-
-        backward();
-
-        //Reset collections for forward
-        this.heap.clear();
-        this.traversedNodes.clear();
-        this.downEdges.clear();
-        this.upEdges.clear();
-
-        //Forward
-        int idxSource = 0;
-        while (idxSource < numSources) {
-            int closestNode = sources.get(idxSource).getClosestNode();
-            findInitialNodesForward(closestNode, idxSource,matrix);
-            idxSource++;
-        }
-
-        forward(matrix);
-
-        return matrix;
     }
 
     protected void checkAlreadyRun() {

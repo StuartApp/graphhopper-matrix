@@ -21,9 +21,8 @@ public interface MatrixAlgorithm {
      * @return Returns a row for each origin, with duration/distance info to each destination
      * @throws IllegalArgumentException Thrown when origin.size() < 1 or desitnations.size() < 1
      */
-    DistanceMatrix calcMatrix(List<Snap> origins, List<Snap> destinations);
 
-    DistanceMatrix calcMatrixV2(MatrixSnapResult origins, MatrixSnapResult destinations);
+    DistanceMatrix calcMatrix(MatrixSnapResult origins, MatrixSnapResult destinations);
 
     /**
      * Limit the search to numberOfNodes. See #681
