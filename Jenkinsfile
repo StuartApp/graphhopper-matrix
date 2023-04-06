@@ -107,6 +107,25 @@ pipeline {
                     }
                 }
 
+                stage('Publish coverage') {
+                    steps {
+                        lockedStep(250, "graphhopper_matrix_${env.BRANCH_NAME}_publish_coverage") {
+                            script {
+                                // Publish Coverage HTML result
+                                publishHTML(target: [
+                                      allowMissing: false,
+                                      alwaysLinkToLastBuild: false,
+                                      keepAll: false,
+                                      reportDir: 'coverage/target/site/jacoco-aggregate',
+                                      reportFiles: 'index.html',
+                                      reportName: 'Jacoco Report',
+                                      reportTitles: 'Jacoco Report'
+                                ])
+                            }
+                        }
+                    }
+                }
+
                 stage('Publish Snapshot') {
                     when {
                         branch "develop"
