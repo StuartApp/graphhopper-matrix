@@ -103,7 +103,8 @@ pipeline {
 
                 stage('Test') {
                     steps {
-                        sh "mvn test"
+                        // Verify start the verify phase so the coverage can be recorded and runs the tests
+                        sh "mvn verify"
                     }
                 }
 
