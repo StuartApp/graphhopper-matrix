@@ -5,7 +5,7 @@ import com.graphhopper.storage.index.Snap;
 import java.util.List;
 
 public interface MatrixCalculator {
-    DistanceMatrix calcMatrix(List<Snap> origins, List<Snap> destinations);
+    DistanceMatrix calcMatrix(MatrixSnapResult origins, MatrixSnapResult destinations);
 
     String getDebugString();
 

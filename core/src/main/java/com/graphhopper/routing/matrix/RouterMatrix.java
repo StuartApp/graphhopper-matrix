@@ -6,10 +6,6 @@ import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.ViaRouting;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.matrix.DistanceMatrix;
-import com.graphhopper.routing.matrix.GHMatrixRequest;
-import com.graphhopper.routing.matrix.GHMatrixResponse;
-import com.graphhopper.routing.matrix.MatrixCalculator;
 import com.graphhopper.routing.matrix.solver.CHMatrixSolver;
 import com.graphhopper.routing.matrix.solver.MatrixSolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -48,21 +44,19 @@ public class RouterMatrix extends Router {
         List<Double> headings = new ArrayList<>();
         List<String> pointHints = new ArrayList<>();
         List<String> snapPreventions = new ArrayList<>();
-        List<Snap> origins = ViaRouting.lookupMatrix(encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
+
+        MatrixSnapResult originsResult = ViaRouting.lookupMatrix(request.isFailFast(), encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
+                snapPreventions, pointHints, directedEdgeFilter, headings);
+        MatrixSnapResult destinationsResult = ViaRouting.lookupMatrix(request.isFailFast(), encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
                 snapPreventions, pointHints, directedEdgeFilter, headings);
 
-        List<Snap> destinations = ViaRouting.lookupMatrix(encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
-                snapPreventions, pointHints, directedEdgeFilter, headings);
+        List<Snap> allCorrectSnaps = new ArrayList<>(originsResult.snaps);
+        allCorrectSnaps.addAll(destinationsResult.snaps);
 
-        // (base) query graph used to resolve headings, curbsides etc. this is not necessarily the same thing as
-        // the (possibly implementation specific) query graph used by PathCalculator
-        List<Snap> allSnaps = new ArrayList<>(origins);
-        allSnaps.addAll(destinations);
-        QueryGraph queryGraph = QueryGraph.create(graph, allSnaps);
-
+        QueryGraph queryGraph = QueryGraph.create(graph, allCorrectSnaps);
 
         MatrixCalculator matrixCalculator = solver.createMatrixCalculator(queryGraph);
-        DistanceMatrix matrix = matrixCalculator.calcMatrix(origins, destinations);
+        DistanceMatrix matrix = matrixCalculator.calcMatrix(originsResult, destinationsResult);
         ghMtxRsp.setMatrix(matrix);
 
         return ghMtxRsp;

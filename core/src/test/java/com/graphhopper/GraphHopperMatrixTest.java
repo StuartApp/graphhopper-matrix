@@ -19,12 +19,15 @@ package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.MultiplePointsNotFoundException;
 import com.graphhopper.routing.matrix.DistanceMatrix;
 import com.graphhopper.routing.matrix.GHMatrixRequest;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 
@@ -35,7 +38,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.matrix.DistanceMatrix.DISTANCE_SNAP_ERROR_VALUE;
+import static com.graphhopper.routing.matrix.DistanceMatrix.TIME_SNAP_ERROR_VALUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class GraphHopperMatrixTest {
     private static final double DISTANCE_METERS_DELTA = 1d;
@@ -156,5 +162,111 @@ public class GraphHopperMatrixTest {
                 assertEquals(response.getBest().getTime(), time, TIME_MILLIS_DELTA, String.format("Unexpected time for points=%s", points));
             }
         }
+    }
+
+    @Test
+    void testFailFast() {
+        List<GHPoint> originPoints = new ArrayList<>();
+        originPoints.add(new GHPoint(42.50488142419136, 1.5239627305424333));
+        originPoints.add(new GHPoint(42.500908692810256, 1.0666521515059635));
+        List<GHPoint> destinationPoints = new ArrayList<>();
+        destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
+        destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
+
+        final MatrixText matrixText = new MatrixText();
+        matrixText.setDestinations(originPoints);
+        matrixText.setOrigins(destinationPoints);
+
+        Profile carProfile = new Profile("car");
+        carProfile.setTurnCosts(false);
+        CHProfile chCarProfile = new CHProfile("car");
+
+        List<Profile> profiles = new ArrayList<>();
+        profiles.add(carProfile);
+
+        List<CHProfile> chProfiles = new ArrayList<>();
+        chProfiles.add(chCarProfile);
+
+        GraphHopperConfig config = new GraphHopperConfig();
+        config.setProfiles(profiles);
+        config.setCHProfiles(chProfiles);
+
+
+        GraphHopper hopper = new GraphHopper()
+                .setOSMFile(ANDORRA)
+                .init(config)
+                .setGraphHopperLocation(GH_LOCATION)
+                .importOrLoad();
+
+        List<GHPoint> origins = matrixText.getOrigins();
+        List<GHPoint> destinations = matrixText.getDestinations();
+
+        GHMatrixRequest request = new GHMatrixRequest();
+        request.setFailFast(true);
+        request.setProfile("car");
+        request.setOrigins(origins);
+        request.setDestinations(destinations);
+
+        MultiplePointsNotFoundException thrown = Assertions.assertThrows(MultiplePointsNotFoundException.class, () -> {
+            hopper.matrix(request).getMatrix();
+        });
+
+        Assertions.assertTrue(thrown.getPointsNotFound().size() > 0);
+    }
+
+    @Test
+    void testFailFastDisabled() {
+        List<GHPoint> originPoints = new ArrayList<>();
+        originPoints.add(new GHPoint(42.50488142419136, 1.5239627305424333));
+        originPoints.add(new GHPoint(42.500908692810256, 1.0666521515059635)); // Point outside Andorra (Not found)
+        List<GHPoint> destinationPoints = new ArrayList<>();
+        destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
+        destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
+
+        final MatrixText matrixText = new MatrixText();
+        matrixText.setDestinations(originPoints);
+        matrixText.setOrigins(destinationPoints);
+
+        Profile carProfile = new Profile("car");
+        carProfile.setTurnCosts(false);
+        CHProfile chCarProfile = new CHProfile("car");
+
+        List<Profile> profiles = new ArrayList<>();
+        profiles.add(carProfile);
+
+        List<CHProfile> chProfiles = new ArrayList<>();
+        chProfiles.add(chCarProfile);
+
+        GraphHopperConfig config = new GraphHopperConfig();
+        config.setProfiles(profiles);
+        config.setCHProfiles(chProfiles);
+
+
+        GraphHopper hopper = new GraphHopper()
+                .setOSMFile(ANDORRA)
+                .init(config)
+                .setGraphHopperLocation(GH_LOCATION)
+                .importOrLoad();
+
+        List<GHPoint> origins = matrixText.getOrigins();
+        List<GHPoint> destinations = matrixText.getDestinations();
+
+        GHMatrixRequest request = new GHMatrixRequest();
+        request.setProfile("car");
+        request.setOrigins(origins);
+        request.setDestinations(destinations);
+
+        DistanceMatrix result = hopper.matrix(request).getMatrix();
+        System.out.println(result);
+        // Distance assertions
+        assertEquals(DISTANCE_SNAP_ERROR_VALUE, result.getDistance(0, 1));
+        assertEquals(DISTANCE_SNAP_ERROR_VALUE, result.getDistance(1, 1));
+        assertTrue(result.getDistance(0, 0) > 0);
+        assertTrue(result.getDistance(1, 0) > 0);
+        // Time assertions
+        assertEquals(TIME_SNAP_ERROR_VALUE, result.getTime(0, 1));
+        assertEquals(TIME_SNAP_ERROR_VALUE, result.getTime(1, 1));
+        assertTrue(result.getTime(0, 0) > 0);
+        assertTrue(result.getTime(1, 0) > 0);
     }
 }

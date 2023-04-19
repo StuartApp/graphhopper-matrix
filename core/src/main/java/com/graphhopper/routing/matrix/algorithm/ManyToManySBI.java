@@ -87,20 +87,22 @@ public class ManyToManySBI implements MatrixAlgorithm {
     }
 
     @Override
-    public DistanceMatrix calcMatrix(List<Snap> sources, List<Snap> targets) {
+    public DistanceMatrix calcMatrix(MatrixSnapResult sources, MatrixSnapResult targets) {
 
         checkAlreadyRun();
 
         int numTargets = targets.size();
         int numSources = sources.size();
-        DistanceMatrix matrix = new DistanceMatrix(numSources, numTargets);
+        DistanceMatrix matrix = new DistanceMatrix(numSources, numTargets,sources.getPointsNotFound(),targets.getPointsNotFound());
 
         //Backward
 
         int idxTarget = 0;
         while (idxTarget < numTargets) {
-            int closestNode = targets.get(idxTarget).getClosestNode();
-            findInitialNodesBackward(closestNode, idxTarget,null);
+            if(targets.isFound(idxTarget)){
+                int closestNode = targets.get(idxTarget).getClosestNode();
+                findInitialNodesBackward(closestNode, idxTarget,null);
+            }
             idxTarget++;
         }
 
@@ -115,14 +117,17 @@ public class ManyToManySBI implements MatrixAlgorithm {
         //Forward
         int idxSource = 0;
         while (idxSource < numSources) {
-            int closestNode = sources.get(idxSource).getClosestNode();
-            findInitialNodesForward(closestNode, idxSource,matrix);
+            if(sources.isFound(idxSource)) {
+                int closestNode = sources.get(idxSource).getClosestNode();
+                findInitialNodesForward(closestNode, idxSource, matrix);
+            }
             idxSource++;
         }
 
         forward(matrix);
 
         return matrix;
+
     }
 
     protected void checkAlreadyRun() {

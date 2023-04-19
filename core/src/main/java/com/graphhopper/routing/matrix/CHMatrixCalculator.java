@@ -21,11 +21,8 @@ package com.graphhopper.routing.matrix;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.matrix.algorithm.MatrixAlgorithm;
 import com.graphhopper.routing.matrix.algorithm.MatrixRoutingAlgorithmFactory;
-import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
-
-import java.util.List;
 
 import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
@@ -42,12 +39,12 @@ public class CHMatrixCalculator implements MatrixCalculator {
     }
 
     @Override
-    public DistanceMatrix calcMatrix(List<Snap> origins, List<Snap> destinations) {
+    public DistanceMatrix calcMatrix(MatrixSnapResult origins, MatrixSnapResult destinations) {
         MatrixAlgorithm algo = createAlgo();
         return calcMatrix(origins, destinations, algo);
     }
 
-    private DistanceMatrix calcMatrix(List<Snap> origins, List<Snap> destinations, MatrixAlgorithm algo) {
+    private DistanceMatrix calcMatrix(MatrixSnapResult origins, MatrixSnapResult destinations, MatrixAlgorithm algo) {
         StopWatch sw = new StopWatch().start();
         DistanceMatrix matrix = algo.calcMatrix(origins, destinations);
 
