@@ -166,48 +166,48 @@ public class GraphHopperMatrixTest {
 
     @Test
     void testFailFast() {
+        List<GHPoint> originPoints = new ArrayList<>();
+        originPoints.add(new GHPoint(42.50488142419136, 1.5239627305424333));
+        originPoints.add(new GHPoint(42.500908692810256, 1.0666521515059635));
+        List<GHPoint> destinationPoints = new ArrayList<>();
+        destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
+        destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
+
+        final MatrixText matrixText = new MatrixText();
+        matrixText.setDestinations(originPoints);
+        matrixText.setOrigins(destinationPoints);
+
+        Profile carProfile = new Profile("car");
+        carProfile.setTurnCosts(false);
+        CHProfile chCarProfile = new CHProfile("car");
+
+        List<Profile> profiles = new ArrayList<>();
+        profiles.add(carProfile);
+
+        List<CHProfile> chProfiles = new ArrayList<>();
+        chProfiles.add(chCarProfile);
+
+        GraphHopperConfig config = new GraphHopperConfig();
+        config.setProfiles(profiles);
+        config.setCHProfiles(chProfiles);
+
+
+        GraphHopper hopper = new GraphHopper()
+                .setOSMFile(ANDORRA)
+                .init(config)
+                .setGraphHopperLocation(GH_LOCATION)
+                .importOrLoad();
+
+        List<GHPoint> origins = matrixText.getOrigins();
+        List<GHPoint> destinations = matrixText.getDestinations();
+
+        GHMatrixRequest request = new GHMatrixRequest();
+        request.setFailFast(true);
+        request.setProfile("car");
+        request.setOrigins(origins);
+        request.setDestinations(destinations);
+
         MultiplePointsNotFoundException thrown = Assertions.assertThrows(MultiplePointsNotFoundException.class, () -> {
-            List<GHPoint> originPoints = new ArrayList<>();
-            originPoints.add(new GHPoint(42.50488142419136, 1.5239627305424333));
-            originPoints.add(new GHPoint(42.500908692810256, 1.0666521515059635));
-            List<GHPoint> destinationPoints = new ArrayList<>();
-            destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
-            destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
-
-            final MatrixText matrixText = new MatrixText();
-            matrixText.setDestinations(originPoints);
-            matrixText.setOrigins(destinationPoints);
-
-            Profile carProfile = new Profile("car");
-            carProfile.setTurnCosts(false);
-            CHProfile chCarProfile = new CHProfile("car");
-
-            List<Profile> profiles = new ArrayList<>();
-            profiles.add(carProfile);
-
-            List<CHProfile> chProfiles = new ArrayList<>();
-            chProfiles.add(chCarProfile);
-
-            GraphHopperConfig config = new GraphHopperConfig();
-            config.setProfiles(profiles);
-            config.setCHProfiles(chProfiles);
-
-
-            GraphHopper hopper = new GraphHopper()
-                    .setOSMFile(ANDORRA)
-                    .init(config)
-                    .setGraphHopperLocation(GH_LOCATION)
-                    .importOrLoad();
-
-            List<GHPoint> origins = matrixText.getOrigins();
-            List<GHPoint> destinations = matrixText.getDestinations();
-
-            GHMatrixRequest request = new GHMatrixRequest();
-            request.setFailFast(true);
-            request.setProfile("car");
-            request.setOrigins(origins);
-            request.setDestinations(destinations);
-
             hopper.matrix(request).getMatrix();
         });
 
