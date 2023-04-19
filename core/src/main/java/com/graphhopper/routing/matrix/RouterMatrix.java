@@ -6,10 +6,6 @@ import com.graphhopper.routing.RouterConfig;
 import com.graphhopper.routing.ViaRouting;
 import com.graphhopper.routing.WeightingFactory;
 import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.matrix.DistanceMatrix;
-import com.graphhopper.routing.matrix.GHMatrixRequest;
-import com.graphhopper.routing.matrix.GHMatrixResponse;
-import com.graphhopper.routing.matrix.MatrixCalculator;
 import com.graphhopper.routing.matrix.solver.CHMatrixSolver;
 import com.graphhopper.routing.matrix.solver.MatrixSolver;
 import com.graphhopper.routing.querygraph.QueryGraph;
@@ -49,9 +45,9 @@ public class RouterMatrix extends Router {
         List<String> pointHints = new ArrayList<>();
         List<String> snapPreventions = new ArrayList<>();
 
-        MatrixSnapResult originsResult = ViaRouting.lookupMatrixV2(encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
+        MatrixSnapResult originsResult = ViaRouting.lookupMatrix(request.isFailFast(), encodingManager, request.getOrigins(), solver.createSnapFilter(), locationIndex,
                 snapPreventions, pointHints, directedEdgeFilter, headings);
-        MatrixSnapResult destinationsResult = ViaRouting.lookupMatrixV2(encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
+        MatrixSnapResult destinationsResult = ViaRouting.lookupMatrix(request.isFailFast(), encodingManager, request.getDestinations(), solver.createSnapFilter(), locationIndex,
                 snapPreventions, pointHints, directedEdgeFilter, headings);
 
         List<Snap> allCorrectSnaps = new ArrayList<>(originsResult.snaps);
