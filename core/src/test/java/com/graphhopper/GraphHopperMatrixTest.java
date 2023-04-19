@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.matrix.DistanceMatrix.DISTANCE_SNAP_ERROR_VALUE;
+import static com.graphhopper.routing.matrix.DistanceMatrix.TIME_SNAP_ERROR_VALUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -257,13 +259,13 @@ public class GraphHopperMatrixTest {
         DistanceMatrix result = hopper.matrix(request).getMatrix();
         System.out.println(result);
         // Distance assertions
-        assertEquals(-1, result.getDistance(0, 1));
-        assertEquals(-1, result.getDistance(1, 1));
+        assertEquals(DISTANCE_SNAP_ERROR_VALUE, result.getDistance(0, 1));
+        assertEquals(DISTANCE_SNAP_ERROR_VALUE, result.getDistance(1, 1));
         assertTrue(result.getDistance(0, 0) > 0);
         assertTrue(result.getDistance(1, 0) > 0);
         // Time assertions
-        assertEquals(-1.0, result.getTime(0, 1));
-        assertEquals(-1.0, result.getTime(1, 1));
+        assertEquals(TIME_SNAP_ERROR_VALUE, result.getTime(0, 1));
+        assertEquals(TIME_SNAP_ERROR_VALUE, result.getTime(1, 1));
         assertTrue(result.getTime(0, 0) > 0);
         assertTrue(result.getTime(1, 0) > 0);
     }
