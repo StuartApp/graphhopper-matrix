@@ -103,7 +103,27 @@ pipeline {
 
                 stage('Test') {
                     steps {
-                        sh "mvn test"
+                        // Verify start the verify phase so the coverage can be recorded and runs the tests
+                        sh "mvn verify"
+                    }
+                }
+
+                stage('Publish coverage') {
+                    steps {
+                        lockedStep(250, "graphhopper_matrix_${env.BRANCH_NAME}_publish_coverage") {
+                            script {
+                                // Publish Coverage HTML result
+                                publishHTML(target: [
+                                      allowMissing: false,
+                                      alwaysLinkToLastBuild: false,
+                                      keepAll: false,
+                                      reportDir: 'coverage/target/site/jacoco-aggregate',
+                                      reportFiles: 'index.html',
+                                      reportName: 'Jacoco Report',
+                                      reportTitles: 'Jacoco Report'
+                                ])
+                            }
+                        }
                     }
                 }
 
