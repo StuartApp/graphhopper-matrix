@@ -6,7 +6,7 @@
     <groupId>com.stuart.platform.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>2.0.1-SNAPSHOT</version>
+    <version>2.0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -216,6 +216,15 @@
                             </goals>
                         </execution>
                     </executions>
+                </plugin>
+                <plugin>
+                    <groupId>com.amashchenko.maven.plugin</groupId>
+                    <artifactId>gitflow-maven-plugin</artifactId>
+                    <version>1.19.0</version>
+                    <configuration>
+                        <developmentBranch>develop</developmentBranch>
+                        <productionBranch>master</productionBranch>
+                    </configuration>
                 </plugin>
             </plugins>
         </pluginManagement>
