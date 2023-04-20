@@ -18,7 +18,7 @@ public class GHMatrixRequest {
     private final List<GHPoint> origins = new ArrayList<>();
     private final List<GHPoint> destinations = new ArrayList<>();
     private final PMap hints = new PMap();
-    private boolean failFast = false;
+    private boolean failFast = true;
 
     /**
      * One or more locations to use as the starting point for calculating travel distance and time.

@@ -202,7 +202,6 @@ public class GraphHopperMatrixTest {
         List<GHPoint> destinations = matrixText.getDestinations();
 
         GHMatrixRequest request = new GHMatrixRequest();
-        request.setFailFast(true);
         request.setProfile("car");
         request.setOrigins(origins);
         request.setDestinations(destinations);
@@ -253,6 +252,7 @@ public class GraphHopperMatrixTest {
 
         GHMatrixRequest request = new GHMatrixRequest();
         request.setProfile("car");
+        request.setFailFast(false);
         request.setOrigins(origins);
         request.setDestinations(destinations);
 

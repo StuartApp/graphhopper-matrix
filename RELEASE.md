@@ -13,3 +13,5 @@ mvn -B gitflow:release-finish
 So in develop, the version of the poms will be incremented automatically and master will contain the release branch merged and the tag created.
 
 For more information about how it works the plugin (options, parameters, etc) please refer to this [link](https://github.com/aleksandr-m/gitflow-maven-plugin).
+
+Remember to push the commits to `develop` and `master`

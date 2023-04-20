@@ -17,8 +17,8 @@ import java.util.function.Consumer;
  */
 public final class DistanceMatrix {
 
-    public static final double DISTANCE_SNAP_ERROR_VALUE = -1;
-    public static final long TIME_SNAP_ERROR_VALUE = -1;
+    public static final double DISTANCE_SNAP_ERROR_VALUE = Double.MAX_VALUE;
+    public static final long TIME_SNAP_ERROR_VALUE = Long.MAX_VALUE;
 
     private final int numberOfOrigins;
     private final int numberOfDestinations;
