@@ -18,16 +18,20 @@
 
 package com.graphhopper.routing.matrix;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.matrix.algorithm.MatrixAlgorithm;
 import com.graphhopper.routing.matrix.algorithm.MatrixRoutingAlgorithmFactory;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.MaximumNodesExceededException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.graphhopper.util.Parameters.Routing.MAX_VISITED_NODES;
 
 public class CHMatrixCalculator implements MatrixCalculator {
 
+    private static final Logger logger = LoggerFactory.getLogger(CHMatrixCalculator.class);
     private final MatrixRoutingAlgorithmFactory algoFactory;
     private final AlgorithmOptions algoOpts;
     private String debug;
@@ -53,7 +57,7 @@ public class CHMatrixCalculator implements MatrixCalculator {
             throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded " + maxVisitedNodes, maxVisitedNodes);
         visitedNodes = algo.getVisitedNodes();
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getMillis() + " ms";
-        System.out.println(debug);
+        logger.debug(debug);
         return matrix;
     }
 
