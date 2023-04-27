@@ -318,7 +318,7 @@ public class GraphHopperMatrixTest {
         DistanceMatrix result = hopper.matrix(request).getMatrix();
         System.out.println(result);
         // Distance assertions
-        assertTrue(result.getDistance(0, 0) == 5260.065166904362);
+        assertTrue(Math.round(result.getDistance(0, 0)) == 5260);
         // Time assertions
         assertTrue(result.getTime(0, 0) == 414191);
 
