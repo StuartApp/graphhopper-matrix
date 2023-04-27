@@ -53,6 +53,8 @@ public class GraphHopperMatrixTest {
     private static final String ANDORRA = DIR + "/andorra.osm.gz";
     private static final String MONACO = DIR + "/monaco.osm.gz";
 
+    private static final String NOTHINGHAM = DIR + "/nottinghamshire.osm.pbf";
+
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-test-gh";
 
@@ -268,5 +270,57 @@ public class GraphHopperMatrixTest {
         assertEquals(TIME_SNAP_ERROR_VALUE, result.getTime(1, 1));
         assertTrue(result.getTime(0, 0) > 0);
         assertTrue(result.getTime(1, 0) > 0);
+    }
+
+    @Test
+    void testSpeedZeroEdge(){
+
+        List<GHPoint> originPoints = new ArrayList<>();
+        originPoints.add(new GHPoint(52.95675659,-1.14968896));
+
+        List<GHPoint> destinationPoints = new ArrayList<>();
+        destinationPoints.add(new GHPoint(52.98455,-1.19811));
+
+        final MatrixText matrixText = new MatrixText();
+        matrixText.setDestinations(originPoints);
+        matrixText.setOrigins(destinationPoints);
+
+        Profile carProfile = new Profile("car");
+        carProfile.setTurnCosts(false);
+        CHProfile chCarProfile = new CHProfile("car");
+
+        List<Profile> profiles = new ArrayList<>();
+        profiles.add(carProfile);
+
+        List<CHProfile> chProfiles = new ArrayList<>();
+        chProfiles.add(chCarProfile);
+
+        GraphHopperConfig config = new GraphHopperConfig();
+        config.setProfiles(profiles);
+        config.setCHProfiles(chProfiles);
+
+
+        GraphHopper hopper = new GraphHopper()
+                .setOSMFile(NOTHINGHAM)
+                .init(config)
+                .setGraphHopperLocation(GH_LOCATION)
+                .importOrLoad();
+
+        List<GHPoint> origins = matrixText.getOrigins();
+        List<GHPoint> destinations = matrixText.getDestinations();
+
+        GHMatrixRequest request = new GHMatrixRequest();
+        request.setProfile("car");
+        request.setFailFast(false);
+        request.setOrigins(origins);
+        request.setDestinations(destinations);
+
+        DistanceMatrix result = hopper.matrix(request).getMatrix();
+        System.out.println(result);
+        // Distance assertions
+        assertTrue(result.getDistance(0, 0) == 5260.065166904362);
+        // Time assertions
+        assertTrue(result.getTime(0, 0) == 414191);
+
     }
 }
