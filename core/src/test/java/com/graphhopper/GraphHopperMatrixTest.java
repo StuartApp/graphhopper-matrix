@@ -220,6 +220,8 @@ public class GraphHopperMatrixTest {
         List<GHPoint> originPoints = new ArrayList<>();
         originPoints.add(new GHPoint(42.50488142419136, 1.5239627305424333));
         originPoints.add(new GHPoint(42.500908692810256, 1.0666521515059635)); // Point outside Andorra (Not found)
+        originPoints.add(new GHPoint(42.50488142419136, 1.5239627305424333));
+        originPoints.add(new GHPoint(42.500908692810256, 1.0666521515059635)); // Point outside Andorra (Not found)
         List<GHPoint> destinationPoints = new ArrayList<>();
         destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));
         destinationPoints.add(new GHPoint(42.50272031776507, 1.5148522642488023));

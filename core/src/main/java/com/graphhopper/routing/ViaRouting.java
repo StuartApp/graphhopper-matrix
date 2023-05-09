@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIntHashMap;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.RoadClass;
@@ -61,6 +62,7 @@ public class ViaRouting {
                 : new SnapPreventionEdgeFilter(snapFilter, roadClassEnc, roadEnvEnc, snapPreventions);
         List<Snap> snaps = new ArrayList<>(points.size());
         IntArrayList pointsNotFound = new IntArrayList();
+        IntIntHashMap snapIndexes = new IntIntHashMap();
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             Snap snap = null;
@@ -81,14 +83,17 @@ public class ViaRouting {
             if (!snap.isValid())
                 pointsNotFound.add(placeIndex);
 
-            if (snap.isValid())
+            if (snap.isValid()){
                 snaps.add(snap);
+                snapIndexes.addTo(placeIndex,snaps.size() - 1);
+            }
+
         }
 
         if (!pointsNotFound.isEmpty() && failFast)
             throw new MultiplePointsNotFoundException(pointsNotFound);
 
-        return new MatrixSnapResult(snaps,pointsNotFound);
+        return new MatrixSnapResult(snaps,snapIndexes,pointsNotFound);
 
     }
 
