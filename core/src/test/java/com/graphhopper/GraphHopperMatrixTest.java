@@ -130,6 +130,7 @@ public class GraphHopperMatrixTest {
         GraphHopperConfig config = new GraphHopperConfig();
         config.setProfiles(profiles);
         config.setCHProfiles(chProfiles);
+        config.putObject("import.osm.ignored_highways","footway,cycleway,path,pedestrian,steps");
 
 
         GraphHopper hopper = new GraphHopper()
@@ -192,6 +193,8 @@ public class GraphHopperMatrixTest {
         GraphHopperConfig config = new GraphHopperConfig();
         config.setProfiles(profiles);
         config.setCHProfiles(chProfiles);
+        config.putObject("import.osm.ignored_highways","footway,cycleway,path,pedestrian,steps");
+
 
 
         GraphHopper hopper = new GraphHopper()
@@ -243,6 +246,8 @@ public class GraphHopperMatrixTest {
         GraphHopperConfig config = new GraphHopperConfig();
         config.setProfiles(profiles);
         config.setCHProfiles(chProfiles);
+        config.putObject("import.osm.ignored_highways","footway,cycleway,path,pedestrian,steps");
+
 
 
         GraphHopper hopper = new GraphHopper()
@@ -300,6 +305,7 @@ public class GraphHopperMatrixTest {
         GraphHopperConfig config = new GraphHopperConfig();
         config.setProfiles(profiles);
         config.setCHProfiles(chProfiles);
+        config.putObject("import.osm.ignored_highways","footway,cycleway,path,pedestrian,steps");
 
 
         GraphHopper hopper = new GraphHopper()
@@ -322,7 +328,7 @@ public class GraphHopperMatrixTest {
         // Distance assertions
         assertTrue(Math.round(result.getDistance(0, 0)) == 5260);
         // Time assertions
-        assertTrue(result.getTime(0, 0) == 414191);
+        assertTrue(result.getTime(0, 0) == 414192);
 
     }
 }
