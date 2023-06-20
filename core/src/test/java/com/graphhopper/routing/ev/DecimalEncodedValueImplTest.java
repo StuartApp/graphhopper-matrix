@@ -81,12 +81,20 @@ public class DecimalEncodedValueImplTest {
         assertEquals(5.5, testEnc.getDecimal(false, intsRef), .1);
         assertEquals(-5.5, testEnc.getDecimal(true, intsRef), .1);
 
+        testEnc.setDecimal(false, intsRef, -5.5);
+        assertEquals(-5.5, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(5.5, testEnc.getDecimal(true, intsRef), .1);
+
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         new DecimalEncodedValueImpl("tmp1", 5, 1, false).init(config);
         testEnc = new DecimalEncodedValueImpl("tmp2", 5, 0, 1, true, false, false);
         testEnc.init(config);
         intsRef = new IntsRef(1);
-        testEnc.setDecimal(false, intsRef, 2.6);
+        testEnc.setDecimal(true, intsRef, 2.6);
+        assertEquals(-3, testEnc.getDecimal(false, intsRef), .1);
+        assertEquals(3, testEnc.getDecimal(true, intsRef), .1);
+
+        testEnc.setDecimal(true, intsRef, -2.6);
         assertEquals(3, testEnc.getDecimal(false, intsRef), .1);
         assertEquals(-3, testEnc.getDecimal(true, intsRef), .1);
     }
@@ -187,5 +195,16 @@ public class DecimalEncodedValueImplTest {
         enc.setDecimal(false, ints, 0);
         assertEquals(0, enc.getDecimal(false, ints));
         assertEquals(6, enc.getMaxOrMaxStorableDecimal());
+    }
+
+    @Test
+    public void minStorableBug() {
+        DecimalEncodedValue enc = new DecimalEncodedValueImpl("test", 5, -3, 0.2, false, true, false);
+        enc.init(new EncodedValue.InitializerConfig());
+        assertEquals(3.2, enc.getMaxStorableDecimal());
+
+        IntsRef flags = new IntsRef(1);
+        enc.setDecimal(true, flags, 1.6);
+        assertEquals(1.6, enc.getDecimal(true, flags));
     }
 }

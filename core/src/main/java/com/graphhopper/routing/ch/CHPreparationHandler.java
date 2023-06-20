@@ -115,9 +115,7 @@ public class CHPreparationHandler {
         return loaded;
     }
 
-
     public Map<String, PrepareContractionHierarchies.Result> prepare(BaseGraph baseGraph, StorableProperties properties, List<CHConfig> chConfigs, final boolean closeEarly) {
-
         if (chConfigs.isEmpty()) {
             LOGGER.info("There are no CHs to prepare");
             return Collections.emptyMap();

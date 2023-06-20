@@ -28,25 +28,19 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
     @Override
     public VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration) {
         if (name.equals(ROADS))
-            return VehicleEncodedValues.roads();
+            return VehicleEncodedValues.roads(configuration);
 
         if (name.equals(CAR))
             return VehicleEncodedValues.car(configuration);
 
-        if (name.equals(MATRIXCAR))
-            return VehicleEncodedValues.matrixcar(configuration);
-
         if (name.equals("car4wd"))
-            throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see web/src/test/resources/com/graphhopper/application/resources/car4wd.yml");
+            throw new IllegalArgumentException("Instead of car4wd use the roads vehicle and a custom_model, see custom_models/car4wd.json");
 
         if (name.equals(BIKE))
             return VehicleEncodedValues.bike(configuration);
 
-        if (name.equals(MATRIXBIKE))
-            return VehicleEncodedValues.matrixbike(configuration);
-
-        if (name.equals(BIKE2))
-            return VehicleEncodedValues.bike2(configuration);
+        if (name.equals("bike2"))
+            throw new IllegalArgumentException("Instead of bike2 use the bike vehicle and a custom model, see custom_models/bike.json and #1234");
 
         if (name.equals(RACINGBIKE))
             return VehicleEncodedValues.racingbike(configuration);
@@ -57,21 +51,26 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(FOOT))
             return VehicleEncodedValues.foot(configuration);
 
-        if (name.equals(MATRIXFOOT))
-            return VehicleEncodedValues.matrixfoot(configuration);
-
         if (name.equals(HIKE))
-            return VehicleEncodedValues.hike(configuration);
+            throw new IllegalArgumentException("Instead of hike use the foot vehicle and a custom model, see custom_models/hike.json and #2759");
 
         if (name.equals(MOTORCYCLE))
             return VehicleEncodedValues.motorcycle(configuration);
 
-        if (name.equals(MATRIXMOTORCYCLE))
-            return VehicleEncodedValues.matrixmotorcycle(configuration);
-
         if (name.equals(WHEELCHAIR))
             return VehicleEncodedValues.wheelchair(configuration);
+            
+         if (name.equals(MATRIXCAR))
+            return VehicleEncodedValues.matrixcar(configuration);
+        if (name.equals(MATRIXBIKE))
+            return VehicleEncodedValues.matrixbike(configuration);
+        if (name.equals(MATRIXFOOT))
+            return VehicleEncodedValues.matrixfoot(configuration);
+        if (name.equals(MATRIXMOTORCYCLE))
+            return VehicleEncodedValues.matrixmotorcycle(configuration);
 
         throw new IllegalArgumentException("entry in vehicle list not supported: " + name);
     }
 }
+
+       
