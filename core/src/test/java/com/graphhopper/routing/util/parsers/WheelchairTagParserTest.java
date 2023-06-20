@@ -21,12 +21,9 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/WheelchairTagParserTest.java
-=======
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/WheelchairTagParserTest.java
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.NodeAccess;
@@ -48,13 +45,9 @@ public class WheelchairTagParserTest {
     private final BooleanEncodedValue carAccessEnc;
     private final DecimalEncodedValue carAvSpeedEnc;
     private final EncodingManager encodingManager;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/WheelchairTagParserTest.java
-    private final WheelchairTagParser wheelchairParser;
-=======
     private final WheelchairAccessParser accessParser;
     private final WheelchairAverageSpeedParser speedParser;
     private final WheelchairPriorityParser prioParser;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/WheelchairTagParserTest.java
 
     public WheelchairTagParserTest() {
         wheelchairAccessEnc = VehicleAccess.create("wheelchair");
@@ -66,10 +59,6 @@ public class WheelchairTagParserTest {
                 .add(wheelchairAccessEnc).add(wheelchairAvSpeedEnc).add(wheelchairPriorityEnc).add(new EnumEncodedValue<>(FootNetwork.KEY, RouteNetwork.class))
                 .add(carAccessEnc).add(carAvSpeedEnc)
                 .build();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/WheelchairTagParserTest.java
-        wheelchairParser = new WheelchairTagParser(encodingManager, new PMap());
-        wheelchairParser.init(new DateRangeParser());
-=======
         accessParser = new WheelchairAccessParser(encodingManager, new PMap());
         accessParser.init(new DateRangeParser());
         speedParser = new WheelchairAverageSpeedParser(encodingManager, new PMap()) {
@@ -80,7 +69,6 @@ public class WheelchairTagParserTest {
             }
         };
         prioParser = new WheelchairPriorityParser(encodingManager, new PMap());
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/WheelchairTagParserTest.java
     }
 
     @Test
@@ -455,32 +443,13 @@ public class WheelchairTagParserTest {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         // passByDefaultBarriers are no barrier by default
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/WheelchairTagParserTest.java
-        assertFalse(wheelchairParser.isBarrier(node));
-        node.setTag("access", "no");
-        assertTrue(wheelchairParser.isBarrier(node));
-=======
         assertFalse(accessParser.isBarrier(node));
         node.setTag("access", "no");
         assertTrue(accessParser.isBarrier(node));
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/WheelchairTagParserTest.java
 
         // these barriers block
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/WheelchairTagParserTest.java
-        assertTrue(wheelchairParser.isBarrier(node));
-        node.setTag("barrier", "wall");
-        assertTrue(wheelchairParser.isBarrier(node));
-        node.setTag("barrier", "handrail");
-        assertTrue(wheelchairParser.isBarrier(node));
-        node.setTag("barrier", "turnstile");
-        assertTrue(wheelchairParser.isBarrier(node));
-        // Explictly allowed access is allowed
-        node.setTag("barrier", "fence");
-        node.setTag("access", "yes");
-        assertFalse(wheelchairParser.isBarrier(node));
-=======
         assertTrue(accessParser.isBarrier(node));
         node.setTag("barrier", "wall");
         assertTrue(accessParser.isBarrier(node));
@@ -492,24 +461,10 @@ public class WheelchairTagParserTest {
         node.setTag("barrier", "fence");
         node.setTag("access", "yes");
         assertFalse(accessParser.isBarrier(node));
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/WheelchairTagParserTest.java
 
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "yes");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/WheelchairTagParserTest.java
-        assertFalse(wheelchairParser.isBarrier(node));
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "kerb");
-        assertFalse(wheelchairParser.isBarrier(node));
-        node.setTag("wheelchair", "yes");
-        assertFalse(wheelchairParser.isBarrier(node));
-
-        node = new ReaderNode(1, -1, -1);
-        node.setTag("barrier", "fence");
-        assertTrue(wheelchairParser.isBarrier(node));
-=======
         assertFalse(accessParser.isBarrier(node));
 
         node = new ReaderNode(1, -1, -1);
@@ -521,7 +476,6 @@ public class WheelchairTagParserTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "fence");
         assertTrue(accessParser.isBarrier(node));
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/WheelchairTagParserTest.java
     }
 
     @Test

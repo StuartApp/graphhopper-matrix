@@ -20,20 +20,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/MountainBikeTagParserTest.java
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BikeNetwork;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.Smoothness;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
-import com.graphhopper.util.PMap;
-import org.junit.jupiter.api.Test;
-
-import static com.graphhopper.routing.util.BikeCommonTagParser.MIN_SPEED;
-import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
-=======
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
@@ -42,7 +28,6 @@ import com.graphhopper.routing.util.VehicleTagParsers;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/MountainBikeTagParserTest.java
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.MIN_SPEED;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.PUSHING_SECTION_SPEED;
@@ -51,31 +36,12 @@ import static org.junit.jupiter.api.Assertions.*;
 public class MountainBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected EncodingManager createEncodingManager() {
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/MountainBikeTagParserTest.java
-        return EncodingManager.create("mtb");
-    }
-
-    @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
-        MountainBikeTagParser parser = new MountainBikeTagParser(lookup, pMap);
-        parser.init(new DateRangeParser());
-        return parser;
-    }
-
-    @Override
-    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
-                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
-                .addVehicleTagParser(parser);
-=======
         return new EncodingManager.Builder().add(VehicleEncodedValues.mountainbike(new PMap())).build();
     }
 
     @Override
     protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
         return VehicleTagParsers.mtb(lookup, pMap);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/MountainBikeTagParserTest.java
     }
 
     @Test

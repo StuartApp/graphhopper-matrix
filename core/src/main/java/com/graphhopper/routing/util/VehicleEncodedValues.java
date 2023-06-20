@@ -161,7 +161,7 @@ public class VehicleEncodedValues {
     public String toString() {
         return getName();
     }
-}
+
     public static VehicleEncodedValues matrixfoot(PMap properties) {
         return foot(new PMap(properties).putObject("name", properties.getString("name", "matrixfoot")));
     }
@@ -174,3 +174,5 @@ public class VehicleEncodedValues {
     public static VehicleEncodedValues matrixmotorcycle(PMap properties) {
         return motorcycle(new PMap(properties).putObject("name", properties.getString("name", "matrixmotorcycle")));
     }
+}
+

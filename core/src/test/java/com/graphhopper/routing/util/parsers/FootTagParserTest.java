@@ -21,12 +21,9 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/FootTagParserTest.java
-=======
 import com.graphhopper.routing.util.AccessFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/FootTagParserTest.java
 import com.graphhopper.storage.BaseGraph;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
@@ -57,19 +54,12 @@ public class FootTagParserTest {
             .add(bikeAccessEnc).add(bikeAvgSpeedEnc).add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
             .add(carAccessEnc).add(carAvSpeedEnc)
             .build();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/FootTagParserTest.java
-    private final FootTagParser footParser = new FootTagParser(encodingManager, new PMap());
-
-    public FootTagParserTest() {
-        footParser.init(new DateRangeParser());
-=======
     private final FootAccessParser accessParser = new FootAccessParser(encodingManager, new PMap());
     private final FootAverageSpeedParser speedParser = new FootAverageSpeedParser(encodingManager, new PMap());
     private final FootPriorityParser prioParser = new FootPriorityParser(encodingManager, new PMap());
 
     public FootTagParserTest() {
         accessParser.init(new DateRangeParser());
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/FootTagParserTest.java
     }
 
     @Test
@@ -498,11 +488,7 @@ public class FootTagParserTest {
         node.setTag("foot", "no");
         assertTrue(accessParser.isBarrier(node));
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/FootTagParserTest.java
-        FootTagParser blockFordsParser = new FootTagParser(encodingManager, new PMap("block_fords=true"));
-=======
         FootAccessParser blockFordsParser = new FootAccessParser(encodingManager, new PMap("block_fords=true"));
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/FootTagParserTest.java
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "no");
         assertFalse(blockFordsParser.isBarrier(node));

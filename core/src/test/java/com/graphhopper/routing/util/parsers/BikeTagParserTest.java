@@ -20,15 +20,6 @@ package com.graphhopper.routing.util.parsers;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/BikeTagParserTest.java
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.BikeNetwork;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RouteNetwork;
-import com.graphhopper.routing.ev.Smoothness;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
-=======
 import com.graphhopper.routing.ev.BikeNetwork;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.RouteNetwork;
@@ -36,16 +27,10 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.util.VehicleTagParsers;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/BikeTagParserTest.java
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/BikeTagParserTest.java
-import static com.graphhopper.routing.util.BikeCommonTagParser.MIN_SPEED;
-import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
-=======
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/BikeTagParserTest.java
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.MIN_SPEED;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.PUSHING_SECTION_SPEED;
@@ -59,31 +44,12 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
 
     @Override
     protected EncodingManager createEncodingManager() {
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/BikeTagParserTest.java
-        return EncodingManager.create("bike");
-    }
-
-    @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
-        BikeTagParser parser = new BikeTagParser(lookup, pMap);
-        parser.init(new DateRangeParser());
-        return parser;
-    }
-
-    @Override
-    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
-                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
-                .addVehicleTagParser(parser);
-=======
         return new EncodingManager.Builder().add(VehicleEncodedValues.bike(new PMap())).build();
     }
 
     @Override
     protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
         return VehicleTagParsers.bike(lookup, pMap);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/BikeTagParserTest.java
     }
 
     @Test
@@ -645,11 +611,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmRel.setTag("network", "icn");
         IntsRef relFlags = osmParsers.handleRelationTags(osmRel, osmParsers.createRelationFlags());
         IntsRef flags = encodingManager.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/BikeTagParserTest.java
-        flags = osmParsers.handleWayTags(flags, osmWay, relFlags);
-=======
         osmParsers.handleWayTags(flags, osmWay, relFlags);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/BikeTagParserTest.java
         assertEquals(RouteNetwork.INTERNATIONAL, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(BEST.getValue()), priorityEnc.getDecimal(false, flags), .1);
 
@@ -658,21 +620,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         flags = encodingManager.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/BikeTagParserTest.java
-        flags = osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
-        assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
-
-        // for unknown highways we should probably keep the priority unchanged, but currently it does not matter
-        // because the access will be false anyway
-        osmRel = new ReaderRelation(1);
-        osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "whatever");
-        flags = encodingManager.createEdgeFlags();
-        flags = osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
-        assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
-        assertEquals(EXCLUDE.getValue(), priorityEnc.getDecimal(false, flags), .1);
-=======
         osmParsers.handleWayTags(flags, osmWay, osmParsers.createRelationFlags());
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
@@ -685,7 +632,6 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         assertFalse(accessParser.getAccessEnc().getBool(false, flags));
         assertEquals(RouteNetwork.MISSING, encodingManager.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class).getEnum(false, flags));
         assertEquals(PriorityCode.getValue(UNCHANGED.getValue()), priorityEnc.getDecimal(false, flags), .1);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/BikeTagParserTest.java
     }
 
     @Test
@@ -711,11 +657,7 @@ public class BikeTagParserTest extends AbstractBikeTagParserTester {
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         // todo: speed is larger than maxspeed tag due to rounding and storable max speed is 30
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/BikeTagParserTest.java
-        assertPriorityAndSpeed(PREFER.getValue(), 16, way);
-=======
         assertPriorityAndSpeed(VERY_NICE.getValue(), 16, way);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/BikeTagParserTest.java
     }
 
     // Issue 407 : Always block kissing_gate except for mountainbikes

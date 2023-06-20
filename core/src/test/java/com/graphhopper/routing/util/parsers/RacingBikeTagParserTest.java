@@ -19,35 +19,21 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
-import com.graphhopper.routing.ev.*;
-import com.graphhopper.routing.util.parsers.OSMBikeNetworkTagParser;
-import com.graphhopper.routing.util.parsers.OSMSmoothnessParser;
-=======
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.VehicleEncodedValues;
 import com.graphhopper.routing.util.VehicleTagParsers;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 import org.junit.jupiter.api.Test;
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-import static com.graphhopper.routing.util.BikeCommonTagParser.MIN_SPEED;
-import static com.graphhopper.routing.util.BikeCommonTagParser.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.PriorityCode.*;
-import static com.graphhopper.routing.util.WayAccess.WAY;
-=======
 import java.util.Arrays;
 import java.util.List;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.MIN_SPEED;
 import static com.graphhopper.routing.util.parsers.BikeCommonAverageSpeedParser.PUSHING_SECTION_SPEED;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,27 +41,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * @author ratrun
  */
 public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
-
     @Override
-    protected EncodingManager createEncodingManager() {
-        return EncodingManager.create("racingbike");
-    }
-
-    @Override
-    protected BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap) {
-        RacingBikeTagParser parser = new RacingBikeTagParser(lookup, pMap);
-        parser.init(new DateRangeParser());
-        return parser;
-    }
-
-    @Override
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-    protected OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup) {
-        return new OSMParsers()
-                .addRelationTagParser(relConfig -> new OSMBikeNetworkTagParser(lookup.getEnumEncodedValue(BikeNetwork.KEY, RouteNetwork.class), relConfig))
-                .addWayTagParser(new OSMSmoothnessParser(lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class)))
-                .addVehicleTagParser(parser);
-=======
     protected EncodingManager createEncodingManager() {
         return new EncodingManager.Builder().add(VehicleEncodedValues.racingbike(new PMap())).build();
     }
@@ -83,7 +49,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
     @Override
     protected VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap) {
         return VehicleTagParsers.racingbike(lookup, pMap);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
     }
 
     @Test
@@ -256,36 +221,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
                 .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
                 .add(new EnumEncodedValue<>(Smoothness.KEY, Smoothness.class))
                 .build();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-        BikeCommonTagParser parser = new RacingBikeTagParser(encodingManager, new PMap("block_fords=true")) {
-            @Override
-            public WayAccess getAccess(ReaderWay way) {
-                return WAY;
-            }
-        };
-        ReaderWay osmWay = new ReaderWay(1);
-        osmWay.setTag("highway", "tertiary");
-        osmWay.setTag("maxspeed", "50");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, PREFER.getValue(), 20, osmWay);
-
-        osmWay.setTag("maxspeed", "60");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, PREFER.getValue(), 20, osmWay);
-
-        osmWay.setTag("maxspeed", "80");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, PREFER.getValue(), 20, osmWay);
-
-        osmWay.setTag("maxspeed", "90");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, UNCHANGED.getValue(), 20, osmWay);
-
-        osmWay.setTag("maxspeed", "120");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, UNCHANGED.getValue(), 20, osmWay);
-
-        osmWay.setTag("highway", "motorway");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, AVOID.getValue(), 18, osmWay);
-
-        osmWay.setTag("tunnel", "yes");
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, BAD.getValue(), 18, osmWay);
-=======
         List<TagParser> parsers = Arrays.asList(
                 new RacingBikeAverageSpeedParser(encodingManager, new PMap()),
                 new RacingBikePriorityParser(encodingManager, new PMap())
@@ -312,48 +247,28 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
 
         osmWay.setTag("tunnel", "yes");
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), 18, osmWay);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
 
         osmWay.clearTags();
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "80");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, BAD.getValue(), 18, osmWay);
-=======
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), 18, osmWay);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
 
         osmWay.clearTags();
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, BAD.getValue(), 18, osmWay);
-=======
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), 18, osmWay);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("maxspeed", "120");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, BAD.getValue(), PUSHING_SECTION_SPEED, osmWay);
-=======
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, BAD.getValue(), PUSHING_SECTION_SPEED, osmWay);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
 
         osmWay.clearTags();
         osmWay.setTag("highway", "notdefined");
         osmWay.setTag("maxspeed", "50");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/RacingBikeTagParserTest.java
-        assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parser, UNCHANGED.getValue(), PUSHING_SECTION_SPEED, osmWay);
-    }
-
-    private void assertPriorityAndSpeed(EncodingManager encodingManager, DecimalEncodedValue priorityEnc, DecimalEncodedValue speedEnc, VehicleTagParser parser, int expectedPrio, double expectedSpeed, ReaderWay way) {
-        IntsRef edgeFlags = parser.handleWayTags(encodingManager.createEdgeFlags(), way);
-=======
         assertPriorityAndSpeed(encodingManager, priorityEnc, speedEnc, parsers, UNCHANGED.getValue(), PUSHING_SECTION_SPEED, osmWay);
     }
 
@@ -361,7 +276,6 @@ public class RacingBikeTagParserTest extends AbstractBikeTagParserTester {
                                         List<TagParser> parsers, int expectedPrio, double expectedSpeed, ReaderWay way) {
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         for (TagParser p : parsers) p.handleWayTags(edgeFlags, way, null);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/RacingBikeTagParserTest.java
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
         assertEquals(expectedSpeed, speedEnc.getDecimal(false, edgeFlags), 0.1);
     }

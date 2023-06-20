@@ -1,14 +1,10 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-<<<<<<< HEAD:core/src/main/java/com/graphhopper/routing/util/WheelchairTagParser.java
-import com.graphhopper.routing.ev.*;
-=======
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.EncodedValueLookup;
 import com.graphhopper.routing.ev.VehicleAccess;
 import com.graphhopper.routing.util.WayAccess;
->>>>>>> 7.0:core/src/main/java/com/graphhopper/routing/util/parsers/WheelchairAccessParser.java
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
@@ -20,30 +16,14 @@ public class WheelchairAccessParser extends FootAccessParser {
     private final Set<String> excludeSmoothness = new HashSet<>();
     private final int maxInclinePercent = 6;
 
-<<<<<<< HEAD:core/src/main/java/com/graphhopper/routing/util/WheelchairTagParser.java
-    public WheelchairTagParser(EncodedValueLookup lookup, PMap properties) {
-        this(
-                lookup.getBooleanEncodedValue(VehicleAccess.key("wheelchair")),
-                lookup.getDecimalEncodedValue(VehicleSpeed.key("wheelchair")),
-                lookup.getDecimalEncodedValue(VehiclePriority.key("wheelchair")),
-                lookup.getEnumEncodedValue(FootNetwork.KEY, RouteNetwork.class)
-        );
-=======
     public WheelchairAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getBooleanEncodedValue(properties.getString("name", VehicleAccess.key("wheelchair"))));
->>>>>>> 7.0:core/src/main/java/com/graphhopper/routing/util/parsers/WheelchairAccessParser.java
         blockPrivate(properties.getBool("block_private", true));
         blockFords(properties.getBool("block_fords", false));
     }
 
-<<<<<<< HEAD:core/src/main/java/com/graphhopper/routing/util/WheelchairTagParser.java
-    protected WheelchairTagParser(BooleanEncodedValue accessEnc, DecimalEncodedValue speedEnc, DecimalEncodedValue priorityEnc,
-                                  EnumEncodedValue<RouteNetwork> footRouteEnc) {
-        super(accessEnc, speedEnc, priorityEnc, footRouteEnc, "wheelchair");
-=======
     protected WheelchairAccessParser(BooleanEncodedValue accessEnc) {
         super(accessEnc);
->>>>>>> 7.0:core/src/main/java/com/graphhopper/routing/util/parsers/WheelchairAccessParser.java
 
         restrictions.add("wheelchair");
 
@@ -152,11 +132,7 @@ public class WheelchairAccessParser extends FootAccessParser {
     }
 
     @Override
-<<<<<<< HEAD:core/src/main/java/com/graphhopper/routing/util/WheelchairTagParser.java
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay way) {
-=======
     public void handleWayTags(IntsRef edgeFlags, ReaderWay way) {
->>>>>>> 7.0:core/src/main/java/com/graphhopper/routing/util/parsers/WheelchairAccessParser.java
         WayAccess access = getAccess(way);
         if (access.canSkip())
             return;

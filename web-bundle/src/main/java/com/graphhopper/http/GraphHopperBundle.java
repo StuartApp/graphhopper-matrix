@@ -266,7 +266,6 @@ public class GraphHopperBundle implements ConfiguredBundle<GraphHopperBundleConf
                 bind(new JTSTriangulator(graphHopper.getRouterConfig())).to(Triangulator.class);
                 bindFactory(MapMatchingRouterFactoryFactory.class).to(MapMatchingResource.MapMatchingRouterFactory.class);
                 bindFactory(PathDetailsBuilderFactoryFactory.class).to(PathDetailsBuilderFactory.class);
-                bindFactory(LegacyProfileResolverFactory.class).to(LegacyProfileResolver.class);
                 bindFactory(ProfileResolverFactory.class).to(ProfileResolver.class);
                 bindFactory(GHRequestTransformerFactory.class).to(GHRequestTransformer.class);
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");

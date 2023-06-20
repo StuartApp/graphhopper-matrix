@@ -43,16 +43,10 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public abstract class AbstractBikeTagParserTester {
     protected EncodingManager encodingManager;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-    protected BikeCommonTagParser parser;
-    protected OSMParsers osmParsers;
-    protected BooleanEncodedValue roundaboutEnc;
-=======
     protected BikeCommonAccessParser accessParser;
     protected BikeCommonAverageSpeedParser speedParser;
     protected BikeCommonPriorityParser priorityParser;
     protected OSMParsers osmParsers;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
     protected DecimalEncodedValue priorityEnc;
     protected DecimalEncodedValue avgSpeedEnc;
     protected BooleanEncodedValue accessEnc;
@@ -60,13 +54,6 @@ public abstract class AbstractBikeTagParserTester {
     @BeforeEach
     public void setUp() {
         encodingManager = createEncodingManager();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-        parser = createBikeTagParser(encodingManager, new PMap("block_fords=true"));
-        osmParsers = createOSMParsers(parser, encodingManager);
-        roundaboutEnc = encodingManager.getBooleanEncodedValue(Roundabout.KEY);
-        priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.getName()));
-        avgSpeedEnc = parser.getAverageSpeedEnc();
-=======
         VehicleTagParsers parsers = createBikeTagParsers(encodingManager, new PMap("block_fords=true"));
         accessParser = (BikeCommonAccessParser) parsers.getAccessParser();
         speedParser = (BikeCommonAverageSpeedParser) parsers.getSpeedParser();
@@ -78,27 +65,16 @@ public abstract class AbstractBikeTagParserTester {
         priorityEnc = priorityParser.getPriorityEnc();
         avgSpeedEnc = speedParser.getAverageSpeedEnc();
         accessEnc = accessParser.getAccessEnc();
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
     }
 
     protected abstract EncodingManager createEncodingManager();
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-    protected abstract BikeCommonTagParser createBikeTagParser(EncodedValueLookup lookup, PMap pMap);
-
-    protected abstract OSMParsers createOSMParsers(BikeCommonTagParser parser, EncodedValueLookup lookup);
-=======
     protected abstract VehicleTagParsers createBikeTagParsers(EncodedValueLookup lookup, PMap pMap);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         IntsRef relFlags = osmParsers.handleRelationTags(new ReaderRelation(0), osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
-=======
         osmParsers.handleWayTags(edgeFlags, way, relFlags);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
     }
 
@@ -109,28 +85,16 @@ public abstract class AbstractBikeTagParserTester {
     protected void assertPriorityAndSpeed(int expectedPrio, double expectedSpeed, ReaderWay way, ReaderRelation rel) {
         IntsRef relFlags = osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags());
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
-        DecimalEncodedValue enc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.toString()));
-        assertEquals(PriorityCode.getValue(expectedPrio), enc.getDecimal(false, edgeFlags), 0.01);
-        assertEquals(expectedSpeed, parser.getAverageSpeedEnc().getDecimal(false, edgeFlags), 0.1);
-        assertEquals(expectedSpeed, parser.getAverageSpeedEnc().getDecimal(true, edgeFlags), 0.1);
-=======
         osmParsers.handleWayTags(edgeFlags, way, relFlags);
         assertEquals(PriorityCode.getValue(expectedPrio), priorityEnc.getDecimal(false, edgeFlags), 0.01);
         assertEquals(expectedSpeed, avgSpeedEnc.getDecimal(false, edgeFlags), 0.1);
         assertEquals(expectedSpeed, avgSpeedEnc.getDecimal(true, edgeFlags), 0.1);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
     }
 
     protected double getSpeedFromFlags(ReaderWay way) {
         IntsRef relFlags = osmParsers.createRelationFlags();
         IntsRef flags = encodingManager.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-        flags = osmParsers.handleWayTags(flags, way, relFlags);
-=======
         osmParsers.handleWayTags(flags, way, relFlags);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
         return avgSpeedEnc.getDecimal(false, flags);
     }
 
@@ -296,11 +260,7 @@ public abstract class AbstractBikeTagParserTester {
         // Example https://www.openstreetmap.org/way/213492914 => two hike 84544, 2768803 and two bike relations 3162932, 5254650
         IntsRef relFlags = osmParsers.handleRelationTags(rel2, osmParsers.handleRelationTags(rel, osmParsers.createRelationFlags()));
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-        edgeFlags = osmParsers.handleWayTags(edgeFlags, way, relFlags);
-=======
         osmParsers.handleWayTags(edgeFlags, way, relFlags);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
         EnumEncodedValue<RouteNetwork> enc = encodingManager.getEnumEncodedValue(RouteNetwork.key("bike"), RouteNetwork.class);
         assertEquals(RouteNetwork.REGIONAL, enc.getEnum(false, edgeFlags));
     }
@@ -424,14 +384,9 @@ public abstract class AbstractBikeTagParserTester {
     public void testHandleWayTagsCallsHandlePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/AbstractBikeTagParserTester.java
-        IntsRef edgeFlags = parser.handleWayTags(encodingManager.createEdgeFlags(), osmWay);
-        DecimalEncodedValue priorityEnc = encodingManager.getDecimalEncodedValue(VehiclePriority.key(parser.getName()));
-=======
 
         IntsRef edgeFlags = encodingManager.createEdgeFlags();
         priorityParser.handleWayTags(edgeFlags, osmWay, null);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/AbstractBikeTagParserTester.java
         assertEquals(PriorityCode.getValue(VERY_NICE.getValue()), priorityEnc.getDecimal(false, edgeFlags), 1e-3);
     }
 
@@ -578,20 +533,5 @@ public abstract class AbstractBikeTagParserTester {
         assertFalse(bike.restrictedValues.contains("private"));
         assertTrue(bike.intendedValues.contains("private"));
         assertFalse(bike.isBarrier(node));
-    }
-
-    @Test
-    void privateAndFords() {
-        // defaults: do not block fords, block private
-        BikeCommonTagParser bike = createBikeTagParser(encodingManager, new PMap());
-        assertFalse(bike.isBlockFords());
-        assertTrue(bike.restrictedValues.contains("private"));
-        assertFalse(bike.intendedValues.contains("private"));
-
-        // block fords, unblock private
-        bike = createBikeTagParser(encodingManager, new PMap("block_fords=true|block_private=false"));
-        assertTrue(bike.isBlockFords());
-        assertFalse(bike.restrictedValues.contains("private"));
-        assertTrue(bike.intendedValues.contains("private"));
     }
 }

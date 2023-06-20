@@ -21,12 +21,9 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.routing.ev.*;
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-=======
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.PriorityCode;
 import com.graphhopper.routing.util.WayAccess;
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -44,24 +41,12 @@ import static org.junit.jupiter.api.Assertions.*;
  * @author Peter Karich
  */
 public class CarTagParserTest {
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-    private final EncodingManager em = createEncodingManager(getCarName());
-    final CarTagParser parser = createParser(em, new PMap("block_fords=true"));
-    private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
-    private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
-    private final DecimalEncodedValue avSpeedEnc = parser.getAverageSpeedEnc();
-
-    protected String getCarName() {
-        return "car";
-    }
-=======
     private final EncodingManager em = createEncodingManager("car");
     final CarAccessParser parser = createParser(em, new PMap("block_fords=true"));
     final CarAverageSpeedParser speedParser = new CarAverageSpeedParser(em, new PMap("block_fords=true"));
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
     private final BooleanEncodedValue accessEnc = parser.getAccessEnc();
     private final DecimalEncodedValue avSpeedEnc = speedParser.getAverageSpeedEnc();
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
 
     private EncodingManager createEncodingManager(String carName) {
         return new EncodingManager.Builder()
@@ -76,13 +61,8 @@ public class CarTagParserTest {
                 .build();
     }
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-    CarTagParser createParser(EncodedValueLookup lookup, PMap properties) {
-        CarTagParser carTagParser = new CarTagParser(lookup, properties);
-=======
     CarAccessParser createParser(EncodedValueLookup lookup, PMap properties) {
         CarAccessParser carTagParser = new CarAccessParser(lookup, properties);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         carTagParser.init(new DateRangeParser());
         return carTagParser;
     }
@@ -210,12 +190,8 @@ public class CarTagParserTest {
         assertTrue(parser.getAccess(way).canSkip());
         assertTrue(parser.isBarrier(node));
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        CarTagParser tmpParser = createParser(em, new PMap("block_fords=false"));
-=======
         CarAccessParser tmpParser = new CarAccessParser(em, new PMap("block_fords=false"));
         tmpParser.init(new DateRangeParser());
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         assertTrue(tmpParser.getAccess(way).isWay());
         assertFalse(tmpParser.isBarrier(node));
     }
@@ -318,73 +294,46 @@ public class CarTagParserTest {
         way.setTag("highway", "trunk");
         way.setTag("maxspeed", "500");
         IntsRef edgeFlags = em.createEdgeFlags();
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        parser.handleWayTags(edgeFlags, way);
-=======
         speedParser.handleWayTags(edgeFlags, way);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         assertEquals(140, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "10");
         way.setTag("maxspeed:forward", "20");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        edgeFlags = parser.handleWayTags(edgeFlags, way);
-        assertEquals(10, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
-=======
         edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
         assertEquals(20, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertEquals(10, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:forward", "20");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        edgeFlags = parser.handleWayTags(edgeFlags, way);
-=======
         edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         assertEquals(20, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "20");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        edgeFlags = parser.handleWayTags(edgeFlags, way);
-        assertEquals(20, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
-=======
         edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
         assertEquals(65, avSpeedEnc.getDecimal(false, edgeFlags), 1e-1);
         assertEquals(20, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
 
         way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", "none");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        edgeFlags = parser.handleWayTags(edgeFlags, way);
-=======
         edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         assertEquals(135, avSpeedEnc.getDecimal(false, edgeFlags), .1);
 
         way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        IntsRef flags = parser.handleWayTags(em.createEdgeFlags(), way);
-        assertEquals(100, avSpeedEnc.getDecimal(true, flags), 1e-1);
-=======
         edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
         assertEquals(100, avSpeedEnc.getDecimal(true, edgeFlags), 1e-1);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
     }
 
     @Test
@@ -666,19 +615,6 @@ public class CarTagParserTest {
 
     @Test
     public void testMaxValue() {
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        DecimalEncodedValueImpl smallFactorSpeedEnc = new DecimalEncodedValueImpl(getCarName() + "_average_speed", 10, 0.5, false);
-        EncodingManager em = new EncodingManager.Builder()
-                .add(new SimpleBooleanEncodedValue(getCarName() + "_access", true))
-                .add(smallFactorSpeedEnc)
-                .addTurnCostEncodedValue(TurnCost.create(getCarName(), 1))
-                .build();
-        CarTagParser parser = createParser(em, new PMap());
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway_link");
-        way.setTag("maxspeed", "60 mph");
-        IntsRef edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
-=======
         DecimalEncodedValueImpl smallFactorSpeedEnc = new DecimalEncodedValueImpl("car_average_speed", 10, 0.5, true);
         EncodingManager em = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue("car_access", true))
@@ -691,7 +627,6 @@ public class CarTagParserTest {
         way.setTag("maxspeed", "60 mph");
         IntsRef edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
 
         // double speed = AbstractFlagEncoder.parseSpeed("60 mph");
         // => 96.56 * 0.9 => 86.9
@@ -702,12 +637,8 @@ public class CarTagParserTest {
         way = new ReaderWay(2);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        edgeFlags = parser.handleWayTags(em.createEdgeFlags(), way);
-=======
         edgeFlags = em.createEdgeFlags();
         speedParser.handleWayTags(edgeFlags, way);
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         assertEquals(101.5, smallFactorSpeedEnc.getDecimal(false, edgeFlags), .1);
     }
 
@@ -730,11 +661,7 @@ public class CarTagParserTest {
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "hiking");
 
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        BikeTagParser bikeParser = new BikeTagParser(em, new PMap());
-=======
         BikeAccessParser bikeParser = new BikeAccessParser(em, new PMap());
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
         bikeParser.init(new DateRangeParser());
         assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         assertNotEquals(WayAccess.CAN_SKIP, bikeParser.getAccess(way));
@@ -768,17 +695,6 @@ public class CarTagParserTest {
         assertEquals(5, speedParser.getAverageSpeedEnc().getDecimal(false, edgeFlags), .1);
 
         // for a smaller speed factor the minimum speed is also smaller
-<<<<<<< HEAD:core/src/test/java/com/graphhopper/routing/util/CarTagParserTest.java
-        DecimalEncodedValueImpl lowFactorSpeedEnc = new DecimalEncodedValueImpl(getCarName() + "_average_speed", 10, 1, false);
-        EncodingManager lowFactorEm = new EncodingManager.Builder()
-                .add(new SimpleBooleanEncodedValue(getCarName() + "_access", true))
-                .add(lowFactorSpeedEnc)
-                .addTurnCostEncodedValue(TurnCost.create(getCarName(), 1))
-                .build();
-        edgeFlags = lowFactorEm.createEdgeFlags();
-        createParser(lowFactorEm, new PMap()).handleWayTags(edgeFlags, way);
-        assertEquals(1, lowFactorSpeedEnc.getDecimal(false, edgeFlags), .1);
-=======
         DecimalEncodedValueImpl lowFactorSpeedEnc = new DecimalEncodedValueImpl(VehicleSpeed.key("car"), 10, 1, false);
         EncodingManager lowFactorEm = new EncodingManager.Builder()
                 .add(new SimpleBooleanEncodedValue(VehicleAccess.key("car"), true))
@@ -800,6 +716,5 @@ public class CarTagParserTest {
             way.setTag(vehicle, "yes");
             assertEquals(WayAccess.CAN_SKIP, parser.getAccess(way));
         }
->>>>>>> 7.0:core/src/test/java/com/graphhopper/routing/util/parsers/CarTagParserTest.java
     }
 }
