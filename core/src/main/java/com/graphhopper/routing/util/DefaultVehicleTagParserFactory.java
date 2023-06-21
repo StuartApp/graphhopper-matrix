@@ -39,6 +39,10 @@ public class DefaultVehicleTagParserFactory implements VehicleTagParserFactory {
             return VehicleTagParsers.foot(lookup, configuration);
         if (name.equals(WHEELCHAIR))
             return VehicleTagParsers.wheelchair(lookup, configuration);
+        if(name.equals(MATRIXBIKE))
+            return VehicleTagParsers.matrixbike(lookup, configuration);
+        if(name.equals(MATRIXCAR))
+            return VehicleTagParsers.matrixcar(lookup, configuration);
 
         throw new IllegalArgumentException("Unknown name for vehicle tag parsers: " + name);
     }

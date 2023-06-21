@@ -38,7 +38,7 @@ public class MatrixCarAccessParser extends AbstractAccessParser implements TagPa
 
     public MatrixCarAccessParser(EncodedValueLookup lookup, PMap properties) {
         this(
-                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "car"))),
+                lookup.getBooleanEncodedValue(VehicleAccess.key(properties.getString("name", "matrixcar"))),
                 lookup.getBooleanEncodedValue(Roundabout.KEY),
                 properties,
                 TransportationMode.CAR
