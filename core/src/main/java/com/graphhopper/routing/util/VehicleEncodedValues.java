@@ -149,17 +149,12 @@ public class VehicleEncodedValues {
         return getName();
     }
 
-    public static VehicleEncodedValues matrixfoot(PMap properties) {
-        return foot(new PMap(properties).putObject("name", properties.getString("name", "matrixfoot")));
-    }
     public static VehicleEncodedValues matrixbike(PMap properties) {
         return bike(new PMap(properties).putObject("name", properties.getString("name", "matrixbike")));
     }
     public static VehicleEncodedValues matrixcar(PMap properties) {
         return car(new PMap(properties).putObject("name", properties.getString("name", "matrixcar")));
     }
-    public static VehicleEncodedValues matrixmotorcycle(PMap properties) {
-        return motorcycle(new PMap(properties).putObject("name", properties.getString("name", "matrixmotorcycle")));
-    }
+
 }
 

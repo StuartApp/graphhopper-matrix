@@ -32,11 +32,8 @@ public interface VehicleEncodedValuesFactory {
     String WHEELCHAIR = "wheelchair";
     String MATRIXCAR = "matrixcar";
     String MATRIXBIKE = "matrixbike";
-    String MATRIXFOOT = "matrixfoot";
-    String MATRIXMOTORCYCLE = "matrixmotorcycle";
 
     VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);
 
 }
 
- 

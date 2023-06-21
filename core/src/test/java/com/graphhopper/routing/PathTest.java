@@ -38,7 +38,6 @@ import static com.graphhopper.search.KVStorage.KeyValue.STREET_NAME;
 import static com.graphhopper.search.KVStorage.KeyValue.createKV;
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
 import static com.graphhopper.util.Parameters.Details.*;
-import com.graphhopper.search.EdgeKVStorage.KeyValue;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
