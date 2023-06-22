@@ -32,6 +32,8 @@ import java.util.*;
 
 import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
 
+import static com.graphhopper.util.DistancePlaneProjection.DIST_PLANE;
+
 class QueryOverlayBuilder {
     private final int firstVirtualNodeId;
     private final int firstVirtualEdgeId;
