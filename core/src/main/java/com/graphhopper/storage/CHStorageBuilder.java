@@ -86,6 +86,15 @@ public class CHStorageBuilder {
         return shortcut;
     }
 
+    public int addShortcutEdgeBased(int a, int b, int accessFlags, double weight,  double distance, long time,
+                                    int skippedEdge1, int skippedEdge2,
+                                    int origFirst, int origLast) {
+        checkNewShortcut(a, b);
+        int shortcut = storage.shortcutEdgeBased(a, b, accessFlags, weight, distance,time, skippedEdge1, skippedEdge2, origFirst, origLast);
+        setLastShortcut(a, shortcut);
+        return shortcut;
+    }
+
     public void replaceSkippedEdges(IntUnaryOperator mapping) {
         for (int i = 0; i < storage.getShortcuts(); ++i) {
             long shortcutPointer = storage.toShortcutPointer(i);

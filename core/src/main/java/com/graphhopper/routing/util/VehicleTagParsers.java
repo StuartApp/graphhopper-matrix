@@ -87,6 +87,22 @@ public class VehicleTagParsers {
         );
     }
 
+    public static VehicleTagParsers matrixbike(EncodedValueLookup lookup, PMap properties) {
+        return new VehicleTagParsers(
+                new MatrixBikeAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new MatrixBikeAverageSpeedParser(lookup, properties),
+                new MatrixBikePriorityParser(lookup, properties)
+        );
+    }
+
+    public static VehicleTagParsers matrixcar(EncodedValueLookup lookup, PMap properties) {
+        return new VehicleTagParsers(
+                new MatrixCarAccessParser(lookup, properties).init(properties.getObject("date_range_parser", new DateRangeParser())),
+                new MatrixCarAverageSpeedParser(lookup, properties),
+                null
+        );
+    }
+
     public VehicleTagParsers(TagParser accessParser, TagParser speedParser, TagParser priorityParser) {
         this.accessParser = accessParser;
         this.speedParser = speedParser;
