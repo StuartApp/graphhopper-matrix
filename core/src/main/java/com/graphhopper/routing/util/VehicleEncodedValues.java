@@ -148,13 +148,13 @@ public class VehicleEncodedValues {
     public String toString() {
         return getName();
     }
-
+    
+    
     public static VehicleEncodedValues matrixbike(PMap properties) {
         return bike(new PMap(properties).putObject("name", properties.getString("name", "matrixbike")));
     }
+    
     public static VehicleEncodedValues matrixcar(PMap properties) {
         return car(new PMap(properties).putObject("name", properties.getString("name", "matrixcar")));
     }
-
 }
-

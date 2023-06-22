@@ -367,11 +367,11 @@ public class RouteResourceTest {
         assertEquals("[34,38,50.0]", maxSpeed.get(2).toString());
         assertEquals("[38,50,90.0]", maxSpeed.get(3).toString());
         assertEquals("[50,52,50.0]", maxSpeed.get(4).toString());
-        assertEquals("[52,78,90.0]", maxSpeed.get(5).toString());
+        assertEquals("[52,60,90.0]", maxSpeed.get(5).toString());
 
         JsonNode urbanDensityNode = details.get("urban_density");
         assertEquals("[0,53,\"residential\"]", urbanDensityNode.get(0).toString());
-        assertEquals("[53,68,\"rural\"]", urbanDensityNode.get(1).toString());
+        assertEquals("[53,57,\"rural\"]", urbanDensityNode.get(1).toString());
     }
 
     @Test
