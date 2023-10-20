@@ -58,7 +58,7 @@ public abstract class MatrixSolver {
 
     public DirectedEdgeFilter createDirectedEdgeFilter() {
         BooleanEncodedValue inSubnetworkEnc = lookup.getBooleanEncodedValue(Subnetwork.key(profile.getName()));
-        return (edgeState, reverse) -> !edgeState.get(inSubnetworkEnc) && Double.isFinite(weighting.calcEdgeWeightWithAccess(edgeState, reverse));
+        return (edgeState, reverse) -> !edgeState.get(inSubnetworkEnc) && Double.isFinite(weighting.calcEdgeWeight(edgeState, reverse));
     }
 
     public abstract MatrixCalculator createMatrixCalculator(QueryGraph queryGraph);

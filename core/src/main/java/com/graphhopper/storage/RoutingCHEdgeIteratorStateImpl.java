@@ -171,10 +171,6 @@ public class RoutingCHEdgeIteratorStateImpl implements RoutingCHEdgeIteratorStat
     }
 
     long getOrigEdgeTime(boolean reverse) {
-        final EdgeIteratorState baseEdge = getBaseGraphEdgeState();
-        if (baseEdge.getBaseNode() != baseEdge.getAdjNode() && weighting.edgeHasNoAccess(baseEdge, reverse))
-            return 0;
-
-        return weighting.calcEdgeMillis(baseEdge, reverse);
+        return weighting.calcEdgeMillis(getBaseGraphEdgeState(), reverse);
     }
 }

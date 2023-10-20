@@ -74,7 +74,6 @@ public class CHPreparationGraph {
         return new CHPreparationGraph(nodes, edges, true, turnCostFunction);
     }
 
-
     /**
      * @param nodes (fixed) number of nodes of the graph
      * @param edges the maximum number of (non-shortcut) edges in this graph. edges-1 is the maximum edge id that may
@@ -82,7 +81,6 @@ public class CHPreparationGraph {
      */
     private CHPreparationGraph(int nodes, int edges, boolean edgeBased, TurnCostFunction turnCostFunction ) {
         this.turnCostFunction = turnCostFunction;
-
         this.nodes = nodes;
         this.edges = edges;
         this.edgeBased = edgeBased;
@@ -95,7 +93,6 @@ public class CHPreparationGraph {
         nextShortcutId = edges;
     }
 
-
     public static void buildFromGraph(CHPreparationGraph prepareGraph, Graph graph, Weighting weighting) {
         if (graph.getNodes() != prepareGraph.getNodes())
             throw new IllegalArgumentException("Cannot initialize from given graph. The number of nodes does not match: " +
@@ -105,7 +102,6 @@ public class CHPreparationGraph {
                     graph.getEdges() + " vs. " + prepareGraph.getOriginalEdges());
         AllEdgesIterator iter = graph.getAllEdges();
         while (iter.next()) {
-
             double weightFwd = weighting.calcEdgeWeight(iter, false);
             double weightBwd = weighting.calcEdgeWeight(iter, true);
 
@@ -122,11 +118,6 @@ public class CHPreparationGraph {
         prepareGraph.prepareForContraction();
     }
 
-    /**
-     * Builds a turn cost function for a given graph('s turn cost storage) and given uTurnCosts.
-     * The trivial implementation would be simply using {@link Weighting#calcTurnWeight}. However, it turned out
-     * that storing all turn costs in separate arrays upfront speeds up edge-based CH preparation by about 25%. See #2084
-     */
     public static TurnCostFunction buildTurnCostFunctionFromTurnCostStorage(Graph graph, Weighting weighting) {
         // At some point we used an optimized version where we copied the turn costs to sorted arrays
         // temporarily. This seemed to be around 25% faster according to measurements on the Bavaria
@@ -134,7 +125,6 @@ public class CHPreparationGraph {
         // and even Germany). See also #2084
         return weighting::calcTurnWeight;
     }
-
 
     public int getNodes() {
         return nodes;
@@ -189,7 +179,6 @@ public class CHPreparationGraph {
             origGraphBuilder.addEdge(from, to, edge, fwd, bwd);
     }
 
-
     public int addShortcut(int from, int to, int origEdgeKeyFirst, int origEdgeKeyLast, int skipped1,
                            int skipped2, double weight, int origEdgeCount) {
         checkReady();
@@ -215,7 +204,6 @@ public class CHPreparationGraph {
             addInEdge(to, prepareEdge);
         return nextShortcutId++;
     }
-
 
     public void prepareForContraction() {
         checkNotReady();

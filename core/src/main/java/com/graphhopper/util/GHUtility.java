@@ -480,10 +480,10 @@ public class GHUtility {
     /**
      * Creates an edge key, i.e. an integer number that encodes an edge ID and the direction of an edge
      */
-    public static int createEdgeKey(int edgeId, boolean isLoop, boolean reverse) {
+    public static int createEdgeKey(int edgeId, boolean reverse) {
         // edge state in storage direction -> edge key is even
         // edge state against storage direction -> edge key is odd
-        return (edgeId << 1) + ((reverse && !isLoop) ? 1 : 0);
+        return (edgeId << 1) + (reverse ? 1 : 0);
     }
 
     /**

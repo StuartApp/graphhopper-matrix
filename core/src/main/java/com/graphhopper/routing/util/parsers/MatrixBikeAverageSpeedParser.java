@@ -10,12 +10,11 @@ public class MatrixBikeAverageSpeedParser extends BikeCommonAverageSpeedParser {
 
     public MatrixBikeAverageSpeedParser(EncodedValueLookup lookup, PMap properties) {
         this(lookup.getDecimalEncodedValue(VehicleSpeed.key(properties.getString("name", "matrixbike"))),
-                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class));
+                lookup.getEnumEncodedValue(Smoothness.KEY, Smoothness.class),lookup.getDecimalEncodedValue(FerrySpeed.KEY));
     }
 
-    public MatrixBikeAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc) {
-        super(speedEnc, smoothnessEnc);
-
+    public MatrixBikeAverageSpeedParser(DecimalEncodedValue speedEnc, EnumEncodedValue<Smoothness> smoothnessEnc, DecimalEncodedValue ferrySpeedEnc) {
+        super(speedEnc, smoothnessEnc, ferrySpeedEnc);
 
 
         //Custom

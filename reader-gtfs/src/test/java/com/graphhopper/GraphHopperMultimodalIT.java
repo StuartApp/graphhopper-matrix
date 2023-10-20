@@ -23,7 +23,6 @@ import com.graphhopper.gtfs.*;
 import com.graphhopper.routing.ev.BooleanEncodedValue;
 import com.graphhopper.routing.ev.Subnetwork;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.weighting.custom.CustomProfile;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CustomModel;
 import com.graphhopper.util.Helper;

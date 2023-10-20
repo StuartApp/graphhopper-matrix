@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.ev.*;
+import com.graphhopper.routing.util.FerrySpeedCalculator;
 import com.graphhopper.routing.util.TransportationMode;
 import com.graphhopper.routing.util.WayAccess;
 import com.graphhopper.routing.util.parsers.AbstractAccessParser;
@@ -90,12 +91,14 @@ public class MatrixCarAccessParser extends AbstractAccessParser implements TagPa
         String highwayValue = way.getTag("highway");
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
+            if (FerrySpeedCalculator.isFerry(way)) {
                 if (restrictedValues.contains(firstValue))
                     return WayAccess.CAN_SKIP;
                 if (intendedValues.contains(firstValue) ||
                         // implied default is allowed only if foot and bicycle is not specified:
-                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
+                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle") ||
+                        // if hgv is allowed than smaller trucks and cars are allowed too
+                        way.hasTag("hgv", "yes"))
                     return WayAccess.FERRY;
             }
             return WayAccess.CAN_SKIP;
@@ -114,7 +117,7 @@ public class MatrixCarAccessParser extends AbstractAccessParser implements TagPa
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return WayAccess.CAN_SKIP;
 
-        // multiple restrictions needs special handling, see also motorcycle
+        // multiple restrictions needs special handling
         boolean permittedWayConditionallyRestricted = getConditionalTagInspector().isPermittedWayConditionallyRestricted(way);
         boolean restrictedWayConditionallyPermitted = getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way);
         if (!firstValue.isEmpty()) {

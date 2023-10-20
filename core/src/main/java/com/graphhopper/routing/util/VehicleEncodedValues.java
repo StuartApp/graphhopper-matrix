@@ -57,6 +57,13 @@ public class VehicleEncodedValues {
         );
     }
 
+    public static VehicleEncodedValues matrixbike(PMap properties) {
+        return bike(new PMap(properties).putObject("name", properties.getString("name", "matrixbike")));
+    }
+    public static VehicleEncodedValues matrixcar(PMap properties) {
+        return car(new PMap(properties).putObject("name", properties.getString("name", "matrixcar")));
+    }
+
     public static VehicleEncodedValues bike(PMap properties) {
         String name = properties.getString("name", "bike");
         int speedBits = properties.getInt("speed_bits", 4);
@@ -150,9 +157,3 @@ public class VehicleEncodedValues {
     }
 }
 
-    public static VehicleEncodedValues matrixbike(PMap properties) {
-        return bike(new PMap(properties).putObject("name", properties.getString("name", "matrixbike")));
-    }
-    public static VehicleEncodedValues matrixcar(PMap properties) {
-        return car(new PMap(properties).putObject("name", properties.getString("name", "matrixcar")));
-    }
