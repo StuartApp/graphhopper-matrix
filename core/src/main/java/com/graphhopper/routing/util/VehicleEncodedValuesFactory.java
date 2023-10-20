@@ -36,4 +36,3 @@ public interface VehicleEncodedValuesFactory {
     VehicleEncodedValues createVehicleEncodedValues(String name, PMap configuration);
 
 }
-

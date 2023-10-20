@@ -47,6 +47,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.graphhopper.json.Statement.If;
+import static com.graphhopper.json.Statement.Op.MULTIPLY;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.lessThan;
 import static org.hamcrest.core.Is.is;
@@ -69,7 +71,10 @@ public class MapMatchingTest {
         graphHopper = new GraphHopper();
         graphHopper.setOSMFile("../map-matching/files/leipzig_germany.osm.pbf");
         graphHopper.setGraphHopperLocation(GH_LOCATION);
-        graphHopper.setProfiles(new Profile("my_profile").setVehicle("car").setWeighting("fastest"));
+        graphHopper.setProfiles(new Profile("my_profile").
+                setCustomModel(new CustomModel().
+                        addToPriority(If("road_access == DESTINATION", MULTIPLY, "0.1"))).
+                setVehicle("car"));
         graphHopper.getLMPreparationHandler().setLMProfiles(new LMProfile("my_profile"));
         graphHopper.importOrLoad();
     }
@@ -84,10 +89,10 @@ public class MapMatchingTest {
         @Override
         public Stream<? extends Arguments> provideArguments(ExtensionContext context) {
             return Stream.of(
-                    new PMap().putObject(Parameters.Landmark.DISABLE, true),
-                    new PMap().putObject(Parameters.Landmark.DISABLE, false)
+                            new PMap().putObject(Parameters.Landmark.DISABLE, true),
+                            new PMap().putObject(Parameters.Landmark.DISABLE, false)
 
-            )
+                    )
                     .map(hints -> hints.putObject("profile", "my_profile"))
                     .map(Arguments::of);
         }

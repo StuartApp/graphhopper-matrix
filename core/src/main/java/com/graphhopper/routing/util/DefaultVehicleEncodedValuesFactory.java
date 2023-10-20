@@ -60,11 +60,11 @@ public class DefaultVehicleEncodedValuesFactory implements VehicleEncodedValuesF
         if (name.equals(WHEELCHAIR))
             return VehicleEncodedValues.wheelchair(configuration);
             
-         if (name.equals(MATRIXCAR))
+        if (name.equals(MATRIXCAR))
             return VehicleEncodedValues.matrixcar(configuration);
+        
         if (name.equals(MATRIXBIKE))
             return VehicleEncodedValues.matrixbike(configuration);
-
 
         throw new IllegalArgumentException("entry in vehicle list not supported: " + name);
     }
