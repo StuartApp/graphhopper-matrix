@@ -139,7 +139,7 @@ public class ShortestPathTree extends AbstractRoutingAlgorithm {
         if (traversalMode == TraversalMode.NODE_BASED) {
             fromMap.put(from, currentLabel);
         }
-        while (!queueByWeighting.isEmpty()) {
+        while (!finished()) {
             currentLabel = queueByWeighting.poll();
             if (currentLabel.deleted)
                 continue;

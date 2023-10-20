@@ -328,7 +328,7 @@ public class GraphHopperMatrixTest {
         // Distance assertions
         assertTrue(Math.round(result.getDistance(0, 0)) == 5260);
         // Time assertions
-        assertTrue(result.getTime(0, 0) == 414192);
+        assertTrue(result.getTime(0, 0) == 422220);
 
     }
 
@@ -432,9 +432,9 @@ public class GraphHopperMatrixTest {
         DistanceMatrix result = hopper.matrix(request).getMatrix();
 
         // Distance assertions
-        assertTrue(Math.round(result.getDistance(0, 0)) == 5561);
+        assertTrue(Math.round(result.getDistance(0, 0)) == 5447);
         // Time assertions
-        assertTrue(result.getTime(0, 0) == 505566);
+        assertTrue(result.getTime(0, 0) == 530105);
 
     }
 }
