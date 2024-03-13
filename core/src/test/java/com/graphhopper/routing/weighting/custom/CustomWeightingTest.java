@@ -33,18 +33,30 @@ class CustomWeightingTest {
     EncodingManager encodingManager;
     BooleanEncodedValue turnRestrictionEnc = TurnRestriction.create("car");
 
+    EnumEncodedValue<TollCar> tollCarEnc;
+    EnumEncodedValue<Toll> tollEnc;
+
     @BeforeEach
     public void setup() {
         accessEnc = VehicleAccess.create("car");
         avSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avSpeedEnc)
+<<<<<<< Updated upstream
                 .add(Toll.create())
                 .add(Hazmat.create())
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .addTurnCostEncodedValue(turnRestrictionEnc)
+=======
+                .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
+                .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
+                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
+                .add(new EnumEncodedValue<>(TollCar.KEY, TollCar.class))
+>>>>>>> Stashed changes
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
+        tollCarEnc = encodingManager.getEnumEncodedValue(TollCar.KEY, TollCar.class);
+        tollEnc = encodingManager.getEnumEncodedValue(Toll.KEY, Toll.class);
         graph = new BaseGraph.Builder(encodingManager).create();
     }
 
@@ -340,6 +352,42 @@ class CustomWeightingTest {
             long customMillis = customWeighting.calcEdgeMillis(edge, false);
             assertEquals(fastestMillis, customMillis);
         }
+    }
+
+    @Test
+    public void testCarToll() {
+        EdgeIteratorState withTollButCarNo = graph.edge(0, 1).setDistance(10).set(avSpeedEnc, 40).set(accessEnc, true, true)
+                .set(tollEnc, Toll.ALL)
+                .set(tollCarEnc, TollCar.NO);
+        EdgeIteratorState withTollButCarMissing = graph.edge(0, 1).setDistance(10).set(avSpeedEnc, 40).set(accessEnc, true, true)
+                .set(tollEnc, Toll.ALL)
+                .set(tollCarEnc, TollCar.MISSING);
+        EdgeIteratorState withTollButCarYes = graph.edge(0, 1).setDistance(10).set(avSpeedEnc, 40).set(accessEnc, true, true)
+                .set(tollEnc, Toll.ALL)
+                .set(tollCarEnc, TollCar.YES);
+
+        EdgeIteratorState withNoTollButCarYes = graph.edge(1, 2).setDistance(10).set(avSpeedEnc, 50).set(accessEnc, true, true)
+                .set(tollEnc, Toll.NO)
+                .set(tollCarEnc, TollCar.YES);
+        EdgeIteratorState withNoTollButCarMissing = graph.edge(1, 2).setDistance(10).set(avSpeedEnc, 50).set(accessEnc, true, true)
+                .set(tollEnc, Toll.NO)
+                .set(tollCarEnc, TollCar.MISSING);
+        EdgeIteratorState withNoTollButCarNo = graph.edge(1, 2).setDistance(10).set(avSpeedEnc, 50).set(accessEnc, true, true)
+                .set(tollEnc, Toll.NO)
+                .set(tollCarEnc, TollCar.NO);
+
+        CustomModel vehicleModel = new CustomModel();
+        vehicleModel.addToPriority(If("toll == ALL && toll_car == NO", MULTIPLY, "1.0"));
+        vehicleModel.addToPriority(If("toll == NO && toll_car != YES", MULTIPLY, "1.0"));
+        vehicleModel.addToPriority(If("toll == NO && toll_car == YES", MULTIPLY, "0.0"));
+        vehicleModel.addToPriority(If("toll == ALL && toll_car != NO", MULTIPLY, "0.0"));
+
+        assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(withTollButCarNo, false), 0.01);
+        assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarMissing, false), 0.01);
+        assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarNo, false), 0.01);
+        assertTrue(Double.isInfinite(createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarYes, false)));
+        assertTrue(Double.isInfinite(createWeighting(vehicleModel).calcEdgeWeight(withTollButCarMissing, false)));
+        assertTrue(Double.isInfinite(createWeighting(vehicleModel).calcEdgeWeight(withTollButCarYes, false)));
     }
 
     private Weighting createWeighting(CustomModel vehicleModel) {
