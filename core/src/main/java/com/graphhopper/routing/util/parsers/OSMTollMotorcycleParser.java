@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.ev.EdgeIntAccess;
 import com.graphhopper.routing.ev.EnumEncodedValue;
 import com.graphhopper.routing.ev.TollMotorcycle;
 import com.graphhopper.storage.IntsRef;
@@ -31,7 +32,7 @@ public class OSMTollMotorcycleParser implements TagParser {
     }
 
     @Override
-    public IntsRef handleWayTags(IntsRef edgeFlags, ReaderWay readerWay, IntsRef relationFlags) {
+    public void handleWayTags(int edgeId, EdgeIntAccess edgeIntAccess, ReaderWay readerWay, IntsRef relationFlags) {
         TollMotorcycle toll;
         if (readerWay.hasTag("toll:motorcycle", "yes")) {
             toll = TollMotorcycle.YES;
@@ -41,8 +42,6 @@ public class OSMTollMotorcycleParser implements TagParser {
             toll = TollMotorcycle.MISSING;
         }
 
-        tollEnc.setEnum(false, edgeFlags, toll);
-
-        return edgeFlags;
+        tollEnc.setEnum(false, edgeId, edgeIntAccess, toll);
     }
 }

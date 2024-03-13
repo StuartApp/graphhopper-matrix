@@ -80,14 +80,12 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMFootwayParser(lookup.getEnumEncodedValue(Footway.KEY, Footway.class));
         else if (name.equals(Country.KEY))
             return new CountryParser(lookup.getEnumEncodedValue(Country.KEY, Country.class));
-<<<<<<< Updated upstream
         else if (name.equals(State.KEY))
             return new StateParser(lookup.getEnumEncodedValue(State.KEY, State.class));
         else if (name.equals(Crossing.KEY))
             return new OSMCrossingParser(lookup.getEnumEncodedValue(Crossing.KEY, Crossing.class));
         else if (name.equals(FerrySpeed.KEY))
             return new FerrySpeedCalculator(lookup.getDecimalEncodedValue(FerrySpeed.KEY));
-=======
         else if (name.equals(TollMotorcycle.KEY))
             return new OSMTollMotorcycleParser(lookup.getEnumEncodedValue(TollMotorcycle.KEY, TollMotorcycle.class));
         else if (name.equals(TollBicycle.KEY))
@@ -96,7 +94,6 @@ public class DefaultTagParserFactory implements TagParserFactory {
             return new OSMTollCarParser(lookup.getEnumEncodedValue(TollCar.KEY, TollCar.class));
         else if (name.equals(TollFoot.KEY))
             return new OSMTollFootParser(lookup.getEnumEncodedValue(TollFoot.KEY, TollFoot.class));
->>>>>>> Stashed changes
         return null;
     }
 }

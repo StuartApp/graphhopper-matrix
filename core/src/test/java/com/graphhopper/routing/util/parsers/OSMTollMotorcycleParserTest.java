@@ -1,9 +1,7 @@
 package com.graphhopper.routing.util.parsers;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.ev.EncodedValue;
-import com.graphhopper.routing.ev.EnumEncodedValue;
-import com.graphhopper.routing.ev.TollMotorcycle;
+import com.graphhopper.routing.ev.*;
 import com.graphhopper.storage.IntsRef;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -22,24 +20,37 @@ public class OSMTollMotorcycleParserTest {
     }
 
     @Test
-    public void testSimpleTags() {
+    public void testTollMotorcycleYes() {
         ReaderWay readerWay = new ReaderWay(1);
         IntsRef relFlags = new IntsRef(2);
-        IntsRef intsRef = new IntsRef(1);
-        readerWay.setTag("highway", "primary");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TollMotorcycle.MISSING, tollEnc.getEnum(false, intsRef));
-
-        intsRef = new IntsRef(1);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:motorcycle", "yes");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TollMotorcycle.YES, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(TollMotorcycle.YES, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
 
-        intsRef = new IntsRef(1);
+    @Test
+    public void testTollMotorcycleNo() {
+        ReaderWay readerWay = new ReaderWay(1);
+        IntsRef relFlags = new IntsRef(2);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
         readerWay.setTag("highway", "primary");
         readerWay.setTag("toll:motorcycle", "no");
-        parser.handleWayTags(intsRef, readerWay, relFlags);
-        assertEquals(TollMotorcycle.NO, tollEnc.getEnum(false, intsRef));
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(TollMotorcycle.NO, tollEnc.getEnum(false, edgeId, edgeIntAccess));
+    }
+
+    @Test
+    public void testTollMotorcycleMissing() {
+        ReaderWay readerWay = new ReaderWay(1);
+        IntsRef relFlags = new IntsRef(2);
+        EdgeIntAccess edgeIntAccess = new ArrayEdgeIntAccess(1);
+        int edgeId = 0;
+        readerWay.setTag("highway", "primary");
+        parser.handleWayTags(edgeId, edgeIntAccess, readerWay, relFlags);
+        assertEquals(TollMotorcycle.MISSING, tollEnc.getEnum(false, edgeId, edgeIntAccess));
     }
 }

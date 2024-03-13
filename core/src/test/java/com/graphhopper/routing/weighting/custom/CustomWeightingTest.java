@@ -41,17 +41,11 @@ class CustomWeightingTest {
         accessEnc = VehicleAccess.create("car");
         avSpeedEnc = VehicleSpeed.create("car", 5, 5, true);
         encodingManager = new EncodingManager.Builder().add(accessEnc).add(avSpeedEnc)
-<<<<<<< Updated upstream
                 .add(Toll.create())
                 .add(Hazmat.create())
                 .add(RouteNetwork.create(BikeNetwork.KEY))
                 .addTurnCostEncodedValue(turnRestrictionEnc)
-=======
-                .add(new EnumEncodedValue<>(Toll.KEY, Toll.class))
-                .add(new EnumEncodedValue<>(Hazmat.KEY, Hazmat.class))
-                .add(new EnumEncodedValue<>(BikeNetwork.KEY, RouteNetwork.class))
                 .add(new EnumEncodedValue<>(TollCar.KEY, TollCar.class))
->>>>>>> Stashed changes
                 .build();
         maxSpeedEnc = encodingManager.getDecimalEncodedValue(MaxSpeed.KEY);
         roadClassEnc = encodingManager.getEnumEncodedValue(KEY, RoadClass.class);
@@ -382,9 +376,9 @@ class CustomWeightingTest {
         vehicleModel.addToPriority(If("toll == NO && toll_car == YES", MULTIPLY, "0.0"));
         vehicleModel.addToPriority(If("toll == ALL && toll_car != NO", MULTIPLY, "0.0"));
 
-        assertEquals(1.6, createWeighting(vehicleModel).calcEdgeWeight(withTollButCarNo, false), 0.01);
-        assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarMissing, false), 0.01);
-        assertEquals(1.42, createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarNo, false), 0.01);
+        assertEquals(0.9, createWeighting(vehicleModel).calcEdgeWeight(withTollButCarNo, false), 0.01);
+        assertEquals(0.72, createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarMissing, false), 0.01);
+        assertEquals(0.72, createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarNo, false), 0.01);
         assertTrue(Double.isInfinite(createWeighting(vehicleModel).calcEdgeWeight(withNoTollButCarYes, false)));
         assertTrue(Double.isInfinite(createWeighting(vehicleModel).calcEdgeWeight(withTollButCarMissing, false)));
         assertTrue(Double.isInfinite(createWeighting(vehicleModel).calcEdgeWeight(withTollButCarYes, false)));
