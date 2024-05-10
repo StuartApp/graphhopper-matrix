@@ -29,6 +29,10 @@ public enum TollFoot {
         this.name = name;
     }
 
+    public static EnumEncodedValue<TollFoot> create() {
+        return new EnumEncodedValue<>(KEY, TollFoot.class);
+    }
+
     @Override
     public String toString() {
         return name;

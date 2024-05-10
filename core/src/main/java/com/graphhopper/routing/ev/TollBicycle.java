@@ -29,6 +29,10 @@ public enum TollBicycle {
         this.name = name;
     }
 
+    public static EnumEncodedValue<TollBicycle> create() {
+        return new EnumEncodedValue<>(KEY, TollBicycle.class);
+    }
+
     @Override
     public String toString() {
         return name;

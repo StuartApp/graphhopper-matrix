@@ -59,6 +59,14 @@ public class DefaultEncodedValueFactory implements EncodedValueFactory {
             return Smoothness.create();
         } else if (Toll.KEY.equals(name)) {
             return Toll.create();
+        }else if(TollBicycle.KEY.equals(name)){
+            return TollBicycle.create();
+        }else if(TollMotorcycle.KEY.equals(name)){
+            return TollMotorcycle.create();
+        }else if(TollCar.KEY.equals(name)){
+            return TollCar.create();
+        }else if(TollFoot.KEY.equals(name)){
+            return TollFoot.create();
         } else if (TrackType.KEY.equals(name)) {
             return TrackType.create();
         } else if (BikeNetwork.KEY.equals(name) || FootNetwork.KEY.equals(name)) {
