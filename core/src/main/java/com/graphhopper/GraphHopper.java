@@ -1298,9 +1298,11 @@ public class GraphHopper {
 
             if(customSpeedReverse < maxSpeedReverse){
                 speedEncoders.forEach( encoder -> {
-                    double speed = iter.getReverse(encoder);
-                    logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge " + edge);
-                    iter.setReverse(encoder,customSpeedReverse);
+                    if(encoder.isStoreTwoDirections()){
+                        double speed = iter.getReverse(encoder);
+                        logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge " + edge);
+                        iter.setReverse(encoder,customSpeedReverse);
+                    }
                 });
             }
         }
