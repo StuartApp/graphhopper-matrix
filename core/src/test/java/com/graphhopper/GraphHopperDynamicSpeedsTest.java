@@ -18,61 +18,16 @@
 package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
-import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.reader.dem.SkadiProvider;
-import com.graphhopper.routing.ev.EdgeIntAccess;
-import com.graphhopper.routing.ev.EncodedValueLookup;
-import com.graphhopper.routing.ev.RoadEnvironment;
-import com.graphhopper.routing.ev.Subnetwork;
-import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.DefaultSnapFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
-import com.graphhopper.routing.util.parsers.DefaultTagParserFactory;
-import com.graphhopper.routing.util.parsers.OSMRoadEnvironmentParser;
-import com.graphhopper.routing.util.parsers.TagParser;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.search.KVStorage;
 import com.graphhopper.speeds.WaySpeedsProvider;
-import com.graphhopper.storage.IntsRef;
-import com.graphhopper.storage.index.LocationIndexTree;
-import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
-import com.graphhopper.util.Parameters.CH;
-import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
-import com.graphhopper.util.exceptions.MaximumNodesExceededException;
-import com.graphhopper.util.exceptions.PointDistanceExceededException;
-import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
 
 import java.io.File;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
-import static com.graphhopper.json.Statement.If;
-import static com.graphhopper.json.Statement.Op.MULTIPLY;
-import static com.graphhopper.util.GHUtility.createCircle;
-import static com.graphhopper.util.GHUtility.createRectangle;
-import static com.graphhopper.util.Parameters.Algorithms.*;
-import static com.graphhopper.util.Parameters.Curbsides.*;
-import static com.graphhopper.util.Parameters.Routing.TIMEOUT_MS;
-import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -107,7 +62,7 @@ public class GraphHopperDynamicSpeedsTest {
     }
 
     @Test
-    public void testMultipleVehiclesWithCH() {
+    public void testDynamicSpeedProvider() {
         final String bikeProfile = "bike_profile";
         final String carProfile = "car_profile";
         List<Profile> profiles = asList(
@@ -170,7 +125,7 @@ public class GraphHopperDynamicSpeedsTest {
         assertFalse(rspBikeSpeeds.hasErrors(), rspBikeSpeeds.getErrors().toString());
         assertEquals(834, resBikeSpeeds.getTime() / 1000f, 1);
         assertEquals(2318, resBikeSpeeds.getDistance(), 1);
-        
+
     }
 
 }
