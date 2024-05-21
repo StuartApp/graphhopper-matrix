@@ -45,6 +45,7 @@ import com.graphhopper.routing.util.countryrules.CountryRuleFactory;
 import com.graphhopper.routing.util.parsers.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.weighting.custom.CustomWeighting;
+import com.graphhopper.speeds.WaySpeedsProvider;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -63,6 +64,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.util.GHUtility.readCountries;
@@ -136,6 +138,14 @@ public class GraphHopper {
     private String encodedValuesString = "";
     private String vehiclesString = "";
 
+
+    //for dynamic speeds
+    private WaySpeedsProvider speedsProvider;
+
+    public GraphHopper setDynamicSpeeds(WaySpeedsProvider speedProvider) {
+        this.speedsProvider = speedProvider;
+        return this;
+    }
 
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
@@ -1238,7 +1248,62 @@ public class GraphHopper {
             loadOrPrepareCH(closeEarly);
     }
 
+
     protected void importPublicTransit() {
+
+        //We use that method to import speeds
+        if(speedsProvider != null){
+            logger.info("Start Custom Speeds Provider");
+            long startTime = System.nanoTime();
+
+            List<DecimalEncodedValue> speedEncoders = this.getProfiles().stream().map( profile -> {
+                String vehicle = profile.getVehicle();
+                return this.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle));
+            }).collect(Collectors.toList());
+            setSpeedsFor(speedEncoders);
+
+            long endTime = System.nanoTime();
+            long elapsed = (endTime - startTime);
+            long durationInMillis = TimeUnit.NANOSECONDS.toMillis(elapsed);
+            logger.info("End Custom Speeds Provider : Graph processed in " + durationInMillis);
+        }
+    }
+
+    private void setSpeedsFor(List<DecimalEncodedValue> speedEncoders) {
+        IntEncodedValue OSMWayIDEncoder = this.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
+        DecimalEncodedValue maxSpeedEncoder = this.getEncodingManager().getDecimalEncodedValue(MaxSpeed.KEY);
+
+        AllEdgesIterator iter = this.getBaseGraph().getAllEdges();
+        while(iter.next()){
+
+            int edge = iter.getEdge();
+
+            //Normal Direction
+            double maxSpeed = iter.get(maxSpeedEncoder);
+            int osmWayId = iter.get(OSMWayIDEncoder);
+            double customSpeed = speedsProvider.speedForWay(osmWayId);
+
+            if(customSpeed < maxSpeed){
+                speedEncoders.forEach( encoder -> {
+                    double speed = iter.get(encoder);
+                    logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
+                    iter.set(encoder,customSpeed);
+                });
+            }
+
+            //Reverse Direction
+            int osmWayIdReverse = iter.getReverse(OSMWayIDEncoder);
+            double maxSpeedReverse = iter.getReverse(maxSpeedEncoder);
+            double customSpeedReverse = speedsProvider.speedForWay(osmWayIdReverse);
+
+            if(customSpeedReverse < maxSpeedReverse){
+                speedEncoders.forEach( encoder -> {
+                    double speed = iter.getReverse(encoder);
+                    logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge " + edge);
+                    iter.setReverse(encoder,customSpeedReverse);
+                });
+            }
+        }
     }
 
     void interpolateBridgesTunnelsAndFerries() {
