@@ -1256,10 +1256,10 @@ public class GraphHopper {
             logger.info("Start Custom Speeds Provider");
             long startTime = System.nanoTime();
 
-            List<DecimalEncodedValue> speedEncoders = this.getProfiles().stream().map( profile -> {
-                String vehicle = profile.getVehicle();
-                return this.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle));
-            }).collect(Collectors.toList());
+            List<String> vehicles = this.getProfiles().stream().map(Profile::getVehicle).distinct().collect(Collectors.toList());
+
+            List<DecimalEncodedValue> speedEncoders = vehicles.stream().map(
+                    vehicle -> this.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle))).collect(Collectors.toList());
             setSpeedsFor(speedEncoders);
 
             long endTime = System.nanoTime();
