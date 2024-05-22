@@ -57,8 +57,13 @@ public class GraphHopperDynamicSpeedsTest {
     class CustomWaySpeedProvider implements WaySpeedsProvider {
 
         @Override
-        public double speedForWay(long osmWayId, RoadClass roadClass) {
-            return 10.1;
+        public Optional<Double> speedForWay(long osmWayId) {
+            return Optional.of(10.1);
+        }
+
+        @Override
+        public Optional<Double> speedForRoadClass(RoadClass roadClass) {
+            return Optional.of(10.1);
         }
     }
 
