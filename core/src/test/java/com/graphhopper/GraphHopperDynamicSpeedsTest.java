@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.speeds.WaySpeedsProvider;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.AfterEach;
@@ -56,7 +57,7 @@ public class GraphHopperDynamicSpeedsTest {
     class CustomWaySpeedProvider implements WaySpeedsProvider {
 
         @Override
-        public double speedForWay(long osmWayId) {
+        public double speedForWay(long osmWayId, RoadClass roadClass) {
             return 10.1;
         }
     }

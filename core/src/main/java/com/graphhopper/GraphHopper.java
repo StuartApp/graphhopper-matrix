@@ -1272,6 +1272,7 @@ public class GraphHopper {
     private void setSpeedsFor(List<DecimalEncodedValue> speedEncoders) {
         IntEncodedValue OSMWayIDEncoder = this.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
         DecimalEncodedValue maxSpeedEncoder = this.getEncodingManager().getDecimalEncodedValue(MaxSpeed.KEY);
+        EnumEncodedValue<RoadClass> roadClassEncoder = this.getEncodingManager().getEnumEncodedValue(RoadClass.KEY,RoadClass.class);
 
         AllEdgesIterator iter = this.getBaseGraph().getAllEdges();
         while(iter.next()){
@@ -1281,7 +1282,8 @@ public class GraphHopper {
             //Normal Direction
             double maxSpeed = iter.get(maxSpeedEncoder);
             int osmWayId = iter.get(OSMWayIDEncoder);
-            double customSpeed = speedsProvider.speedForWay(osmWayId);
+            RoadClass roadClass = iter.get(roadClassEncoder);
+            double customSpeed = speedsProvider.speedForWay(osmWayId,roadClass);
 
             if(customSpeed < maxSpeed){
                 speedEncoders.forEach( encoder -> {
@@ -1289,12 +1291,15 @@ public class GraphHopper {
                     logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
                     iter.set(encoder,customSpeed);
                 });
+            }else{
+                logger.warn("Custom Speed (" + customSpeed  +") > MaxSpeed ( " + maxSpeed + ") for edge " + edge);
             }
 
             //Reverse Direction
             int osmWayIdReverse = iter.getReverse(OSMWayIDEncoder);
             double maxSpeedReverse = iter.getReverse(maxSpeedEncoder);
-            double customSpeedReverse = speedsProvider.speedForWay(osmWayIdReverse);
+            RoadClass roadClassReverse = iter.getReverse(roadClassEncoder);
+            double customSpeedReverse = speedsProvider.speedForWay(osmWayIdReverse,roadClassReverse);
 
             if(customSpeedReverse < maxSpeedReverse){
                 speedEncoders.forEach( encoder -> {
@@ -1304,6 +1309,8 @@ public class GraphHopper {
                         iter.setReverse(encoder,customSpeedReverse);
                     }
                 });
+            }else{
+                logger.warn("Custom Speed (" + customSpeedReverse  +") > MaxSpeed ( " + maxSpeedReverse + ") for edge " + edge);
             }
         }
     }
