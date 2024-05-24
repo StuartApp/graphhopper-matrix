@@ -76,7 +76,7 @@ public class GraphHopperCustomSpeedsTest {
                 new Profile(carProfile).setVehicle("car")
         );
 
-        GraphHopper hopper = new GraphHopperCustomSpeeds(new CustomWaySpeedProvider()).
+        GraphHopper hopper = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -86,7 +86,7 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(carProfile)
         );
 
-        GraphHopper hopperCustomSpeeds = new GraphHopper().
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new CustomWaySpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
