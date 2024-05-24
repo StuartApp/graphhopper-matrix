@@ -138,15 +138,6 @@ public class GraphHopper {
     private String encodedValuesString = "";
     private String vehiclesString = "";
 
-
-    //for dynamic speeds
-    private WaySpeedsProvider speedsProvider;
-
-    public GraphHopper setDynamicSpeeds(WaySpeedsProvider speedProvider) {
-        this.speedsProvider = speedProvider;
-        return this;
-    }
-
     public GraphHopper setEncodedValuesString(String encodedValuesString) {
         this.encodedValuesString = encodedValuesString;
         return this;
@@ -1248,90 +1239,7 @@ public class GraphHopper {
             loadOrPrepareCH(closeEarly);
     }
 
-
     protected void importPublicTransit() {
-
-        //We use that method to import speeds
-        if(speedsProvider != null){
-            logger.info("Start Custom Speeds Provider");
-            long startTime = System.nanoTime();
-
-            List<String> vehicles = this.getProfiles().stream().map(Profile::getVehicle).distinct().collect(Collectors.toList());
-
-            List<DecimalEncodedValue> speedEncoders = vehicles.stream().map(
-                    vehicle -> this.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key(vehicle))).collect(Collectors.toList());
-            setSpeedsFor(speedEncoders);
-
-            long endTime = System.nanoTime();
-            long elapsed = (endTime - startTime);
-            long durationInMillis = TimeUnit.NANOSECONDS.toMillis(elapsed);
-            logger.info("End Custom Speeds Provider : Graph processed in " + durationInMillis);
-        }
-    }
-
-    private Optional<Double> speedFor(int osmWayId, RoadClass roadClass) {
-
-        Optional<Double>  waySpeed = speedsProvider.speedForWay(osmWayId);
-
-        if(waySpeed.isPresent()){
-            return waySpeed;
-        }else {
-            return speedsProvider.speedForRoadClass(roadClass);
-        }
-    }
-
-    private void setSpeedsFor(List<DecimalEncodedValue> speedEncoders) {
-        IntEncodedValue OSMWayIDEncoder = this.getEncodingManager().getIntEncodedValue(OSMWayID.KEY);
-        DecimalEncodedValue maxSpeedEncoder = this.getEncodingManager().getDecimalEncodedValue(MaxSpeed.KEY);
-        EnumEncodedValue<RoadClass> roadClassEncoder = this.getEncodingManager().getEnumEncodedValue(RoadClass.KEY,RoadClass.class);
-
-        AllEdgesIterator iter = this.getBaseGraph().getAllEdges();
-        while(iter.next()){
-
-            int edge = iter.getEdge();
-
-            //Normal Direction
-            double maxSpeed = iter.get(maxSpeedEncoder);
-            int osmWayId = iter.get(OSMWayIDEncoder);
-            RoadClass roadClass = iter.get(roadClassEncoder);
-            Optional<Double> maybeCustomSpeed = speedFor(osmWayId,roadClass);
-
-            if(maybeCustomSpeed.isPresent()){
-                double customSpeed = maybeCustomSpeed.get();
-                if(customSpeed < maxSpeed){
-                    speedEncoders.forEach( encoder -> {
-                        double speed = iter.get(encoder);
-                        logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
-                        iter.set(encoder,customSpeed);
-                    });
-                }else{
-                    logger.warn("Custom Speed (" + customSpeed  +") > MaxSpeed ( " + maxSpeed + ") for edge " + edge);
-                }
-            }
-
-
-            //Reverse Direction
-            int osmWayIdReverse = iter.getReverse(OSMWayIDEncoder);
-            double maxSpeedReverse = iter.getReverse(maxSpeedEncoder);
-            RoadClass roadClassReverse = iter.getReverse(roadClassEncoder);
-            Optional<Double> maybeCustomSpeedReverse = speedFor(osmWayIdReverse,roadClassReverse);
-
-            if(maybeCustomSpeedReverse.isPresent()){
-                double customSpeedReverse = maybeCustomSpeedReverse.get();
-                if(customSpeedReverse < maxSpeedReverse){
-                    speedEncoders.forEach( encoder -> {
-                        if(encoder.isStoreTwoDirections()){
-                            double speed = iter.getReverse(encoder);
-                            logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge reverse " + edge);
-                            iter.setReverse(encoder,customSpeedReverse);
-                        }
-                    });
-                }else{
-                    logger.warn("Custom Speed (" + customSpeedReverse  +") > MaxSpeed ( " + maxSpeedReverse + ") for edge reverse " + edge);
-                }
-            }
-
-        }
     }
 
     void interpolateBridgesTunnelsAndFerries() {

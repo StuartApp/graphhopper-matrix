@@ -5,6 +5,6 @@ import com.graphhopper.routing.ev.RoadClass;
 import java.util.Optional;
 
 public interface WaySpeedsProvider {
-    Optional<Double> speedForWay(long osmWayId);
-    Optional<Double> speedForRoadClass(RoadClass roadClass);
+    Optional<Double> speedKmHourForWay(long osmWayId);
+    Optional<Double> speedKmHourForRoadClass(RoadClass roadClass);
 }

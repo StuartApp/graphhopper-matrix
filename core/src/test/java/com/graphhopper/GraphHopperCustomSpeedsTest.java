@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperDynamicSpeedsTest {
+public class GraphHopperCustomSpeedsTest {
 
     public static final String DIR = "../core/files";
 
@@ -57,12 +57,12 @@ public class GraphHopperDynamicSpeedsTest {
     class CustomWaySpeedProvider implements WaySpeedsProvider {
 
         @Override
-        public Optional<Double> speedForWay(long osmWayId) {
+        public Optional<Double> speedKmHourForWay(long osmWayId) {
             return Optional.of(10.1);
         }
 
         @Override
-        public Optional<Double> speedForRoadClass(RoadClass roadClass) {
+        public Optional<Double> speedKmHourForRoadClass(RoadClass roadClass) {
             return Optional.of(10.1);
         }
     }
@@ -76,7 +76,7 @@ public class GraphHopperDynamicSpeedsTest {
                 new Profile(carProfile).setVehicle("car")
         );
 
-        GraphHopper hopper = new GraphHopper().
+        GraphHopper hopper = new GraphHopperCustomSpeeds(new CustomWaySpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -96,9 +96,6 @@ public class GraphHopperDynamicSpeedsTest {
                 new CHProfile(bikeProfile),
                 new CHProfile(carProfile)
         );
-
-        hopperCustomSpeeds.setDynamicSpeeds(new CustomWaySpeedProvider());
-
 
         hopper.importOrLoad();
         hopperCustomSpeeds.importOrLoad();
