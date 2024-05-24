@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
 import com.graphhopper.util.*;
 import org.junit.jupiter.api.AfterEach;
@@ -57,13 +58,13 @@ public class GraphHopperCustomSpeedsTest {
     class CustomWaySpeedProvider implements WaySpeedsProvider {
 
         @Override
-        public Optional<Double> speedKmHourForWay(long osmWayId) {
-            return Optional.of(10.1);
+        public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
+            return Optional.of(new SpeedKmByHour(10.10));
         }
 
         @Override
-        public Optional<Double> speedKmHourForRoadClass(RoadClass roadClass) {
-            return Optional.of(10.1);
+        public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
+            return Optional.of(new SpeedKmByHour(10.1));
         }
     }
 

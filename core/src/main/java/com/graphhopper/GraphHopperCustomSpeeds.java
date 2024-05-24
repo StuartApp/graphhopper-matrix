@@ -3,6 +3,7 @@ package com.graphhopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,12 +44,12 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
 
     private Optional<Double> speedFor(int osmWayId, RoadClass roadClass) {
 
-        Optional<Double> waySpeed = speedsProvider.speedKmHourForWay(osmWayId);
+        Optional<Double> waySpeed = speedsProvider.speedForWay(osmWayId).map(SpeedKmByHour::getSpeed);
 
         if (waySpeed.isPresent()) {
             return waySpeed;
         } else {
-            return speedsProvider.speedKmHourForRoadClass(roadClass);
+            return speedsProvider.speedForRoadClass(roadClass).map(SpeedKmByHour::getSpeed);
         }
     }
 
