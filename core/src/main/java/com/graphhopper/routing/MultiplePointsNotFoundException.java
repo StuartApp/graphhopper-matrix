@@ -22,13 +22,24 @@ import com.carrotsearch.hppc.IntArrayList;
 
 public class MultiplePointsNotFoundException extends RuntimeException {
 
+    public enum IssueLocation{
+        ORIGIN,DESTINATION, SIMPLE_ROUTE
+    }
+
     private final IntArrayList pointsNotFound;
 
-    MultiplePointsNotFoundException(IntArrayList pointsNotFound) {
+    private final IssueLocation issueLocation;
+
+    MultiplePointsNotFoundException(IssueLocation issueLocation, IntArrayList pointsNotFound) {
+        this.issueLocation = issueLocation;
         this.pointsNotFound = pointsNotFound;
     }
 
     public IntArrayList getPointsNotFound() {
         return pointsNotFound;
+    }
+
+    public IssueLocation getIssueLocation() {
+        return issueLocation;
     }
 }
