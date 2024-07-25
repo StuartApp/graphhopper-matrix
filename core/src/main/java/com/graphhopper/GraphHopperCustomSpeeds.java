@@ -73,9 +73,15 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
                 double customSpeed = maybeCustomSpeed.get();
                 if (customSpeed < maxSpeed) {
                     speedEncoders.forEach(encoder -> {
-                        double speed = iter.get(encoder);
-                        logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
-                        iter.set(encoder, customSpeed);
+                        double maxEncoderValue = encoder.getMaxStorableDecimal();
+                        double minEncoderValue = encoder.getMinStorableDecimal();
+                        if(customSpeed <= maxEncoderValue && customSpeed >= minEncoderValue){
+                            double speed = iter.get(encoder);
+                            logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
+                            iter.set(encoder, customSpeed);
+                        }else{
+                            logger.warn("Invalid Custom Speed (" + customSpeed + ")  for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge " + edge + ",so it will be ignored");
+                        }
                     });
                 } else {
                     logger.warn("Custom Speed (" + customSpeed + ") > MaxSpeed ( " + maxSpeed + ") for edge " + edge + ",so it will be ignored");
@@ -93,9 +99,16 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
                 if (customSpeedReverse < maxSpeedReverse) {
                     speedEncoders.forEach(encoder -> {
                         if (encoder.isStoreTwoDirections()) {
-                            double speed = iter.getReverse(encoder);
-                            logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge reverse " + edge);
-                            iter.setReverse(encoder, customSpeedReverse);
+                            double maxEncoderValue = encoder.getMaxStorableDecimal();
+                            double minEncoderValue = encoder.getMinStorableDecimal();
+                            if(customSpeedReverse <= maxEncoderValue && customSpeedReverse >= minEncoderValue){
+                                double speed = iter.getReverse(encoder);
+                                logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge reverse " + edge);
+                                iter.setReverse(encoder, customSpeedReverse);
+                            }else{
+                                logger.warn("Invalid Custom Speed (" + customSpeedReverse + ") for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge reverse " + edge + ",so it will be ignored");
+                            }
+
                         }
                     });
                 } else {
