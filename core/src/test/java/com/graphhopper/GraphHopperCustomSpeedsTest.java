@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
+import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
@@ -41,7 +42,7 @@ public class GraphHopperCustomSpeedsTest {
     public static final String DIR = "../core/files";
 
     // map locations
-    private static final String MONACO = DIR + "/monaco.osm.gz";
+    private static final String MONACO = DIR + "/monaco2024.osm.gz";
 
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-test-gh";
@@ -55,21 +56,22 @@ public class GraphHopperCustomSpeedsTest {
         Helper.removeDir(new File(GH_LOCATION_CUSTOM_SPEEDS));
     }
 
-    class CustomWaySpeedProvider implements WaySpeedsProvider {
-
-        @Override
-        public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
-            return Optional.of(new SpeedKmByHour(10.10));
-        }
-
-        @Override
-        public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
-            return Optional.of(new SpeedKmByHour(10.1));
-        }
-    }
-
     @Test
     public void testDynamicSpeedProvider() {
+
+        class CustomWaySpeedProvider implements WaySpeedsProvider {
+
+            @Override
+            public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
+                return Optional.of(new SpeedKmByHour(10.10));
+            }
+
+            @Override
+            public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
+                return Optional.of(new SpeedKmByHour(10.1));
+            }
+        }
+
         final String bikeProfile = "bike_profile";
         final String carProfile = "car_profile";
         List<Profile> profiles = asList(
@@ -101,36 +103,174 @@ public class GraphHopperCustomSpeedsTest {
         hopper.importOrLoad();
         hopperCustomSpeeds.importOrLoad();
 
-        GHResponse rsp = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
-                .setProfile(carProfile));
+        GHRequest request = new GHRequest(43.73005, 7.415707, 43.741522, 7.42826);
+
+        GHResponse rsp = hopper.route(request.setProfile(carProfile));
         ResponsePath res = rsp.getBest();
         assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
-        assertEquals(205, res.getTime() / 1000f, 1);
-        assertEquals(2837, res.getDistance(), 1);
+        assertEquals(208, res.getTime() / 1000f, 1); // 50kmh = 13.8 m/s
+        assertEquals(2750, res.getDistance(), 1);
 
-        GHResponse rspSpeeds = hopperCustomSpeeds.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
+        GHResponse rspSpeeds = hopperCustomSpeeds.route(request
                 .setProfile(carProfile));
         ResponsePath resSpeeds = rspSpeeds.getBest();
         assertFalse(rspSpeeds.hasErrors(), rspSpeeds.getErrors().toString());
-        assertEquals(893, resSpeeds.getTime() / 1000f, 1);
-        assertEquals(2481, resSpeeds.getDistance(), 1);
+        assertEquals(893, resSpeeds.getTime() / 1000f, 1); // 10kmh = 2.7m/s
+        assertEquals(2478, resSpeeds.getDistance(), 1);
 
 
-        GHResponse rspBike = hopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
+        GHResponse rspBike = hopper.route(request
                 .setProfile(bikeProfile));
         ResponsePath resBike = rspBike.getBest();
         assertFalse(rspBike.hasErrors(), rspBike.getErrors().toString());
-        assertEquals(536, resBike.getTime() / 1000f, 1);
-        assertEquals(2521, resBike.getDistance(), 1);
+        assertEquals(544, resBike.getTime() / 1000f, 1); // 17kmh = 4.7 m/s
+        assertEquals(2764, resBike.getDistance(), 1);
 
-        GHResponse rspBikeSpeeds = hopperCustomSpeeds.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
+        GHResponse rspBikeSpeeds = hopperCustomSpeeds.route(request
                 .setProfile(bikeProfile));
         ResponsePath resBikeSpeeds = rspBikeSpeeds.getBest();
         assertFalse(rspBikeSpeeds.hasErrors(), rspBikeSpeeds.getErrors().toString());
-        assertEquals(834, resBikeSpeeds.getTime() / 1000f, 1);
-        assertEquals(2318, resBikeSpeeds.getDistance(), 1);
+        assertEquals(784, resBikeSpeeds.getTime() / 1000f, 1); // 10kmh = 2.7m/s
+        assertEquals(2178, resBikeSpeeds.getDistance(), 1);
 
     }
 
+    @Test
+    public void testDynamicSpeedProviderUsesMaxSpeedWhenInputSpeedIsTooHigh() {
+
+        class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
+
+            @Override
+            public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
+                return Optional.of(new SpeedKmByHour(100));
+            }
+
+            @Override
+            public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
+                return Optional.of(new SpeedKmByHour(80.1));
+            }
+        }
+
+        final String carProfile = "car_profile";
+
+        List<Profile> profiles = asList(
+                new Profile(carProfile).setVehicle("car")
+                        .setCustomModel(
+                                new CustomModel()
+                                        .addToSpeed(
+                                                Statement.If("road_class == SECONDARY", Statement.Op.LIMIT, "20")))
+        );
+
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setProfiles(profiles).
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(carProfile)
+        );
+
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
+                setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
+                setOSMFile(MONACO).
+                setProfiles(profiles).
+                setStoreOnFlush(true)
+                .setEncodedValuesString("roundabout, road_class, road_class_link, road_environment, max_speed, road_access, ferry_speed, bike_network, get_off_bike, smoothness, osm_way_id");
+        hopperCustomSpeeds.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(carProfile)
+        );
+
+        hopper.importOrLoad();
+        hopperCustomSpeeds.importOrLoad();
+
+        // requests uses osm way 166009792 (secondary road, that has max speed = 50km)
+        // in the request we set a custom model with max speed of 20kmh for secondary roads
+        GHRequest request = new GHRequest(43.73887, 7.42074, 43.73992, 7.42386);
+
+        GHResponse rsp = hopper.route(request.setProfile(carProfile));
+        ResponsePath res = rsp.getBest();
+        assertFalse(rsp.hasErrors(), rsp.getErrors().toString());
+        assertEquals(49, res.getTime() / 1000f, 1); // 20kmh = 5.7m/s
+        assertEquals(277, res.getDistance(), 1);
+
+        GHResponse rspSpeeds = hopperCustomSpeeds.route(request
+                .setProfile(carProfile));
+        ResponsePath resSpeeds = rspSpeeds.getBest();
+        assertFalse(rspSpeeds.hasErrors(), rspSpeeds.getErrors().toString());
+        assertEquals(21, resSpeeds.getTime() / 1000f, 1);  // 50kmh = 13.8 m/s
+        assertEquals(277, resSpeeds.getDistance(), 1);
+
+    }
+
+    @Test
+    public void testDynamicSpeedProviderDiscardCustomSpeedIfHigherThanMaxEncoderSpeed() {
+
+        // For bike, the max encoder speed is 30kmh
+        // For car, the max encoder speed is 254 kmh
+        // We are trying to set a custom speed for bike > 30kmh, that is the limit for the bike
+        // encoder, so we expect it to be discarded, and we expect that the default speed
+        // for those roads will be used
+
+        class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
+
+            @Override
+            public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
+                return Optional.of(new SpeedKmByHour(100));
+            }
+
+            @Override
+            public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
+                return Optional.of(new SpeedKmByHour(80.1));
+            }
+        }
+
+        final String bikeProfile = "bike_profile";
+
+        List<Profile> profiles = asList(
+                new Profile(bikeProfile).setVehicle("bike")
+        );
+
+        GraphHopper hopper = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION).
+                setOSMFile(MONACO).
+                setProfiles(profiles).
+                setStoreOnFlush(true);
+        hopper.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(bikeProfile)
+        );
+
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
+                setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
+                setOSMFile(MONACO).
+                setProfiles(profiles).
+                setStoreOnFlush(true)
+                .setEncodedValuesString("roundabout, road_class, road_class_link, road_environment, max_speed, road_access, ferry_speed, bike_network, get_off_bike, smoothness, osm_way_id");
+        hopperCustomSpeeds.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(bikeProfile)
+        );
+
+        hopper.importOrLoad();
+        hopperCustomSpeeds.importOrLoad();
+
+        GHRequest request = new GHRequest(43.73887, 7.42074, 43.73992, 7.42386);
+
+        GHResponse rspBike = hopper.route(request
+                .setProfile(bikeProfile));
+        ResponsePath resBike = rspBike.getBest();
+        assertFalse(rspBike.hasErrors(), rspBike.getErrors().toString());
+        assertEquals(55, resBike.getTime() / 1000f, 1); // 18kmh = 5 m/s
+        assertEquals(277, resBike.getDistance(), 1);
+
+        GHResponse rspBikeSpeeds = hopperCustomSpeeds.route(request
+                .setProfile(bikeProfile));
+        ResponsePath resBikeSpeeds = rspBikeSpeeds.getBest();
+        assertFalse(rspBikeSpeeds.hasErrors(), rspBikeSpeeds.getErrors().toString());
+        assertEquals(55, resBikeSpeeds.getTime() / 1000f, 1); // 17kmh = 4.7 m/s
+        assertEquals(277, resBikeSpeeds.getDistance(), 1);
+
+        // the result with and without custom speeds should be the same when the custom speed is > than the encoder limit
+        assertEquals(resBike.getTime() / 1000f, resBikeSpeeds.getTime() / 1000f, 1);
+
+    }
 }
 

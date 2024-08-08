@@ -71,21 +71,25 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
 
             if (maybeCustomSpeed.isPresent()) {
                 double customSpeed = maybeCustomSpeed.get();
-                if (customSpeed < maxSpeed) {
-                    speedEncoders.forEach(encoder -> {
-                        double maxEncoderValue = encoder.getMaxStorableDecimal();
-                        double minEncoderValue = encoder.getMinStorableDecimal();
-                        if(customSpeed <= maxEncoderValue && customSpeed >= minEncoderValue){
-                            double speed = iter.get(encoder);
-                            logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
-                            iter.set(encoder, customSpeed);
-                        }else{
-                            logger.warn("Invalid Custom Speed (" + customSpeed + ")  for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge " + edge + ",so it will be ignored");
-                        }
-                    });
+                double speedToSet;
+                if (customSpeed > maxSpeed) {
+                    logger.warn("OsmId " + osmWayId + ": Custom Speed (" + customSpeed + ") > MaxSpeed ( " + maxSpeed + ") for edge reverse " + edge + ", so max_speed will be used");
+                    speedToSet = maxSpeed;
                 } else {
-                    logger.warn("Custom Speed (" + customSpeed + ") > MaxSpeed ( " + maxSpeed + ") for edge " + edge + ",so it will be ignored");
+                    speedToSet = customSpeed;
                 }
+                speedEncoders.forEach(encoder -> {
+                    double maxEncoderValue = encoder.getMaxStorableDecimal();
+                    double minEncoderValue = encoder.getMinStorableDecimal();
+                    if(speedToSet <= maxEncoderValue && speedToSet >= minEncoderValue){
+                        double speed = iter.get(encoder);
+                        logger.debug("Replace " + speed + " with " + speedToSet + " for edge " + edge);
+                        iter.set(encoder, speedToSet);
+                    }else{
+                        logger.warn("OsmId " + osmWayId + ": Invalid Custom Speed (" + speedToSet + ")  for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge " + edge + ",so it will be ignored");
+                    }
+                });
+
             }
 
             //Reverse Direction
@@ -96,24 +100,26 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
 
             if (maybeCustomSpeedReverse.isPresent()) {
                 double customSpeedReverse = maybeCustomSpeedReverse.get();
-                if (customSpeedReverse < maxSpeedReverse) {
-                    speedEncoders.forEach(encoder -> {
-                        if (encoder.isStoreTwoDirections()) {
-                            double maxEncoderValue = encoder.getMaxStorableDecimal();
-                            double minEncoderValue = encoder.getMinStorableDecimal();
-                            if(customSpeedReverse <= maxEncoderValue && customSpeedReverse >= minEncoderValue){
-                                double speed = iter.getReverse(encoder);
-                                logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge reverse " + edge);
-                                iter.setReverse(encoder, customSpeedReverse);
-                            }else{
-                                logger.warn("Invalid Custom Speed (" + customSpeedReverse + ") for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge reverse " + edge + ",so it will be ignored");
-                            }
-
-                        }
-                    });
+                double speedToSet;
+                if (customSpeedReverse > maxSpeedReverse) {
+                    logger.warn("OsmId " + osmWayId + ": Custom Speed (" + customSpeedReverse + ") > MaxSpeed ( " + maxSpeedReverse + ") for edge reverse " + edge + ", so max_speed will be used");
+                    speedToSet = maxSpeedReverse;
                 } else {
-                    logger.warn("Custom Speed (" + customSpeedReverse + ") > MaxSpeed ( " + maxSpeedReverse + ") for edge reverse " + edge + ",so it will be ignored");
+                    speedToSet = customSpeedReverse;
                 }
+                speedEncoders.forEach(encoder -> {
+                    if (encoder.isStoreTwoDirections()) {
+                        double maxEncoderValue = encoder.getMaxStorableDecimal();
+                        double minEncoderValue = encoder.getMinStorableDecimal();
+                        if(speedToSet <= maxEncoderValue && speedToSet >= minEncoderValue){
+                            double speed = iter.getReverse(encoder);
+                            logger.debug("Replace " + speed + " with " + speedToSet + " for edge reverse " + edge);
+                            iter.setReverse(encoder, speedToSet);
+                        }else{
+                            //logger.warn("OsmId " + osmWayId + ": Invalid Custom Speed (" + speedToSet + ") for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge reverse " + edge + ",so it will be ignored");
+                        }
+                    }
+                });
             }
 
         }
