@@ -19,7 +19,6 @@ package com.graphhopper;
 
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
-import com.graphhopper.json.Statement;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
