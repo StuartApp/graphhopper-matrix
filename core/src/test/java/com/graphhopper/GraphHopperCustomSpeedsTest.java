@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.RoadClass;
+import com.graphhopper.routing.ev.VehicleSpeed;
 import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
 import com.graphhopper.util.*;
@@ -46,6 +47,8 @@ public class GraphHopperCustomSpeedsTest {
     // when creating GH instances make sure to use this as the GH location such that it will be cleaned between tests
     private static final String GH_LOCATION = "target/graphhopper-test-gh";
     private static final String GH_LOCATION_CUSTOM_SPEEDS = "target/graphhopper-test-gh-custom_speeds";
+
+    private static final String GH_LOCATION_CUSTOM_SPEEDS_RELOAD = "target/graphhopper-test-gh-custom_speeds-reload";
 
     @BeforeEach
     @AfterEach
@@ -265,6 +268,66 @@ public class GraphHopperCustomSpeedsTest {
         assertEquals(resBike.getTime() / 1000f, resBikeSpeeds.getTime() / 1000f, 1);
 
     }
+
+    @Test
+    public void testEncodingManagerStorePropertiesAfterSetCustomSpeeds() {
+
+        // For bike, the max encoder speed is 30kmh
+        class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
+
+            @Override
+            public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
+                return Optional.of(new SpeedKmByHour(28));
+            }
+
+            @Override
+            public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
+                return Optional.of(new SpeedKmByHour(28));
+            }
+        }
+
+        final String bikeProfile = "bike_profile";
+
+        List<Profile> profiles = asList(
+                new Profile(bikeProfile).setVehicle("bike")
+        );
+
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
+                setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS_RELOAD).
+                setOSMFile(MONACO).
+                setProfiles(profiles).
+                setStoreOnFlush(true)
+                .setEncodedValuesString("roundabout, road_class, road_class_link, road_environment, max_speed, road_access, ferry_speed, bike_network, get_off_bike, smoothness, osm_way_id");
+        hopperCustomSpeeds.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(bikeProfile)
+        );
+
+        hopperCustomSpeeds.importOrLoad();
+
+        double maxSpeed = hopperCustomSpeeds.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key("bike")).getMaxOrMaxStorableDecimal();
+
+       hopperCustomSpeeds.close();
+
+        GraphHopper loadHopperCustomSpeeds = new GraphHopper().
+                setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS_RELOAD).
+                setOSMFile(MONACO).
+                setProfiles(profiles)
+                .setEncodedValuesString("roundabout, road_class, road_class_link, road_environment, max_speed, road_access, ferry_speed, bike_network, get_off_bike, smoothness, osm_way_id");
+        hopperCustomSpeeds.getCHPreparationHandler().setCHProfiles(
+                new CHProfile(bikeProfile)
+        );
+
+        loadHopperCustomSpeeds.importOrLoad();
+
+        double loadMaxSpeed = loadHopperCustomSpeeds.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key("bike")).getMaxOrMaxStorableDecimal();
+
+        loadHopperCustomSpeeds.close();
+
+        assertEquals(maxSpeed, loadMaxSpeed, 1);
+
+    }
+
+
 
 }
 

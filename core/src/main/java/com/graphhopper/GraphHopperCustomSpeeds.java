@@ -39,6 +39,10 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
         long endTime = System.nanoTime();
         long elapsed = (endTime - startTime);
         long durationInMillis = TimeUnit.NANOSECONDS.toMillis(elapsed);
+
+        //Save Encoding Manager Into Properties to have Max Speed in place after setting the new speeds
+        this.writeEncodingManagerToProperties();
+
         logger.info("End Custom Speeds Provider : Graph processed in " + durationInMillis);
     }
 
