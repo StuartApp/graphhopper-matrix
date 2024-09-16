@@ -3,6 +3,7 @@ package com.graphhopper;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.speeds.Metrics;
 import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
 import org.slf4j.Logger;
@@ -63,9 +64,11 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
         EnumEncodedValue<RoadClass> roadClassEncoder = this.getEncodingManager().getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
 
         AllEdgesIterator iter = this.getBaseGraph().getAllEdges();
+        Metrics metrics = new Metrics();
         while (iter.next()) {
 
             int edge = iter.getEdge();
+            metrics.incrementTotalNumberEdgesProcessed();
 
             //Normal Direction
             double maxSpeed = iter.get(maxSpeedEncoder);
@@ -82,6 +85,7 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
                         if(customSpeed <= maxEncoderValue && customSpeed >= minEncoderValue){
                             double speed = iter.get(encoder);
                             logger.debug("Replace " + speed + " with " + customSpeed + " for edge " + edge);
+                            metrics.incrementTotalNumberEdgesConfiguredWithCustomSpeed();
                             iter.set(encoder, customSpeed);
                         }else{
                             logger.warn("Invalid Custom Speed (" + customSpeed + ")  for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge " + edge + ",so it will be ignored");
@@ -108,6 +112,7 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
                             if(customSpeedReverse <= maxEncoderValue && customSpeedReverse >= minEncoderValue){
                                 double speed = iter.getReverse(encoder);
                                 logger.debug("Replace " + speed + " with " + customSpeedReverse + " for edge reverse " + edge);
+                                metrics.incrementTotalNumberEdgesConfiguredWithCustomSpeedInReverse();
                                 iter.setReverse(encoder, customSpeedReverse);
                             }else{
                                 logger.warn("Invalid Custom Speed (" + customSpeedReverse + ") for encoder " + encoder.getName() + " ( " + minEncoderValue + " - " + maxEncoderValue+ ") for edge reverse " + edge + ",so it will be ignored");
@@ -121,5 +126,6 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
             }
 
         }
+        this.speedsProvider.setMetrics(metrics);
     }
 }

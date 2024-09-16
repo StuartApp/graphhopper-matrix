@@ -21,15 +21,17 @@ import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.ev.RoadClass;
 import com.graphhopper.routing.ev.VehicleSpeed;
+import com.graphhopper.speeds.Metrics;
 import com.graphhopper.speeds.SpeedKmByHour;
 import com.graphhopper.speeds.WaySpeedsProvider;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
@@ -62,6 +64,7 @@ public class GraphHopperCustomSpeedsTest {
     public void testDynamicSpeedProvider() {
 
         class CustomWaySpeedProvider implements WaySpeedsProvider {
+            private Metrics metrics;
 
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
@@ -71,6 +74,16 @@ public class GraphHopperCustomSpeedsTest {
             @Override
             public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
                 return Optional.of(new SpeedKmByHour(10.1));
+            }
+
+            @Override
+            public void setMetrics(Metrics metrics) {
+                this.metrics = metrics;
+            }
+
+            @Override
+            public Metrics getMetrics() {
+                return this.metrics;
             }
         }
 
@@ -91,7 +104,8 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(carProfile)
         );
 
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new CustomWaySpeedProvider()).
+        CustomWaySpeedProvider provider = new CustomWaySpeedProvider();
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -132,12 +146,15 @@ public class GraphHopperCustomSpeedsTest {
         assertEquals(834, resBikeSpeeds.getTime() / 1000f, 1);
         assertEquals(2318, resBikeSpeeds.getDistance(), 1);
 
+        assertNotNull(provider.getMetrics());
+
     }
 
     @Test
     public void testDynamicSpeedProviderDiscardCustomSpeedIfHigherThanMaxSpeed() {
 
         class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
+            private Metrics metrics;
 
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
@@ -147,6 +164,16 @@ public class GraphHopperCustomSpeedsTest {
             @Override
             public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
                 return Optional.of(new SpeedKmByHour(80.1));
+            }
+
+            @Override
+            public void setMetrics(Metrics metrics) {
+                this.metrics = metrics;
+            }
+
+            @Override
+            public Metrics getMetrics() {
+                return this.metrics;
             }
         }
 
@@ -163,7 +190,8 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(carProfile)
         );
 
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
+        SpeedsTooHighSpeedProvider provider = new SpeedsTooHighSpeedProvider();
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -195,7 +223,7 @@ public class GraphHopperCustomSpeedsTest {
         // the result with and without custom speeds should be the same when the custom speed is > than the max_speed
         assertEquals(res.getTime() / 1000f, resSpeeds.getTime() / 1000f, 1);
 
-
+        assertNotNull(provider.getMetrics());
     }
 
     @Test
@@ -209,6 +237,8 @@ public class GraphHopperCustomSpeedsTest {
 
         class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
 
+            private Metrics metrics;
+
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
                 return Optional.of(new SpeedKmByHour(100));
@@ -217,6 +247,16 @@ public class GraphHopperCustomSpeedsTest {
             @Override
             public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
                 return Optional.of(new SpeedKmByHour(80.1));
+            }
+
+            @Override
+            public void setMetrics(Metrics metrics) {
+                this.metrics = metrics;
+            }
+
+            @Override
+            public Metrics getMetrics() {
+                return this.metrics;
             }
         }
 
@@ -235,7 +275,8 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(bikeProfile)
         );
 
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
+        SpeedsTooHighSpeedProvider provider = new SpeedsTooHighSpeedProvider();
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -267,6 +308,7 @@ public class GraphHopperCustomSpeedsTest {
         // the result with and without custom speeds should be the same when the custom speed is > than the encoder limit
         assertEquals(resBike.getTime() / 1000f, resBikeSpeeds.getTime() / 1000f, 1);
 
+        assertNotNull(provider.getMetrics());
     }
 
     @Test
@@ -274,6 +316,8 @@ public class GraphHopperCustomSpeedsTest {
 
         // For bike, the max encoder speed is 30kmh
         class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
+
+            private Metrics metrics;
 
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
@@ -284,6 +328,16 @@ public class GraphHopperCustomSpeedsTest {
             public Optional<SpeedKmByHour> speedForRoadClass(RoadClass roadClass) {
                 return Optional.of(new SpeedKmByHour(28));
             }
+
+            @Override
+            public void setMetrics(Metrics metrics) {
+                this.metrics = metrics;
+            }
+
+            @Override
+            public Metrics getMetrics() {
+                return this.metrics;
+            }
         }
 
         final String bikeProfile = "bike_profile";
@@ -292,7 +346,8 @@ public class GraphHopperCustomSpeedsTest {
                 new Profile(bikeProfile).setVehicle("bike")
         );
 
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
+        SpeedsTooHighSpeedProvider provider = new SpeedsTooHighSpeedProvider();
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS_RELOAD).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -306,7 +361,7 @@ public class GraphHopperCustomSpeedsTest {
 
         double maxSpeed = hopperCustomSpeeds.getEncodingManager().getDecimalEncodedValue(VehicleSpeed.key("bike")).getMaxOrMaxStorableDecimal();
 
-       hopperCustomSpeeds.close();
+        hopperCustomSpeeds.close();
 
         GraphHopper loadHopperCustomSpeeds = new GraphHopper().
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS_RELOAD).
@@ -324,9 +379,9 @@ public class GraphHopperCustomSpeedsTest {
         loadHopperCustomSpeeds.close();
 
         assertEquals(maxSpeed, loadMaxSpeed, 1);
+        assertNotNull(provider.getMetrics());
 
     }
-
 
 
 }
