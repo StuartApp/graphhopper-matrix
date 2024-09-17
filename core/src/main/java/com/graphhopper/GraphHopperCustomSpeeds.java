@@ -19,9 +19,10 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
     private static final Logger logger = LoggerFactory.getLogger(GraphHopperCustomSpeeds.class);
 
     private WaySpeedsProvider speedsProvider;
+    private Metrics metrics;
 
     public GraphHopperCustomSpeeds(WaySpeedsProvider speedsProvider) {
-
+        this.metrics = new Metrics();
         this.speedsProvider = speedsProvider;
     }
 
@@ -64,7 +65,6 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
         EnumEncodedValue<RoadClass> roadClassEncoder = this.getEncodingManager().getEnumEncodedValue(RoadClass.KEY, RoadClass.class);
 
         AllEdgesIterator iter = this.getBaseGraph().getAllEdges();
-        Metrics metrics = new Metrics();
         while (iter.next()) {
 
             int edge = iter.getEdge();
@@ -126,6 +126,9 @@ public class GraphHopperCustomSpeeds extends GraphHopper {
             }
 
         }
-        this.speedsProvider.setMetrics(metrics);
+    }
+
+    public Metrics getMetrics() {
+        return this.metrics;
     }
 }
