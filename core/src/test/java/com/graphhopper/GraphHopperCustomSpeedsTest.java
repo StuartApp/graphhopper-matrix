@@ -64,7 +64,6 @@ public class GraphHopperCustomSpeedsTest {
     public void testDynamicSpeedProvider() {
 
         class CustomWaySpeedProvider implements WaySpeedsProvider {
-            private final Metrics metrics = new Metrics();
 
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
@@ -143,7 +142,6 @@ public class GraphHopperCustomSpeedsTest {
     public void testDynamicSpeedProviderDiscardCustomSpeedIfHigherThanMaxSpeed() {
 
         class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
-            private final Metrics metrics = new Metrics();
 
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
@@ -215,8 +213,6 @@ public class GraphHopperCustomSpeedsTest {
 
         class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
 
-            private final Metrics metrics = new Metrics();
-
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
                 return Optional.of(new SpeedKmByHour(100));
@@ -284,8 +280,6 @@ public class GraphHopperCustomSpeedsTest {
         // For bike, the max encoder speed is 30kmh
         class SpeedsTooHighSpeedProvider implements WaySpeedsProvider {
 
-            private final Metrics metrics = new Metrics();
-
             @Override
             public Optional<SpeedKmByHour> speedForWay(long osmWayId) {
                 return Optional.of(new SpeedKmByHour(28));
@@ -302,7 +296,7 @@ public class GraphHopperCustomSpeedsTest {
         List<Profile> profiles = asList(
                 new Profile(bikeProfile).setVehicle("bike")
         );
-        
+
         GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS_RELOAD).
                 setOSMFile(MONACO).
