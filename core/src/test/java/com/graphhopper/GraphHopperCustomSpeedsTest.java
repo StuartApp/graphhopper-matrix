@@ -94,8 +94,7 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(carProfile)
         );
 
-        CustomWaySpeedProvider provider = new CustomWaySpeedProvider();
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new CustomWaySpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -170,8 +169,7 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(carProfile)
         );
 
-        SpeedsTooHighSpeedProvider provider = new SpeedsTooHighSpeedProvider();
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -245,8 +243,7 @@ public class GraphHopperCustomSpeedsTest {
                 new CHProfile(bikeProfile)
         );
 
-        SpeedsTooHighSpeedProvider provider = new SpeedsTooHighSpeedProvider();
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
@@ -305,9 +302,8 @@ public class GraphHopperCustomSpeedsTest {
         List<Profile> profiles = asList(
                 new Profile(bikeProfile).setVehicle("bike")
         );
-
-        SpeedsTooHighSpeedProvider provider = new SpeedsTooHighSpeedProvider();
-        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(provider).
+        
+        GraphHopper hopperCustomSpeeds = new GraphHopperCustomSpeeds(new SpeedsTooHighSpeedProvider()).
                 setGraphHopperLocation(GH_LOCATION_CUSTOM_SPEEDS_RELOAD).
                 setOSMFile(MONACO).
                 setProfiles(profiles).
