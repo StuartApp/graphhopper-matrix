@@ -20,6 +20,11 @@ public final class DistanceMatrix {
     public static final double DISTANCE_SNAP_ERROR_VALUE = 1e7;
     public static final long TIME_SNAP_ERROR_VALUE = 10000000;
 
+    /** Sentinel value (meters) returned when two snapped points have no route between them. */
+    public static final double DISTANCE_NO_ROUTE_VALUE = (double) Integer.MAX_VALUE;
+    /** Sentinel value (milliseconds) returned when two snapped points have no route between them. */
+    public static final long TIME_NO_ROUTE_VALUE = (long) Integer.MAX_VALUE;
+
     private final int numberOfOrigins;
     private final int numberOfDestinations;
 
@@ -51,6 +56,9 @@ public final class DistanceMatrix {
 
         distances = new double[numberOfOrigins][numberOfDestinations];
         times = new long[numberOfOrigins][numberOfDestinations];
+
+        for (double[] row : distances) Arrays.fill(row, DISTANCE_NO_ROUTE_VALUE);
+        for (long[]   row : times)     Arrays.fill(row, TIME_NO_ROUTE_VALUE);
 
         this.snapOriginsErrors = originsErrors;
         this.snapDestinationErrors = destinationsErros;
