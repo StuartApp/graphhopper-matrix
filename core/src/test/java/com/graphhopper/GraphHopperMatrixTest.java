@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.config.CHProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.routing.MultiplePointsNotFoundException;
@@ -38,7 +39,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.graphhopper.routing.matrix.DistanceMatrix.DISTANCE_NO_ROUTE_VALUE;
 import static com.graphhopper.routing.matrix.DistanceMatrix.DISTANCE_SNAP_ERROR_VALUE;
+import static com.graphhopper.routing.matrix.DistanceMatrix.TIME_NO_ROUTE_VALUE;
 import static com.graphhopper.routing.matrix.DistanceMatrix.TIME_SNAP_ERROR_VALUE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -436,5 +439,20 @@ public class GraphHopperMatrixTest {
         // Time assertions
         assertTrue(result.getTime(0, 0) == 530105);
 
+    }
+
+    @Test
+    void testNoRouteDefaultCellValue() {
+        IntArrayList noErrors = new IntArrayList();
+        DistanceMatrix matrix = new DistanceMatrix(2, 2, noErrors, noErrors);
+
+        // Cells never written by setCell must return the no-route sentinel
+        assertEquals(DISTANCE_NO_ROUTE_VALUE, matrix.getDistance(0, 1));
+        assertEquals(TIME_NO_ROUTE_VALUE, matrix.getTime(0, 1));
+
+        // setCell must overwrite the sentinel with real values
+        matrix.setCell(0, 1, 1500.0, 90000L);
+        assertEquals(1500.0, matrix.getDistance(0, 1));
+        assertEquals(90000L, matrix.getTime(0, 1));
     }
 }
