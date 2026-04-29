@@ -9,7 +9,7 @@
     <parent>
         <groupId>com.stuart.platform.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>5.1.4-SNAPSHOT</version>
+        <version>5.2.0-SNAPSHOT</version>
     </parent>
     <properties>
         <assembly-phase>package</assembly-phase>
