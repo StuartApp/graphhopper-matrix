@@ -29,6 +29,18 @@ public class RouterMatrix extends Router {
 
     public GHMatrixResponse matrix(GHMatrixRequest request) {
 
+        if (!request.getOriginPointHints().isEmpty() && !request.getDestinationPointHints().isEmpty())
+            throw new IllegalArgumentException("Point hints are not supported for Matrix");
+
+        if (!request.getSnapPreventions().isEmpty())
+            throw new IllegalArgumentException("SnapPreventions are not supported for Matrix " + request.getSnapPreventions().toString());
+
+        if (!request.getOriginCurbsides().isEmpty() && !request.getDestinationCurbsides().isEmpty())
+            throw new IllegalArgumentException("Curbsides are not supported for Matrix");
+
+        if (request.getCustomModel() != null)
+            throw new IllegalArgumentException("CustomModel not supported for Matrix: " + request.getCustomModel().toString());
+
         Profile profile = profilesByName.get(request.getProfile());
         RoutingCHGraph chGraph = chGraphs.get(profile.getName());
 
