@@ -53,7 +53,7 @@ public class ViaRouting {
 
     public static MatrixSnapResult lookupMatrix(boolean failFast, EncodedValueLookup lookup, List<GHPoint> points, EdgeFilter snapFilter,
                                                 LocationIndex locationIndex, List<String> snapPreventions, List<String> pointHints,
-                                                DirectedEdgeFilter directedSnapFilter, List<Double> headings) {
+                                                DirectedEdgeFilter directedSnapFilter, List<Double> headings, boolean isOrigins) {
         if (points.size() < 1)
             throw new IllegalArgumentException("At least 1 point have to be specified, but was:" + points.size());
 
@@ -93,7 +93,9 @@ public class ViaRouting {
         }
 
         if (!pointsNotFound.isEmpty() && failFast)
-            throw new MultiplePointsNotFoundException(pointsNotFound);
+            throw new MultiplePointsNotFoundException(isOrigins?
+                    MultiplePointsNotFoundException.IssueLocation.ORIGIN:
+                    MultiplePointsNotFoundException.IssueLocation.DESTINATION, pointsNotFound);
 
         return new MatrixSnapResult(snaps,snapIndexes,pointsNotFound);
 
@@ -139,7 +141,8 @@ public class ViaRouting {
         }
 
         if (!pointsNotFound.isEmpty())
-            throw new MultiplePointsNotFoundException(pointsNotFound);
+            throw new MultiplePointsNotFoundException(
+                    MultiplePointsNotFoundException.IssueLocation.SIMPLE_ROUTE, pointsNotFound);
 
         return snaps;
     }
